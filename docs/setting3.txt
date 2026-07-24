@@ -1,0 +1,39 @@
+===============================================================================
+ 친비즈(ChinBiz) 영업대행 ERP - 재구축(3차) 작업 정리
+ 스택: Next.js(FE) + Spring Boot(BE) + MySQL / 인증: JWT
+===============================================================================
+
+-------------------------------------------------------------------------------
+[0] 기술 스택 / 전역 규칙
+-------------------------------------------------------------------------------
+- FE : Next.js 16(App Router) + React 19 + TypeScript + Tailwind CSS 4
+- BE : Spring Boot 3.5 + Spring Security(JWT) + Spring Data JPA + springdoc(Swagger)
+- DB : MySQL 8.x (기존 chin4 DB 재사용)
+- 인증 : JWT Bearer 토큰(무상태). jjwt 0.12.6
+- 포트 : BE 9001, FE 3100 (※ 이 PC에서 3000은 OS 예약 범위라 3100 사용)
+- 개인정보 : 전 항목 '평문' 저장. 암호화 및 encryption_key 컬럼 제거(요구사항).
+- 금액/수당 : 정수(원 단위). RATE=bp(1%=100), FIXED=원.
+  ※ RATE 저장/검증은 bp 그대로지만, FE 상품등록 입력창은 %값을 직접 입력받아 bp로
+    환산해 전송(job13 후속, ProductsPanel.rewardDisplay/setReward). RATE 합계는
+    "100% 이하"가 아니라 "정확히 100%"여야 등록/수정 가능(BE ProductService.validateRewards
+    +FE 동일검증, 초과/미달 모두 차단).
+
+
+
+1.본사: https://chinbiz.base44.app/hq-dashboard
+2.파트너사: https://chinbiz.base44.app/partner-dashboard
+3.본부: https://chinbiz.base44.app/division-dashboard
+4.센터: https://chinbiz.base44.app/center-dashboard
+5.관리매니저: https://chinbiz.base44.app/manager-dashboard
+6.버즈 : https://chinbiz.base44.app/dashboard 
+
+
+
+할일
+
+파트너admin의 영업관리메뉴
+1. 등록일자, 고객명(전체), 영업내역(버튼생성), 거래확정(버튼생성)
+2. 상품명 클릭시 상품 상세내역 보여지게
+3. 고객명 클릭시 고객정보 화면 보여지게
+4. 영업내역 버튼 클릭시  버즈/매니저 admin의 영업관리 메뉴에서 맨니저가 등록한 영업사항을 볼수 있도록 화면 구현
+5. 거래확정 버튼 클릭시 해당 영업완료 후 cp -> mp 처리
