@@ -43,9 +43,10 @@ public class BuzzEducationController {
         Map<Long, String> pn = new LinkedHashMap<>();
         partnerRepo.findAll().forEach(p -> pn.put(p.getId(), p.getCompanyName()));
 
-        // 이수완료(completed)된 상품은 목록에서 제외 → 아직 이수 전인 상품만 노출
+        // 이수완료(completed)된 상품은 목록에서 제외 → 아직 이수 전인 상품만 노출.
+        // 단순배송상품(simple_delivery)은 교육 대상에서 제외 (docs/11)
         List<Map<String, Object>> rows = productRepo.findAll().stream()
-                .filter(p -> p.getPartnerId() != null)
+                .filter(p -> p.getPartnerId() != null && !p.isSimpleDelivery())
                 .filter(p -> {
                     Education e = eduRepo.findByProductIdAndManagerId(p.getId(), me.getId()).orElse(null);
                     return e == null || !e.isCompleted();

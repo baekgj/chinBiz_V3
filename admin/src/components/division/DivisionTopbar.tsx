@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import { apiGet } from "@/lib/api";
@@ -29,6 +29,16 @@ export default function DivisionTopbar() {
   const childActive = (child: string, parent: string) =>
     child === parent ? pathname === child : pathname === child || pathname.startsWith(child + "/");
 
+  // 소매뉴: hover 대신 클릭 토글(사라짐 방지). 외부 클릭·라우트 변경 시 닫힘
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => { setOpenKey(null); }, [pathname]);
+  useEffect(() => {
+    function onDoc(e: MouseEvent) { if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenKey(null); }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
   return (
     <header className={dv.header}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
@@ -40,15 +50,22 @@ export default function DivisionTopbar() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav ref={navRef} className="hidden items-center gap-1 lg:flex">
           {NAV.map((n) => n.children ? (
-            <div key={n.href} className="group relative flex h-16 items-center">
-              <button className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) ? dv.navActive : dv.navIdle}`}>{n.label} ▾</button>
-              <div className="invisible absolute left-0 top-full z-40 min-w-[180px] rounded-lg border border-violet-900/40 bg-[#1a1428] p-1 opacity-0 shadow-xl transition-opacity group-hover:visible group-hover:opacity-100">
-                {n.children.map((c) => (
-                  <Link key={c.href} href={c.href} className={`block whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold ${childActive(c.href, n.href) ? dv.navActive : dv.navIdle}`}>{c.label}</Link>
-                ))}
-              </div>
+            <div key={n.href} className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenKey(openKey === n.href ? null : n.href)}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) || openKey === n.href ? dv.navActive : dv.navIdle}`}>
+                {n.label} <span className="text-[10px]">{openKey === n.href ? "▲" : "▼"}</span>
+              </button>
+              {openKey === n.href && (
+                <div className="absolute left-0 top-full z-40 mt-1 min-w-[180px] rounded-lg border border-violet-900/40 bg-[#1a1428] p-1 shadow-xl">
+                  {n.children.map((c) => (
+                    <Link key={c.href} href={c.href} onClick={() => setOpenKey(null)} className={`block whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold ${childActive(c.href, n.href) ? dv.navActive : dv.navIdle}`}>{c.label}</Link>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <Link key={n.href} href={n.href} className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) ? dv.navActive : dv.navIdle}`}>{n.label}</Link>

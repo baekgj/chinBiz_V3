@@ -161,6 +161,13 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-5">
             <SectionHead en="MAIN SHOWCASE" title="지금 바로 영업 가능한 파트너사 대표 상품" />
 
+            {/* 전체상품보기 → 상품리스트 페이지 */}
+            <div className="mt-2 flex justify-end">
+              <Link href="/products" className="inline-flex items-center gap-1 text-sm font-bold text-forest-700 hover:text-forest-900">
+                전체상품보기 <span aria-hidden>→</span>
+              </Link>
+            </div>
+
             <ProductShowcase />
 
             {/* Guardrail */}

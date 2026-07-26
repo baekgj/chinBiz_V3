@@ -50,6 +50,9 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
   });
   const [onSale, setOnSale] = useState<boolean>(initial?.onSale != null ? Boolean(initial.onSale) : true);
   const [installProduct, setInstallProduct] = useState<boolean>(Boolean(initial?.installProduct));
+  const [simpleDelivery, setSimpleDelivery] = useState<boolean>(Boolean(initial?.simpleDelivery));
+  const [cancelFeeFlag, setCancelFeeFlag] = useState<boolean>(Boolean(initial?.cancelFeeFlag));
+  const [cancelAmount, setCancelAmount] = useState<string>(initial?.cancelAmount != null ? String(initial.cancelAmount) : "");
   const [popular, setPopular] = useState<boolean>(Boolean(initial?.popular));
   const [recommended, setRecommended] = useState<boolean>(Boolean(initial?.recommended));
   const [images, setImages] = useState<string[]>(() =>
@@ -146,7 +149,9 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       salesCenterReward: num(f.salesCenterReward), mgmtCenterReward: num(f.mgmtCenterReward),
       divisionReward: num(f.divisionReward), hqReward: num(f.hqReward),
       description: f.description, installPolicy: f.installPolicy, returnPolicy: f.returnPolicy, onSale,
-      contractEndDate: f.contractEndDate || null, installProduct, popular, recommended,
+      contractEndDate: f.contractEndDate || null, installProduct, simpleDelivery,
+      cancelFeeFlag, cancelAmount: cancelFeeFlag ? Number(cancelAmount || 0) : 0,
+      popular, recommended,
     };
     const res = mode === "new" ? await apiPost("/api/products", payload) : await apiPut(`/api/products/${initial?.id}`, payload);
     setSaving(false);
@@ -205,6 +210,30 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
               {installProduct ? "설치상품 (방문 설치형)" : "일반상품"}
             </button>
           </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-400">단순배송상품 여부</span>
+            <button type="button" onClick={() => setSimpleDelivery((v) => !v)}
+              className={`mt-1 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${simpleDelivery ? "border-brand-500 bg-brand-600/20 text-white" : "border-line text-slate-400 hover:bg-navy-800"}`}>
+              <span className={`grid h-5 w-5 place-items-center rounded border ${simpleDelivery ? "border-brand-400 bg-brand-500 text-white" : "border-line text-transparent"}`}>✓</span>
+              {simpleDelivery ? "단순배송상품 (관리마켓·교육 제외)" : "단순배송 아님"}
+            </button>
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-400">취소 시 매니저 보전비</span>
+            <button type="button" onClick={() => setCancelFeeFlag((v) => !v)}
+              className={`mt-1 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${cancelFeeFlag ? "border-amber-400 bg-amber-500/20 text-amber-300" : "border-line text-slate-400 hover:bg-navy-800"}`}>
+              <span className={`grid h-5 w-5 place-items-center rounded border ${cancelFeeFlag ? "border-amber-400 bg-amber-500 text-white" : "border-line text-transparent"}`}>✓</span>
+              {cancelFeeFlag ? "취소 시 매니저 보전비 있음" : "보전비 없음"}
+            </button>
+          </label>
+          {cancelFeeFlag && (
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-400">취소비용 (매니저 보전비, 원)</span>
+              <input type="number" min={0} value={cancelAmount} onChange={(e) => setCancelAmount(e.target.value)}
+                placeholder="예: 50000"
+                className="mt-1 w-full rounded-lg border border-line bg-navy-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500" />
+            </label>
+          )}
           <div className="sm:col-span-2">
             <span className="text-xs font-semibold text-slate-400">키워드 태그 <span className="font-normal text-slate-500">(마켓 배지 · 중복 선택 가능)</span></span>
             <div className="mt-1 flex gap-2">

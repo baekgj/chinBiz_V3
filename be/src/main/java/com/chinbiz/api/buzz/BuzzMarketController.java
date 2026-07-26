@@ -94,6 +94,9 @@ public class BuzzMarketController {
         m.put("partnerName", p.getPartnerId() == null ? null : pn.get(p.getPartnerId()));
         m.put("contractEndDate", p.getContractEndDate() == null ? null : p.getContractEndDate().toString());
         m.put("installProduct", p.isInstallProduct());
+        m.put("simpleDelivery", p.isSimpleDelivery());
+        m.put("cancelFeeFlag", p.isCancelFeeFlag());
+        m.put("cancelAmount", p.getCancelAmount());
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
         return m;
@@ -131,6 +134,7 @@ public class BuzzMarketController {
         if (managerMode) {
             Set<Long> ids = completedIds.isEmpty() ? Set.of(-1L) : completedIds; // 빈 목록 → 매칭 없음
             specs.add((r, q, cb) -> r.get("id").in(ids));
+            specs.add((r, q, cb) -> cb.isFalse(r.get("simpleDelivery"))); // 단순배송상품 제외(docs/11)
         }
         Specification<Product> spec = specs.stream().reduce(Specification::and).orElse(null);
 

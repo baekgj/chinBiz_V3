@@ -47,6 +47,36 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
 
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
 
+  // 하위추천회원 소속센터 일괄변경 모달
+  const [cascadeOpen, setCascadeOpen] = useState(false);
+  const [cDivisions, setCDivisions] = useState<Division[]>([]);
+  const [cDivision, setCDivision] = useState<number | "">("");
+  const [cCenterCodes, setCCenterCodes] = useState<Code[]>([]);
+  const [cCenterId, setCCenterId] = useState<number | "">("");
+  const [cBusy, setCBusy] = useState(false);
+  const [cMsg, setCMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!cascadeOpen || cDivisions.length) return;
+    apiGet<Division[]>("/api/org/divisions").then((r) => { if (r.data) setCDivisions(r.data); });
+  }, [cascadeOpen, cDivisions.length]);
+
+  useEffect(() => {
+    if (cDivision === "") { setCCenterCodes([]); return; }
+    const div = cDivisions.find((d) => d.id === cDivision);
+    if (!div?.salesCenterId) { setCCenterCodes([]); return; }
+    apiGet<Code[]>(`/api/org/center-codes/centers?divisionIdx=${div.salesCenterId}`).then((r) => { setCCenterCodes(r.data ?? []); setCCenterId(""); });
+  }, [cDivision, cDivisions]);
+
+  async function runCascade() {
+    if (cCenterId === "") { setCMsg("변경할 센터를 선택해 주세요."); return; }
+    setCBusy(true); setCMsg(null);
+    const r = await apiPost<{ message: string; count: number }>(`/api/org/members/${initial?.id}/cascade-center`, { salesCenterId: Number(cCenterId) });
+    setCBusy(false);
+    if (r.ok) { setCMsg(r.data?.message ?? "일괄변경 완료"); }
+    else setCMsg(r.message ?? "일괄변경에 실패했습니다.");
+  }
+
   useEffect(() => {
     if (isEdit) return; // 수정 모드는 소속(center) 재선택 없이 기본정보만
     apiGet<Code[]>("/api/org/center-codes/divisions").then((r) => { if (r.data) setDivisionCodes(r.data); });
@@ -130,8 +160,14 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
           </Field>
 
           {isEdit ? (
-            <Field label="소속">
-              <div className="rounded-lg border border-line bg-navy-800 px-3 py-2 text-sm text-slate-300">{initial?.centerName ?? "-"}</div>
+            <Field label="소속" hint="하위 추천회원까지 일괄 변경하려면 아래 버튼 사용">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 rounded-lg border border-line bg-navy-800 px-3 py-2 text-sm text-slate-300">{initial?.centerName ?? "-"}</div>
+                <button type="button" onClick={() => { setCascadeOpen(true); setCMsg(null); }}
+                  className="shrink-0 rounded-lg border border-brand-500 px-3 py-2 text-xs font-bold text-brand-400 hover:bg-brand-600/15">
+                  하위추천회원 소속센터 전체변경
+                </button>
+              </div>
             </Field>
           ) : role === "DIVISION_ADMIN" ? (
             <Field label="본부 선택" required error={errors.salesCenterId} hint="center_code 미지정(본부) 목록">
@@ -195,6 +231,37 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
         <button type="button" onClick={() => router.push("/master/organization/members")} className="rounded-xl border border-line px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-navy-800">취소</button>
         <button type="submit" disabled={saving} className="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-500 disabled:opacity-60">{saving ? "저장 중…" : isEdit ? "변경 저장" : "등록"}</button>
       </div>
+
+      {/* 하위추천회원 소속센터 일괄변경 모달 */}
+      {cascadeOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => !cBusy && setCascadeOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-line bg-navy-900 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-black text-white">하위추천회원 소속센터 전체변경</h3>
+            <p className="mt-2 text-xs text-slate-400">
+              <b className="text-white">{initial?.name}</b>님과 <b className="text-white">{initial?.name}</b>님을 추천으로 가입한 모든 하위 버즈회원의 소속센터를 일괄 변경합니다.
+            </p>
+            <div className="mt-4 space-y-3">
+              <Field label="본부 선택">
+                <select className={inputCls} value={cDivision} onChange={(e) => setCDivision(e.target.value ? Number(e.target.value) : "")}>
+                  <option value="">본부 선택</option>
+                  {cDivisions.map((d) => <option key={d.id} value={d.id}>{d.name}{d.centerName ? ` (${d.centerName})` : ""}</option>)}
+                </select>
+              </Field>
+              <Field label="변경할 센터">
+                <select className={inputCls} value={cCenterId} disabled={cCenterCodes.length === 0} onChange={(e) => setCCenterId(e.target.value ? Number(e.target.value) : "")}>
+                  <option value="">{cCenterCodes.length ? "센터 선택" : "본부 먼저 선택"}</option>
+                  {cCenterCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
+                </select>
+              </Field>
+            </div>
+            {cMsg && <p className="mt-3 rounded-lg border border-brand-500/40 bg-brand-600/10 px-3 py-2 text-sm text-brand-200">{cMsg}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" disabled={cBusy} onClick={() => setCascadeOpen(false)} className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-navy-800">닫기</button>
+              <button type="button" disabled={cBusy || cCenterId === ""} onClick={runCascade} className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-500 disabled:opacity-50">{cBusy ? "변경 중…" : "일괄변경"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

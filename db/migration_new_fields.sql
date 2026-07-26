@@ -88,5 +88,30 @@ CALL chinbiz_add_col('user','manager_status',    "`manager_status` varchar(1) CO
 -- ── [education] 자동배정 동의여부 (교육완료 시 매니저 선택) ──────────
 CALL chinbiz_add_col('education','auto_assign',  "`auto_assign` bit(1) NOT NULL DEFAULT b'0'");
 
+-- ── [allowance] 확정일자 / 확정월 (2026-07-24) ──────────────────────
+CALL chinbiz_add_col('allowance','fixed_date',  "`fixed_date` datetime(6) DEFAULT NULL");
+CALL chinbiz_add_col('allowance','fixed_month', "`fixed_month` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+
+-- ── [product] 단순배송상품 / 취소보전비 / 취소비용 (docs/11) ─────────
+CALL chinbiz_add_col('product','simple_delivery', "`simple_delivery` bit(1) NOT NULL DEFAULT b'0'");
+CALL chinbiz_add_col('product','cancel_fee_flag', "`cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0'");
+CALL chinbiz_add_col('product','cancel_amount',   "`cancel_amount` bigint DEFAULT 0");
+
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
+
+-- ── [신규 테이블] 정산(수당지급) allowance_payment (2026-07-24) ──────
+CREATE TABLE IF NOT EXISTS `allowance_payment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `member_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `member_type` enum('BUZZ','BUZZ_CENTER','DIVISION','HQ','MANAGER','MANAGER_CENTER','MASTER','TOPBUZZ') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fixed_month` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_amount` bigint DEFAULT NULL,
+  `created_date` datetime(6) DEFAULT NULL,
+  `payment_flag` char(1) COLLATE utf8mb4_unicode_ci DEFAULT 'N',
+  `payment_date` datetime(6) DEFAULT NULL,
+  `account_holder` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `account_number` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `account_bankname` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- 완료.

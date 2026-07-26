@@ -1,5 +1,7 @@
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\Allowance.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowanceId.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowancePayment.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowancePaymentRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowanceRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowanceService.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\auth\AuthController.java
@@ -12,6 +14,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\BuzzManagerCo
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\BuzzMarketController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\BuzzMemberController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\BuzzSalesController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\BuzzSettlementController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\Sale.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\buzz\SaleRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\category\Category.java
@@ -43,6 +46,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\CenterMatcher.
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\DivisionDashboardController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\DivisionSettlementController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\MasterDashboardController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\MasterSettlementController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\OrgController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\dto\PartnerRequest.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\dto\PartnerResponse.java

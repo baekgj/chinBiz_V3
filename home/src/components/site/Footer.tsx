@@ -4,9 +4,9 @@ const COLS = [
   {
     title: "서비스",
     links: [
-      { label: "친비즈 소개", href: "/#service" },
-      { label: "상품 둘러보기", href: "/#market" },
-      { label: "업무 프로세스", href: "/#process" },
+      { label: "친비즈 소개", href: "/about" },
+      { label: "상품 둘러보기", href: "/products" },
+      { label: "업무 프로세스", href: "/process" },
       { label: "공지사항", href: "/#partner" },
     ],
   },
@@ -15,7 +15,7 @@ const COLS = [
     links: [
       { label: "버즈회원 가입", href: "/signup" },
       { label: "로그인", href: "/login" },
-      { label: "파트너사 입점문의", href: "/#inquiry" },
+      { label: "파트너사 입점문의", href: "/partner-apply" },
     ],
   },
   {

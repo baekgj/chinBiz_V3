@@ -55,6 +55,9 @@ public class Allowance {
     @Column(name = "contract_date") private LocalDate contractDate;   // 계약일자
     @Column(name = "confirm_date") private LocalDate confirmDate;     // 구매확정일자
 
+    @Column(name = "fixed_date") private LocalDateTime fixedDate;      // 확정일자
+    @Column(name = "fixed_month", length = 6) private String fixedMonth; // 확정월(YYYYMM)
+
     @Column(name = "paid", nullable = false) private boolean paid = false; // 지급여부
     @Column(name = "paid_date") private LocalDate paidDate;                 // 지급일자
 
@@ -79,6 +82,8 @@ public class Allowance {
     public Long getAmount() { return amount; } public void setAmount(Long v) { amount = v; }
     public LocalDate getContractDate() { return contractDate; } public void setContractDate(LocalDate v) { contractDate = v; }
     public LocalDate getConfirmDate() { return confirmDate; } public void setConfirmDate(LocalDate v) { confirmDate = v; }
+    public LocalDateTime getFixedDate() { return fixedDate; } public void setFixedDate(LocalDateTime v) { fixedDate = v; }
+    public String getFixedMonth() { return fixedMonth; } public void setFixedMonth(String v) { fixedMonth = v; }
     public boolean isPaid() { return paid; } public void setPaid(boolean v) { paid = v; }
     public LocalDate getPaidDate() { return paidDate; } public void setPaidDate(LocalDate v) { paidDate = v; }
     public String getAccountNumber() { return accountNumber; } public void setAccountNumber(String v) { accountNumber = v; }

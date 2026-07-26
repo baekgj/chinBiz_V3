@@ -2,21 +2,27 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import { useBuzz } from "@/components/buzz/theme";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
+const SETTLEMENT_NAV = { href: "/buzz/allowances", label: "수당/정산현황", children: [
+  { href: "/buzz/allowances", label: "수당현황" },
+  { href: "/buzz/payments", label: "정산현황" },
+] };
+
 const NAV: NavItem[] = [
-  { href: "/buzz", label: "수당 현황" },
+  SETTLEMENT_NAV,
   { href: "/buzz/pipeline", label: "영업 파이프라인" },
   { href: "/buzz/market", label: "상품 마켓" },
   { href: "/buzz/network", label: "버즈 네트워크" },
   { href: "/buzz/notices", label: "공지사항" },
 ];
 const NAV_MANAGER: NavItem[] = [
-  { href: "/buzz", label: "정산·자산 현황" },
+  SETTLEMENT_NAV,
   { href: "/buzz/intake", label: "영업관리", children: [
     { href: "/buzz/intake", label: "버즈1차접수현황" },
     { href: "/buzz/managed", label: "2차영업관리" },
@@ -35,6 +41,17 @@ export default function BuzzTopbar() {
   const toggleView = () => { setView(isManager ? "buzz" : "manager"); router.push("/buzz"); };
   const active = (href: string) => (href === "/buzz" ? pathname === "/buzz" : pathname.startsWith(href));
 
+  // 소매뉴: hover 대신 클릭 토글(사라짐 방지). 외부 클릭·라우트 변경 시 닫힘
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => { setOpenKey(null); }, [pathname]);
+  useEffect(() => {
+    function onDoc(e: MouseEvent) { if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenKey(null); }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+  const dropdownPanel = isManager ? "border-neutral-800 bg-neutral-900" : "border-emerald-100 bg-white";
+
   return (
     <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${theme.header}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
@@ -48,20 +65,25 @@ export default function BuzzTopbar() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav ref={navRef} className="hidden items-center gap-1 lg:flex">
           {nav.map((n) => n.children ? (
-            <div key={n.href} className="group relative">
-              <button className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${n.children.some((c) => active(c.href)) ? theme.navActive : theme.navIdle}`}>
-                {n.label} ▾
+            <div key={n.href} className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenKey(openKey === n.href ? null : n.href)}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) || openKey === n.href ? theme.navActive : theme.navIdle}`}>
+                {n.label} <span className="text-[10px]">{openKey === n.href ? "▲" : "▼"}</span>
               </button>
-              <div className={`absolute left-0 top-full z-40 mt-1 hidden min-w-[180px] rounded-lg border p-1 shadow-xl group-hover:block ${theme.header}`}>
-                {n.children.map((c) => (
-                  <Link key={c.href} href={c.href}
-                    className={`block rounded-md px-3 py-2 text-sm font-semibold ${active(c.href) ? theme.navActive : theme.navIdle}`}>
-                    {c.label}
-                  </Link>
-                ))}
-              </div>
+              {openKey === n.href && (
+                <div className={`absolute left-0 top-full z-40 mt-1 min-w-[190px] rounded-lg border p-1 shadow-xl ${dropdownPanel}`}>
+                  {n.children.map((c) => (
+                    <Link key={c.href} href={c.href} onClick={() => setOpenKey(null)}
+                      className={`block whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold ${active(c.href) ? theme.navActive : theme.navIdle}`}>
+                      {c.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <Link key={n.href} href={n.href}

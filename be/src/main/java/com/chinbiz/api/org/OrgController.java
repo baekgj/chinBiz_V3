@@ -12,9 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 조직망 관리 API (본사 마스터 어드민 전용). 본부/센터 계정 등록·회원 목록.
@@ -123,6 +128,38 @@ public class OrgController {
     public ResponseEntity<?> getMember(@PathVariable Long id) {
         return userRepository.findById(id).map(u -> ResponseEntity.ok((Object) member(u)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "회원을 찾을 수 없습니다.")));
+    }
+
+    public record CascadeCenterRequest(Long salesCenterId) {}
+
+    /** 하위추천회원 소속센터 일괄변경 — 대상 회원 + 그를 (직·간접) 추천으로 가입한 모든 하위 버즈회원의
+     *  sales_center_id 를 지정 센터로 변경. (referral_code = 상위 userId 체인을 BFS 탐색) */
+    @PostMapping("/members/{id}/cascade-center")
+    public ResponseEntity<?> cascadeCenter(@PathVariable Long id, @RequestBody CascadeCenterRequest req) {
+        User root = userRepository.findById(id).orElse(null);
+        if (root == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "회원을 찾을 수 없습니다."));
+        if (req.salesCenterId() == null) return ResponseEntity.badRequest().body(Map.of("message", "변경할 센터를 선택해 주세요."));
+
+        // 대상 회원 + 하위 추천 체인 수집 (referral_code 그래프 BFS, 사이클 방지)
+        List<User> targets = new ArrayList<>();
+        Set<Long> visited = new HashSet<>();
+        Deque<User> queue = new ArrayDeque<>();
+        queue.add(root); visited.add(root.getId());
+        while (!queue.isEmpty()) {
+            User cur = queue.poll();
+            targets.add(cur);
+            if (cur.getUserId() == null) continue;
+            for (User child : userRepository.findByReferralCode(cur.getUserId())) {
+                if (child.getId() != null && visited.add(child.getId())) queue.add(child);
+            }
+        }
+        targets.forEach(u -> u.setSalesCenterId(req.salesCenterId()));
+        userRepository.saveAll(targets);
+        return ResponseEntity.ok(Map.of(
+                "message", targets.size() + "명(본인 포함)의 소속센터가 변경되었습니다.",
+                "count", targets.size(),
+                "salesCenterId", req.salesCenterId(),
+                "centerName", centerName(req.salesCenterId())));
     }
 
     // ───────── 조직 관리 트리 (B-3) : 본부 ▸ 센터 ▸ 버즈/매니저 ─────────

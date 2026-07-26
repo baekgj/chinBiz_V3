@@ -32,6 +32,7 @@ public class ProductController {
             Long mgmtCenterReward, Long divisionReward, Long hqReward,
             String description, String installPolicy, String returnPolicy, Boolean onSale,
             String contractEndDate, Boolean installProduct,
+            Boolean simpleDelivery, Boolean cancelFeeFlag, Long cancelAmount,
             Boolean popular, Boolean recommended
     ) {}
 
@@ -59,6 +60,9 @@ public class ProductController {
         m.put("onSale", p.isOnSale());
         m.put("contractEndDate", p.getContractEndDate() == null ? null : p.getContractEndDate().toString());
         m.put("installProduct", p.isInstallProduct());
+        m.put("simpleDelivery", p.isSimpleDelivery());
+        m.put("cancelFeeFlag", p.isCancelFeeFlag());
+        m.put("cancelAmount", p.getCancelAmount());
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
         m.put("createdAt", p.getCreatedAt() == null ? null : p.getCreatedAt().toString());
@@ -140,6 +144,9 @@ public class ProductController {
         p.setOnSale(req.onSale() == null ? true : req.onSale());
         p.setContractEndDate(parseDate(req.contractEndDate()));
         p.setInstallProduct(req.installProduct() != null && req.installProduct());
+        p.setSimpleDelivery(req.simpleDelivery() != null && req.simpleDelivery());
+        p.setCancelFeeFlag(req.cancelFeeFlag() != null && req.cancelFeeFlag());
+        p.setCancelAmount(req.cancelAmount() == null ? 0L : req.cancelAmount());
         p.setPopular(req.popular() != null && req.popular());
         p.setRecommended(req.recommended() != null && req.recommended());
     }

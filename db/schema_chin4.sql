@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS `allowance` (
   `bank_name` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `confirm_date` date DEFAULT NULL,
   `contract_date` date DEFAULT NULL,
+  `fixed_date` datetime(6) DEFAULT NULL,             -- 확정일자
+  `fixed_month` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL, -- 확정월(YYYYMM)
   `created_at` datetime(6) NOT NULL,
   `handler_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `paid` bit(1) NOT NULL,
@@ -35,6 +37,24 @@ CREATE TABLE IF NOT EXISTS `allowance` (
   PRIMARY KEY (`member_id`,`member_type`,`order_no`,`type`),
   UNIQUE KEY `seq` (`seq`)
 ) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 정산(수당지급) 테이블 — 회원·확정월 단위 지급 관리
+--
+CREATE TABLE IF NOT EXISTS `allowance_payment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `member_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `member_type` enum('BUZZ','BUZZ_CENTER','DIVISION','HQ','MANAGER','MANAGER_CENTER','MASTER','TOPBUZZ') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fixed_month` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_amount` bigint DEFAULT NULL,
+  `created_date` datetime(6) DEFAULT NULL,
+  `payment_flag` char(1) COLLATE utf8mb4_unicode_ci DEFAULT 'N',
+  `payment_date` datetime(6) DEFAULT NULL,
+  `account_holder` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `account_number` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `account_bankname` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -174,6 +194,9 @@ CREATE TABLE IF NOT EXISTS `product` (
   `updated_at` datetime(6) DEFAULT NULL,
   `contract_end_date` date DEFAULT NULL,
   `install_product` bit(1) NOT NULL,
+  `simple_delivery` bit(1) NOT NULL DEFAULT b'0',   -- 단순배송상품 여부
+  `cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0',   -- 취소 시 매니저 보전비 있음
+  `cancel_amount` bigint DEFAULT 0,                 -- 취소비용(매니저 보전비, 원)
   `kw_popular` bit(1) NOT NULL,
   `kw_recommended` bit(1) NOT NULL,
   PRIMARY KEY (`id`)

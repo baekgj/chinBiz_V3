@@ -64,6 +64,15 @@ public class Product {
     /** 설치상품 여부 (체크박스). true=설치형 상품 */
     @Column(name = "install_product", nullable = false) private boolean installProduct = false;
 
+    /** 단순배송상품 여부 (체크박스). true=단순배송 → 관리마켓/교육관리에서 제외 */
+    @Column(name = "simple_delivery", nullable = false) private boolean simpleDelivery = false;
+
+    /** 취소 시 매니저 보전비 있음 (체크박스) */
+    @Column(name = "cancel_fee_flag", nullable = false) private boolean cancelFeeFlag = false;
+
+    /** 취소비용(매니저 보전비, 원) — cancel_fee_flag=true 일 때 사용 */
+    @Column(name = "cancel_amount") private Long cancelAmount = 0L;
+
     // 키워드 태그 (마켓 배지). 상품등록 시 선택
     @Column(name = "kw_popular", nullable = false) private boolean popular = false;      // 인기
     @Column(name = "kw_recommended", nullable = false) private boolean recommended = false; // 추천
@@ -105,6 +114,9 @@ public class Product {
     public boolean isOnSale() { return onSale; } public void setOnSale(boolean v) { onSale = v; }
     public LocalDate getContractEndDate() { return contractEndDate; } public void setContractEndDate(LocalDate v) { contractEndDate = v; }
     public boolean isInstallProduct() { return installProduct; } public void setInstallProduct(boolean v) { installProduct = v; }
+    public boolean isSimpleDelivery() { return simpleDelivery; } public void setSimpleDelivery(boolean v) { simpleDelivery = v; }
+    public boolean isCancelFeeFlag() { return cancelFeeFlag; } public void setCancelFeeFlag(boolean v) { cancelFeeFlag = v; }
+    public Long getCancelAmount() { return cancelAmount; } public void setCancelAmount(Long v) { cancelAmount = v; }
     public boolean isPopular() { return popular; } public void setPopular(boolean v) { popular = v; }
     public boolean isRecommended() { return recommended; } public void setRecommended(boolean v) { recommended = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }

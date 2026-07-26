@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { krw } from "@/components/ui";
-import { Card, dv } from "@/components/division/DivisionUI";
+import { dv } from "@/components/division/DivisionUI";
 import { apiGet } from "@/lib/api";
 
 /** 본부 자산 — 이달 CP/MP (Allowance: 회원구분 DIVISION, 로그인 본부 기준) */
@@ -34,32 +34,10 @@ export default function WalletSection() {
         </div>
       </div>
 
-      {/* 본부 정산 수당 기여도 요약 (1차 / 2차) */}
-      <Card title="본부 정산 수당 기여도 요약" sub="배정 요율 4% — 1차(버즈 소속) / 2차(매니저 관리) 인프라 분리">
-        <div className="grid gap-4 lg:grid-cols-2">
-          {[
-            { title: "1차 영업(버즈 소속 7단계) 본부 배정액", cp: 48_000_000, mp: 22_000_000, cpDesc: "산하 센터 소속 버즈회원들의 1차 접수 진행 총액", mpDesc: "최종 완료된 1차 마케팅 기반 본부 확정액", action: { label: "산하 센터별 본부 수당 기여도 랭킹 보기 ›", href: "/division/leaderboard" } },
-          ].map((b) => (
-            <div key={b.title} className={`rounded-xl border p-4 ${dv.tableWrap}`}>
-              <h4 className={`text-sm font-black ${dv.cardHead}`}>{b.title}</h4>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div>
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${dv.badge}`}>CP</span>
-                  <p className={`mt-1 text-lg font-black ${dv.statTone.violet}`}>{krw(b.cp)}</p>
-                  <p className={`text-[11px] ${dv.note}`}>{b.cpDesc}</p>
-                </div>
-                <div>
-                  <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">MP · 출금가능</span>
-                  <p className={`mt-1 text-lg font-black ${dv.statTone.emerald}`}>{krw(b.mp)}</p>
-                  <p className={`text-[11px] ${dv.note}`}>{b.mpDesc}</p>
-                </div>
-              </div>
-              <Link href={b.action.href} className={`mt-3 block rounded-lg px-3 py-2 text-center text-xs font-bold ${dv.outlineBtn}`}>{b.action.label}</Link>
-            </div>
-          ))}
-        </div>
-      </Card>
-
+      {/* 현황판 아래로 이동한 랭킹 보기 버튼 (기여도 요약 카드는 삭제) */}
+      <Link href="/division/leaderboard" className={`block rounded-xl px-4 py-3 text-center text-sm font-bold ${dv.outlineBtn}`}>
+        산하 센터별 본부 수당 기여도 랭킹 보기 ›
+      </Link>
     </div>
   );
 }

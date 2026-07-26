@@ -43,7 +43,15 @@ export const NAV: NavItem[] = [
       { href: "/master/education/approve", label: "교육이수 승인" },
     ],
   },
-  { href: "/master/settlement", label: "수당 및 정산 관리", desc: "CP/MP 원장·출금 승인", icon: "wallet" },
+  {
+    href: "/master/settlement", label: "수당 및 정산 관리", desc: "매출·마감·정산·지급", icon: "wallet",
+    children: [
+      { href: "/master/settlement/sales", label: "매출현황" },
+      { href: "/master/settlement/closed", label: "마감내역" },
+      { href: "/master/settlement/payments", label: "정산내역" },
+      { href: "/master/settlement/paid", label: "지급내역" },
+    ],
+  },
   {
     href: "/master/notice", label: "공지사항", desc: "본부·센터·매니저·버즈 공지 발행", icon: "bell",
     children: [

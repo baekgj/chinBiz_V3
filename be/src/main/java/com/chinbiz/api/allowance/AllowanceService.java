@@ -179,6 +179,7 @@ public class AllowanceService {
         for (Allowance a : allowanceRepo.findByOrderNoAndType(orderNo, Allowance.Type.ORDER)) {
             if (a.getStatus() == Allowance.Status.CP) a.setStatus(Allowance.Status.MP);
             a.setConfirmDate(today);
+            // fixed_date/fixed_month 는 구매확정이 아니라 본사 [마감완료] 시점에만 기록 (docs/12)
             allowanceRepo.save(a);
         }
     }
@@ -216,10 +217,11 @@ public class AllowanceService {
             allowanceRepo.save(c);
         }
 
-        // 2) 설치형 상품 + 구매확정/배송·설치 단계 → 매니저 취소수당(CANCEL_FEE)
+        // 2) 매니저 보전비 있는 상품 + 구매확정/배송·설치 단계 → 매니저 취소수당(CANCEL_FEE = product.cancel_amount)
         String st = sale.getStatus();
         boolean feeStage = "구매확정".equals(st) || "배송/설치".equals(st);
-        if (feeStage && product != null && product.isInstallProduct() && sale.getManagerId() != null) {
+        long cancelFee = product == null || product.getCancelAmount() == null ? 0L : product.getCancelAmount();
+        if (feeStage && product != null && product.isCancelFeeFlag() && cancelFee > 0 && sale.getManagerId() != null) {
             User mgr = userRepo.findById(sale.getManagerId()).orElse(null);
             if (mgr != null) {
                 Allowance fee = new Allowance();
@@ -230,7 +232,7 @@ public class AllowanceService {
                 fee.setStatus(Allowance.Status.MP);
                 fee.setProductId(sale.getProductId());
                 fee.setPartnerId(product.getPartnerId());
-                fee.setAmount(50000L);
+                fee.setAmount(cancelFee);
                 fee.setConfirmDate(today);
                 fee.setPaid(false);
                 fee.setAccountNumber(mgr.getAccountNumber());

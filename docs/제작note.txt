@@ -354,8 +354,31 @@ ALTER TABLE `user` ADD COLUMN `manager_code` varchar(20) DEFAULT NULL;
 ALTER TABLE `user` ADD COLUMN `manager_sdate` varchar(10) DEFAULT NULL;
 ALTER TABLE `user` ADD COLUMN `manager_edate` varchar(20) DEFAULT NULL;
 ALTER TABLE `user` ADD COLUMN `manager_status` varchar(1) DEFAULT NULL;
--- education (자동배정 동의여부; docs/10) ★최근 추가
+-- education (자동배정 동의여부; docs/10)
 ALTER TABLE `education` ADD COLUMN `auto_assign` bit(1) NOT NULL DEFAULT b'0';
+-- allowance (확정일자/확정월; 2026-07-24) ★최근 추가
+ALTER TABLE `allowance` ADD COLUMN `fixed_date` datetime(6) DEFAULT NULL;
+ALTER TABLE `allowance` ADD COLUMN `fixed_month` varchar(6) DEFAULT NULL;
+-- allowance_payment (정산/수당지급 테이블 신규; 2026-07-24) ★최근 추가
+CREATE TABLE IF NOT EXISTS `allowance_payment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `member_id` varchar(60) DEFAULT NULL,
+  `member_type` enum('BUZZ','BUZZ_CENTER','DIVISION','HQ','MANAGER','MANAGER_CENTER','MASTER','TOPBUZZ') DEFAULT NULL,
+  `fixed_month` varchar(6) DEFAULT NULL,
+  `payment_amount` bigint DEFAULT NULL,
+  `created_date` datetime(6) DEFAULT NULL,
+  `payment_flag` char(1) DEFAULT 'N',
+  `payment_date` datetime(6) DEFAULT NULL,
+  `account_holder` varchar(50) DEFAULT NULL,
+  `account_number` varchar(40) DEFAULT NULL,
+  `account_bankname` varchar(40) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- product (단순배송상품/취소보전비/취소비용; docs/11) ★최근 추가
+ALTER TABLE `product` ADD COLUMN `simple_delivery` bit(1) NOT NULL DEFAULT b'0';
+ALTER TABLE `product` ADD COLUMN `cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0';
+ALTER TABLE `product` ADD COLUMN `cancel_amount` bigint DEFAULT 0;
 
 -- (이후 신규 필드는 여기 아래에 날짜/사유와 함께 계속 추가)
 
@@ -372,3 +395,96 @@ ALTER TABLE `education` ADD COLUMN `auto_assign` bit(1) NOT NULL DEFAULT b'0';
    · 테스트 데이터(2차용, 삭제하지 않음): sale에 manager_id=37(p5manager,센터21) 2건 INSERT
      (order_no OD-TEST2C-1/2, 이순신/강감찬). 1차는 기존 6건으로 확인.
    · 검증: 1차/2차 화면 모두 합산+개별내역 렌더, 마스킹 정상(강O찬/010-XXXX-2222/kangxxxxx@daum.net), 콘솔 에러 0.
+
+  [보완 2026-07-24] 모든 admin 상단바 소매뉴 hover 깜빡임 → 클릭 토글로 변경
+   · 증상: 소매뉴 있는 상단 메뉴에 마우스 올리면 서브메뉴가 나타났다 사라져 클릭이 어려움(hover 방식).
+   · 해결: 4개 상단바(Buzz/Center/Division/Partner)를 hover(group-hover) → **클릭 토글**로 전환.
+     - 부모 클릭 시 열림/닫힘, 서브메뉴 링크 클릭 시 이동+닫힘, 외부 클릭·라우트 변경 시 닫힘.
+     - openKey(useState) + navRef(외부클릭 mousedown 감지) + pathname 변경 시 닫힘.
+     - 화살표 ▼(닫힘)/▲(열림) 표시. 패널은 불투명 배경으로 완전 표시(사라짐 없음).
+   · 본사(master) admin은 좌측 세로 LNB(인라인 확장, hover 아님)라 변경 불필요.
+   · 파일: components/buzz/BuzzTopbar.tsx, center/CenterTopbar.tsx, division/DivisionTopbar.tsx, partner/PartnerTopbar.tsx
+   · 검증: 센터 [정산 원장] 클릭→서브 3개 유지→[관리매니저 영업 정산현황] 클릭→해당 페이지 로드, 콘솔 에러 0.
+   ※ 공유 컴포넌트(상단바) 수정 후 Turbopack dev가 중첩 라우트를 드롭(404)하는 현상 재발 →
+     admin에서 .next 삭제 후 npm run dev 재기동으로 복구(서버 빌드에선 무관). 기존과 동일 이슈.
+
+====================================================================
+[추가] docs/11.txt 작업 — 상품필드/취소보전/버즈·매니저 수당정산 (2026-07-25)
+====================================================================
+■ P1. 본사 상품등록 필드 추가 (product)
+  - simple_delivery(단순배송상품), cancel_fee_flag(취소 시 매니저 보전비 있음), cancel_amount(취소비용)
+  - Product 엔티티 + ProductController/PartnerProductController DTO·dto·apply + master ProductForm UI
+    (보전비 체크 시 취소비용 입력 노출). 검증: 상품 dto cancelFeeFlag/cancelAmount 왕복.
+■ P2. 파트너 취소 프로세스 변경 (AllowanceService.cancelOrder)
+  - 매니저 보전비 조건: [설치상품] → [매니저보전비 있음(cancel_fee_flag)], 금액 50000 → product.cancel_amount.
+  - 검증: product8(cff=1,amount=30000,install=0) 배송/설치 sale 파트너취소 → 매니저 CANCEL_FEE ₩30,000 MP (유지).
+■ P3. 본부 대시보드 정리 (division WalletSection)
+  - [기여도 요약] 카드 삭제, [산하 센터별 본부 수당 기여도 랭킹 보기] 버튼을 현황판 카드 아래로 이동.
+■ P4/P5. 버즈/매니저 [수당/정산현황] + 대시보드 수당구성
+  - 상단바 첫 메뉴 → [수당/정산현황] 드롭다운(수당현황/정산현황), 대시보드는 로고 링크(기존 유지).
+  - MP 확정수당 카드: 출금 버튼 삭제 + "확정된 MP수당은 익월 정산됩니다." 문구.
+  - 수당현황: GET /api/buzz/allowances?as=buzz|manager&gubun=&status=&month= (allowance, member_id=본인,
+    구분 BUZZ/TOPBUZZ/MANAGER, 상태 CP/MP, 대상월=fixed_month 없으면 created_at월). 검색영역 + 리스트
+    (영업일자/구분/상품명/고객명/추천(1차)버즈회원/확정일자/수당금액/상태).
+  - 정산현황: GET /api/buzz/payments?as=&month= (allowance_payment). (대상월/구분/정산금액/지급일자).
+  - 대시보드 수당구성 4항목 DB(/api/buzz/dashboard 확장: directCp/referralOrPenalty/confirmedMp/cumulativeMp)
+    + 클릭 시 수당현황 필터 링크. 매니저=관리CP/패널티(CANCEL_FEE)·보전/확정MP/누적MP.
+  - confirmOrder(구매확정) 시 allowance.fixed_date/fixed_month(YYYYMM) 기록.
+  - 매니저 [관리마켓]·[교육관리]: 단순배송상품(simple_delivery) 제외(BuzzMarketController as=manager, BuzzEducationController).
+  - 신규 FE: buzz sections/AllowancesSection·PaymentsSection + app/buzz/{allowances,payments}. BE: BuzzSettlementController.
+  - 검증: 버즈/매니저 대시보드 타일·MP문구, 수당현황(필터 링크 진입), 정산현황, 마켓/교육 simple 제외 모두 실증. 콘솔 에러 0.
+
+★ DB: product 3컬럼 + allowance.fixed_date/fixed_month + allowance_payment 는
+   db/migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영됨.
+★ 테스트 데이터(삭제 안 함): product8 cancel_fee_flag=1/cancel_amount=30000, sale OD-CANCELTEST-1(취소/반품),
+   allowance_payment 2건(buzzgn1 BUZZ 270000·202606 / p5manager MANAGER 150000·202606).
+★ 데모 계정 비번 정렬(비-시드 드리프트): buzzgn1·p5manager → sample1234!.
+
+====================================================================
+[추가] docs/12.txt 작업 — 마감/정산 워크플로우·추천tree 일괄변경 등 (2026-07-25)
+====================================================================
+■ P1. 파트너 [구매확정] 시 fixed_date/fixed_month 미기록 (AllowanceService.confirmOrder)
+  - docs/11에서 confirm 시 기록하던 것을 제거. fixed_date/fixed_month는 본사 [마감완료] 시점에만 기록.
+■ P2. 버즈/매니저 상품상세 상품설명 안내문 (ProductDetail)
+  - install_product → "본 제품은 설치 및 교육대상 상품입니다."
+  - simple_delivery → "본 제품은 배송상품이며, 설치나 교육이 진행되지 않습니다."
+  - cancel_fee_flag → "설치후 주문취소시 영업보전비 {cancel_amount}원 지급되는 상품입니다."
+  - BuzzMarketController.card()에 simpleDelivery/cancelFeeFlag/cancelAmount 추가.
+■ P3-1. 본사 추천 tree 소속센터 일괄변경 (OrgController + OrgMemberForm)
+  - POST /api/org/members/{id}/cascade-center {salesCenterId}: 대상 회원 + referral_code 그래프 하위
+    추천 체인(BFS, 사이클 방지) 전체의 sales_center_id 일괄 변경.
+  - 회원수정 화면 [하위추천회원 소속센터 전체변경] 버튼 → 본부→센터 선택 모달 → [일괄변경].
+  - 검증: buzzgn2(21)→가평군(78) 시 buzzgn2+buzzgn21+test0001(손자)+test002 4명 일괄 변경.
+■ P3-2. 본사 [수당및정산관리] 소메뉴 4종 (MasterSettlementController /api/org/settlement, nav.ts, MasterSettlement.tsx)
+  - 매출현황: MP·미지급·fixed_month=null·confirm_date=검색월 (+sale join). [마감완료]→fixed_date/fixed_month 기록.
+  - 마감내역: fixed_month=검색월·미지급 회원별 합산. [정산완료]→paid=1 + allowance_payment 생성(회원별).
+  - 정산내역: allowance_payment fixed_month=검색월·payment_flag=N (user 계좌 join). [지급완료]→flag=Y, payment_date.
+  - 지급내역: allowance_payment fixed_month=검색월·payment_flag=Y.
+  - 리스트 페이징 없이 스크롤(max-h + overflow-auto, sticky header). /master/settlement→/sales redirect.
+  - 검증: 202607 전체 흐름 실증(매출8건→마감→합산→정산완료 전표8건→지급완료→지급내역). 콘솔 에러 0.
+★ 테스트 데이터(삭제 안 함): 202607 마감/정산/지급 처리결과(allowance fixed/paid, allowance_payment 8건 지급완료),
+   buzzgn2 추천체인 4명 소속센터=78(가평군).
+
+====================================================================
+[추가] docs/13.txt 작업 — 홈페이지 상품리스트·입점신청·프로세스·소개 (2026-07-25)
+====================================================================
+1. 상품리스트 페이지 (/products) + 홈 MAIN SHOWCASE 우측 [전체상품보기] 링크
+   - BE PublicProductController 확장: GET /api/public/categories(대분류 LARGE),
+     GET /api/public/products/list?keyword=&categoryId=&sort=latest|popular&page=&size=
+     (categoryId는 하위 카테고리 재귀 포함, parent_id 그래프). ★가드레일 유지: 단가/마진/수당 미노출.
+   - FE: components/landing/ProductBrowse.tsx(검색+대분류칩+정렬(오른쪽)+카드그리드+페이징),
+     app/products/page.tsx(히어로+Header/Footer). 카드는 "로그인 후 상세 정보를 확인하세요" 가드레일.
+   - [친비즈 상품 제안하기]/하단 CTA는 지시대로 미작업.
+2. 파트너사 입점신청 (/partner-apply) — 하단 [회원]-[파트너사 입점문의] 링크
+   - 히어로+3특징 / 4단계 입점 프로세스 / 신청폼(1.기업·담당자 / 2.제안상품 + 파일첨부 + 개인정보 동의 모달).
+   - 제출 → 기존 POST /api/public/partner-inquiry (본사 [상담신청] 유입). 상세필드는 message로 결합.
+   - 파일첨부는 파일명만 message에 기록(실제 업로드는 범위 외). 마지막 [참고---] 섹션은 지시대로 미작업.
+3. 업무프로세스 (/process) — 하단 [서비스]-[업무프로세스]
+   - 히어로 + E2E 4단계(리드발굴·현장케어·이행결제검증·MP정산) + 주체별 상세 탭(버즈/매니저/파트너 각 4단계 표).
+     components/landing/ProcessTabs.tsx.
+4. 친비즈소개 (/about) — 하단 [서비스]-[친비즈소개]
+   - 히어로+3주체(버즈/매니저/파트너) + 핵심가치 3(초기비용0/전문분업화/정기수익) + 2차 관리매니저 시스템.
+   - Footer 링크: 친비즈소개→/about, 상품둘러보기→/products, 업무프로세스→/process, 파트너사입점문의→/partner-apply.
+   * GNB(헤더) 링크는 지시 범위(하단=footer)에 따라 기존 해시 스크롤 유지.
+   검증: /products(검색·카테고리 10→5·정렬·페이징·가드레일), /partner-apply·/process·/about 렌더, 콘솔 에러 0.
+   docx 목업이 수당/단가를 노출하나 프로젝트 가드레일(CLAUDE.md §11·12) 우선하여 비로그인 노출 금지 준수.

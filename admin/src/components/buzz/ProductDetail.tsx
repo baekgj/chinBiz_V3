@@ -17,6 +17,7 @@ type Detail = Record<string, unknown> & {
   buzzReward?: number; chinkuReward?: number; managerReward?: number;
   image1?: string; image2?: string; image3?: string; image4?: string; image5?: string;
   contractEndDate?: string | null;
+  installProduct?: boolean; simpleDelivery?: boolean; cancelFeeFlag?: boolean; cancelAmount?: number;
 };
 
 /** 상품 상세 — 수당내역은 역할별 표시(버즈: 버즈·추천인 / 매니저: 매니저·버즈·추천인) */
@@ -90,8 +91,16 @@ export default function ProductDetail({ id }: { id: string }) {
         <p className={`mt-3 text-xs ${theme.note}`}>※ 센터·본부·본사 등 그 외 분배 항목은 표시되지 않습니다.</p>
       </Card>
 
-      {(p.description || p.installPolicy || p.returnPolicy) && (
+      {(p.description || p.installPolicy || p.returnPolicy || p.installProduct || p.simpleDelivery || p.cancelFeeFlag) && (
         <Card title="상품 설명 및 규정">
+          {/* 상품 유형 안내 (설치/단순배송/취소보전비) */}
+          {(p.installProduct || p.simpleDelivery || p.cancelFeeFlag) && (
+            <div className={`mb-3 space-y-1 rounded-lg border p-3 ${theme.tableWrap}`}>
+              {p.installProduct && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 설치 및 교육대상 상품입니다.</p>}
+              {p.simpleDelivery && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 배송상품이며, 설치나 교육이 진행되지 않습니다.</p>}
+              {p.cancelFeeFlag && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 설치후 주문취소시 영업보전비 {(p.cancelAmount ?? 0).toLocaleString()}원 지급되는 상품입니다.</p>}
+            </div>
+          )}
           {p.description && <div className={`rte-content text-sm ${theme.cellMain}`} dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.description) }} />}
           {p.installPolicy && <p className={`mt-3 text-sm ${theme.cellSub}`}><b>설치 규정</b> · {p.installPolicy}</p>}
           {p.returnPolicy && <p className={`mt-1 text-sm ${theme.cellSub}`}><b>반품/취소 규정</b> · {p.returnPolicy}</p>}
