@@ -138,10 +138,11 @@ public class AllowanceService {
         // 1) 매니저 본인
         add(sale, Allowance.MemberType.MANAGER, manager.getUserId(), amount(p, p.getManagerReward()), manager, partnerId, manager);
 
-        // 2) 매니저 관리센터(자신의 센터)
-        User mgmtCenter = centerAdmin(manager.getManagerCenterId());
+        // 2) 매니저 관리센터 — 이 영업의 지역센터(고객 주소 센터, 매니저의 활동센터 중 하나). docs/19 다중센터
+        Long mgmtCenterId = sale.getCustomerCenterId();
+        User mgmtCenter = centerAdmin(mgmtCenterId);
         String mcId = mgmtCenter != null ? mgmtCenter.getUserId()
-                : (manager.getManagerCenterId() != null ? "MC:" + manager.getManagerCenterId() : null);
+                : (mgmtCenterId != null ? "MC:" + mgmtCenterId : null);
         add(sale, Allowance.MemberType.MANAGER_CENTER, mcId, amount(p, p.getMgmtCenterReward()), mgmtCenter, partnerId, manager);
     }
 

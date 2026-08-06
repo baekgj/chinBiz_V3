@@ -31,9 +31,14 @@ public class CenterManagerController {
     private final UserRepository userRepo;
     private final CenterCodeRepository centerCodeRepository;
     private final AllowanceRepository allowanceRepo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
+    private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo;
 
-    public CenterManagerController(UserRepository userRepo, CenterCodeRepository centerCodeRepository, AllowanceRepository allowanceRepo) {
+    public CenterManagerController(UserRepository userRepo, CenterCodeRepository centerCodeRepository, AllowanceRepository allowanceRepo,
+                                   com.chinbiz.api.alarm.AlarmService alarmService,
+                                   com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo) {
         this.userRepo = userRepo; this.centerCodeRepository = centerCodeRepository; this.allowanceRepo = allowanceRepo;
+        this.alarmService = alarmService; this.managerCenterRepo = managerCenterRepo;
     }
 
     /** 센터 대시보드 — CP/MP (BUZZ_CENTER+MANAGER_CENTER) + 버즈/매니저 분리, 이달 기준 */
@@ -67,61 +72,66 @@ public class CenterManagerController {
         return centerCodeRepository.findById(idx).map(CenterCode::displayName).orElse(null);
     }
 
-    private Map<String, Object> dto(User u) {
+    /** manager_center 행 + 신청 버즈 정보로 dto 구성 (해당 센터 기준 신청/승인일) */
+    private Map<String, Object> dto(com.chinbiz.api.buzz.ManagerCenter mc) {
+        User u = userRepo.findById(mc.getBuzzId()).orElse(null);
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", u.getId());
-        m.put("userId", u.getUserId());
-        m.put("name", u.getName());
-        m.put("phone", u.getPhone());
-        m.put("email", u.getEmail());
-        m.put("managerCenterId", u.getManagerCenterId());
-        m.put("managerCenterName", centerName(u.getManagerCenterId()));
-        m.put("managerStatus", u.getManagerStatus());
-        m.put("managerSdate", u.getManagerSdate());   // 신청일
-        m.put("managerEdate", u.getManagerEdate());   // 승인일
-        m.put("managerCode", u.getManagerCode());
+        m.put("id", mc.getBuzzId());
+        m.put("userId", u == null ? null : u.getUserId());
+        m.put("name", u == null ? null : u.getName());
+        m.put("phone", u == null ? null : u.getPhone());
+        m.put("email", u == null ? null : u.getEmail());
+        m.put("managerCenterId", mc.getCenterId());
+        m.put("managerCenterName", centerName(mc.getCenterId()));
+        m.put("managerStatus", mc.getStatus());
+        m.put("managerSdate", mc.getApplyDate() == null ? null : mc.getApplyDate().toString());     // 신청일
+        m.put("managerEdate", mc.getApproveDate() == null ? null : mc.getApproveDate().toString()); // 승인일
         return m;
     }
 
-    /** 매니저 신청 목록 — 내 센터(sales_center_id)로 신청(status=I)한 BUZZ */
+    /** 매니저 신청 목록 — 내 센터로 신청(status=I)한 manager_center 행 */
     @GetMapping("/manager-applications")
     public ResponseEntity<?> applications(Authentication auth) {
         User me = me(auth);
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         Long myCenter = me.getSalesCenterId();
         List<Map<String, Object>> list = myCenter == null ? List.of()
-                : userRepo.findByRole(Role.BUZZ).stream()
-                    .filter(u -> myCenter.equals(u.getManagerCenterId()) && "I".equals(u.getManagerStatus()))
-                    .map(this::dto).toList();
+                : managerCenterRepo.findByCenterIdAndStatus(myCenter, "I").stream().map(this::dto).toList();
         return ResponseEntity.ok(Map.of("content", list));
     }
 
-    /** 매니저 승인 — role=MANAGER, status=Y, manager_edate=오늘 */
+    /** 매니저 승인 — 해당 (버즈,내센터) manager_center 행 승인(Y) + user.role=MANAGER (denorm 동기화) */
     @PostMapping("/manager-applications/{id}/approve")
     public ResponseEntity<?> approve(Authentication auth, @PathVariable Long id) {
         User me = me(auth);
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         Long myCenter = me.getSalesCenterId();
-        User u = userRepo.findById(id).orElse(null);
-        if (u == null || myCenter == null || !myCenter.equals(u.getManagerCenterId()) || !"I".equals(u.getManagerStatus()))
+        com.chinbiz.api.buzz.ManagerCenter mc = myCenter == null ? null
+                : managerCenterRepo.findByBuzzIdAndCenterId(id, myCenter).orElse(null);
+        if (mc == null || !"I".equals(mc.getStatus()))
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "승인 대상 신청 건이 아닙니다."));
+        User u = userRepo.findById(id).orElse(null);
+        if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "회원을 찾을 수 없습니다."));
+        LocalDate today = LocalDate.now();
+        mc.setStatus("Y");
+        mc.setApproveDate(today);
+        managerCenterRepo.save(mc);
+        // 역할 승급 (매니저 신청/승인의 실제 상태는 manager_center 가 소스, docs/19)
         u.setRole(Role.MANAGER);
-        u.setManagerStatus("Y");
-        u.setManagerEdate(LocalDate.now().toString());
         userRepo.save(u);
+        // [매니저승인] 알람 (매니저 본인) — docs/16 · 승인센터 기준
+        try { alarmService.fireManagerApprove(u, myCenter); } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", "매니저로 승인되었습니다.", "userId", u.getUserId()));
     }
 
-    /** 승인된 매니저 목록 — 내 센터 소속(MANAGER, status=Y) */
+    /** 승인된 매니저 목록 — 내 센터로 승인(status=Y)된 manager_center 행 */
     @GetMapping("/managers")
     public ResponseEntity<?> managers(Authentication auth) {
         User me = me(auth);
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         Long myCenter = me.getSalesCenterId();
         List<Map<String, Object>> list = myCenter == null ? List.of()
-                : userRepo.findByRole(Role.MANAGER).stream()
-                    .filter(u -> myCenter.equals(u.getManagerCenterId()) && "Y".equals(u.getManagerStatus()))
-                    .map(this::dto).toList();
+                : managerCenterRepo.findByCenterIdAndStatus(myCenter, "Y").stream().map(this::dto).toList();
         return ResponseEntity.ok(Map.of("content", list));
     }
 }

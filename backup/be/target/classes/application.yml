@@ -1,0 +1,48 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: chinbiz-api
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  datasource:
+    # 로컬 개발 기본값 — 로컬 MySQL localhost, 계정 chin4_test/1234.
+    # (.env DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD 로 override 가능. 서버 배포 시 DB_HOST=175.125.94.198, DB_USER=chin4)
+    # nullCatalogMeansCurrent=true : ddl-auto 가 현재 DB 스키마만 인식하도록(타 스키마 테이블 오인 방지)
+    url: jdbc:mysql://${DB_HOST:175.125.94.198}:${DB_PORT:3306}/${DB_NAME:chin4}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&nullCatalogMeansCurrent=true
+    username: ${DB_USER:chin4}
+    password: "${DB_PASSWORD:1234}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# JWT 설정 (.env JWT_SECRET / JWT_EXPIRATION_MS 대응)
+jwt:
+  secret: "change-this-to-a-very-long-random-secret-key-at-least-32-bytes-0123456789"
+  expiration-ms: 86400000
+
+# CORS 허용 출처 (host 뒤 :* 와일드카드 — .env CORS_ORIGINS 대응)
+#  - 로컬(localhost/127.0.0.1) + 서버 IP(175.125.94.198) + 운영 도메인(chinbiz.kr, 서브도메인 포함)
+#  - http/https, 포트 있음(:*)/없음(80·443) 모두 허용. 도메인 추가 시 CORS_ORIGINS 환경변수로 override 가능.
+app:
+  cors:
+    allowed-origin-patterns: ${CORS_ORIGINS:http://localhost,http://localhost:*,http://127.0.0.1,http://127.0.0.1:*,http://175.125.94.198,http://175.125.94.198:*,http://chinbiz.kr,https://chinbiz.kr,http://chinbiz.kr:*,https://chinbiz.kr:*,http://*.chinbiz.kr,https://*.chinbiz.kr,http://*.chinbiz.kr:*,https://*.chinbiz.kr:*}
+  upload-dir: uploads
+  # 웹푸시(Web Push · VAPID) — Firebase 불필요. 키쌍은 최초 1회 생성 후 고정(시크릿).
+  #  생성: BE 실행 후 `mvnw.cmd -q exec:java` 대신, docs/제작note.txt의 VAPID 키 생성 절차 참고.
+  #  .env(또는 환경변수) PUSH_VAPID_PUBLIC_KEY / PUSH_VAPID_PRIVATE_KEY 로 주입. 미설정 시 푸시는 자동 비활성화.
+  push:
+    vapid:
+      # 기본값 = 개발용 생성 키(jwt.secret 과 동일하게 커밋). 운영 배포 시 PUSH_VAPID_* 환경변수로 override 권장.
+      public-key: ${PUSH_VAPID_PUBLIC_KEY:BDCIRs3qFazaY3rAAI8I_ah3npNV9ZxReu60vGH41lES4BdCmWBVaUv-Ixw8Wj5hTa1Zr5LvY-YKq1tktYbpxXE}
+      private-key: ${PUSH_VAPID_PRIVATE_KEY:tWXkZ9h7QMhGieICfJVgpmFADbcFUo2EXcgEOhcCs3E}
+      subject: ${PUSH_VAPID_SUBJECT:mailto:admin@chinbiz.kr}

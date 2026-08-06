@@ -1,0 +1,45 @@
+# =============================================================================
+#  친비즈(ChinBiz) V3 · Caddy 설정 (Let's Encrypt 자동 발급·자동 갱신)
+#  구조: Caddy(80/443, SSL 자동) → home 8001 / admin 3100 / BE 9001
+#    - https://chinbiz.kr, www.chinbiz.kr → 홈(Next.js 8001)
+#    - https://admin.chinbiz.kr           → 어드민(Next.js 3100)
+#    - 각 도메인 /api, /uploads            → BE(Spring Boot 9001)  (same-origin → CORS 불필요)
+#  적용:  /etc/caddy/Caddyfile 로 저장 → sudo systemctl reload caddy
+#  ★ tls 지시어를 쓰지 않음 → Caddy 가 도메인별로 인증서를 자동 발급하고 만료 전 자동 갱신.
+#  전제: DNS A레코드(3개)가 서버로 향함 + 80/443 오픈 + 내부앱은 로컬 포트로 구동(home 은 80 아닌 8001).
+# =============================================================================
+
+# 전역 옵션 — ACME 계정 이메일(만료 경고 수신용). 없어도 발급은 됨.
+{
+	email admin@chinbiz.kr
+	# 발급 테스트 시엔 아래 staging 을 켜서 rate limit 회피(운영 전엔 반드시 주석 처리):
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# ── 홈: chinbiz.kr / www ─────────────────────────────────────────────────────
+chinbiz.kr, www.chinbiz.kr {
+	encode gzip
+	handle /api/* {
+		reverse_proxy 127.0.0.1:9001
+	}
+	handle /uploads/* {
+		reverse_proxy 127.0.0.1:9001
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8001
+	}
+}
+
+# ── 어드민: admin.chinbiz.kr ────────────────────────────────────────────────
+admin.chinbiz.kr {
+	encode gzip
+	handle /api/* {
+		reverse_proxy 127.0.0.1:9001
+	}
+	handle /uploads/* {
+		reverse_proxy 127.0.0.1:9001
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3100
+	}
+}

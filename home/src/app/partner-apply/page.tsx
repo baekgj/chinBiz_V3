@@ -17,7 +17,8 @@ const STEPS = [
   { step: "Step 4", title: "상품 런칭 & 영업", items: ["친비즈 App 상품 등록", "전국 버즈/매니저 프로모션 및 영업 시작"] },
 ];
 
-export default function PartnerApplyPage() {
+export default async function PartnerApplyPage({ searchParams }: { searchParams: Promise<{ stage?: string }> }) {
+  const { stage } = await searchParams;
   return (
     <>
       <Header />
@@ -69,7 +70,7 @@ export default function PartnerApplyPage() {
             <h2 className="text-2xl font-black text-ink">입점 제안 신청서</h2>
             <p className="mt-2 text-sm text-muted">아래 정보를 입력해 주시면 담당 MD가 검토 후 연락드립니다.</p>
           </div>
-          <PartnerApply />
+          <PartnerApply initialStage={stage} />
         </div>
       </section>
 

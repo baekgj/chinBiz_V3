@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @IdClass(AllowanceId.class)
 public class Allowance {
 
-    /** 유형 */
-    public enum Type { ORDER, CANCEL, CANCEL_FEE }
+    /** 유형 (JOIN=가입 추천마일리지) */
+    public enum Type { ORDER, CANCEL, CANCEL_FEE, JOIN }
     /** 회원구분 (DIVISION=본부 추가) */
     public enum MemberType { BUZZ, TOPBUZZ, MANAGER, BUZZ_CENTER, MANAGER_CENTER, DIVISION, HQ, MASTER }
     /** 수당상태 */

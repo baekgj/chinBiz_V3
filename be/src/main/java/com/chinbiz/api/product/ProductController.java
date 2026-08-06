@@ -21,8 +21,11 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductRepository repo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
-    public ProductController(ProductRepository repo) { this.repo = repo; }
+    public ProductController(ProductRepository repo, com.chinbiz.api.alarm.AlarmService alarmService) {
+        this.repo = repo; this.alarmService = alarmService;
+    }
 
     public record ProductRequest(
             String name, String rewardType, Long salePrice, Long totalAllowance,
@@ -33,7 +36,8 @@ public class ProductController {
             String description, String installPolicy, String returnPolicy, Boolean onSale,
             String contractEndDate, Boolean installProduct,
             Boolean simpleDelivery, Boolean cancelFeeFlag, Long cancelAmount,
-            Boolean popular, Boolean recommended
+            Boolean popular, Boolean recommended,
+            String descGuest, String descBuzz, String descManager, String descPartner, String descAdmin
     ) {}
 
     private Map<String, Object> dto(Product p) {
@@ -55,6 +59,11 @@ public class ProductController {
         m.put("divisionReward", p.getDivisionReward());
         m.put("hqReward", p.getHqReward());
         m.put("description", p.getDescription());
+        m.put("descGuest", p.getDescGuest());
+        m.put("descBuzz", p.getDescBuzz());
+        m.put("descManager", p.getDescManager());
+        m.put("descPartner", p.getDescPartner());
+        m.put("descAdmin", p.getDescAdmin());
         m.put("installPolicy", p.getInstallPolicy());
         m.put("returnPolicy", p.getReturnPolicy());
         m.put("onSale", p.isOnSale());
@@ -108,6 +117,8 @@ public class ProductController {
         Product p = new Product();
         apply(p, req);
         repo.save(p);
+        // [상품등록] 알람 (전체 버즈/매니저/센터) — docs/16
+        try { alarmService.fireProductRegister(p); } catch (Exception ignore) {}
         return ResponseEntity.status(HttpStatus.CREATED).body(dto(p));
     }
 
@@ -139,6 +150,11 @@ public class ProductController {
         p.setDivisionReward(n(req.divisionReward()));
         p.setHqReward(n(req.hqReward()));
         p.setDescription(req.description());
+        p.setDescGuest(req.descGuest());
+        p.setDescBuzz(req.descBuzz());
+        p.setDescManager(req.descManager());
+        p.setDescPartner(req.descPartner());
+        p.setDescAdmin(req.descAdmin());
         p.setInstallPolicy(req.installPolicy());
         p.setReturnPolicy(req.returnPolicy());
         p.setOnSale(req.onSale() == null ? true : req.onSale());

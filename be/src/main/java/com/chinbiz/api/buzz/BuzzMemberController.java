@@ -32,12 +32,15 @@ public class BuzzMemberController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.chinbiz.api.org.CenterMatcher centerMatcher;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     public BuzzMemberController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                                com.chinbiz.api.org.CenterMatcher centerMatcher) {
+                                com.chinbiz.api.org.CenterMatcher centerMatcher,
+                                com.chinbiz.api.alarm.AlarmService alarmService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.centerMatcher = centerMatcher;
+        this.alarmService = alarmService;
     }
 
     private String meId(Authentication auth) { return auth == null ? null : auth.getName(); }
@@ -135,6 +138,8 @@ public class BuzzMemberController {
         if (scid == null) scid = centerMatcher.matchCenterIdx(u.getAddress());
         u.setSalesCenterId(scid);
         userRepository.save(u);
+        // [회원추천] 알람 (센터/본부/본사 + 추천인) — docs/16
+        try { alarmService.fireMemberReferral(u); } catch (Exception ignore) {}
         return ResponseEntity.status(HttpStatus.CREATED).body(dto(u));
     }
 

@@ -21,8 +21,8 @@ const COLS = [
   {
     title: "법적 고지",
     links: [
-      { label: "이용약관", href: "#" },
-      { label: "개인정보처리방침", href: "#" },
+      { label: "이용약관", href: "/terms/total" },
+      { label: "개인정보처리방침", href: "/terms/privacy" },
     ],
   },
 ];

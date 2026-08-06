@@ -43,12 +43,25 @@ export default function NetworkSection() {
   const reset = () => { setKw(""); setFrom(""); setTo(""); setQ({ kw: "", from: "", to: "" }); };
 
   const inputCls = `rounded-lg border px-3 py-2 text-sm outline-none placeholder:text-slate-400 ${theme.input}`;
-  // 내 추천 링크: https://chinbiz.com/signup?ref=(로그인 회원id)
+  // 내 추천 링크: https://chinbiz.kr/signup?ref=(로그인 회원id)
   const [myId, setMyId] = useState("");
   useEffect(() => { apiGet<{ userId: string }>("/api/user/me").then((r) => { if (r.data?.userId) setMyId(r.data.userId); }); }, []);
-  const refUrl = `https://chinbiz.com/signup?ref=${myId || "..."}`;
+  const refUrl = `https://chinbiz.kr/signup?ref=${myId || "..."}`;
   const [copied, setCopied] = useState(false);
-  const copy = async () => { try { await navigator.clipboard.writeText(refUrl); } catch { /* noop */ } setCopied(true); setTimeout(() => setCopied(false), 1500); };
+  const copy = async () => {
+    // HTTPS(보안 컨텍스트)에선 Clipboard API, 아니면(HTTP) execCommand 폴백 — 전체 URL이 항상 복사되도록
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(refUrl);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = refUrl; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand("copy"); document.body.removeChild(ta);
+      }
+    } catch { /* noop */ }
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <div className="space-y-5">

@@ -46,6 +46,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     mgmtCenterReward: String(g("mgmtCenterReward", 0)), divisionReward: String(g("divisionReward", 0)),
     hqReward: String(g("hqReward", 0)),
     description: String(g("description")), installPolicy: String(g("installPolicy")), returnPolicy: String(g("returnPolicy")),
+    descGuest: String(g("descGuest")), descBuzz: String(g("descBuzz")), descManager: String(g("descManager")),
+    descPartner: String(g("descPartner")), descAdmin: String(g("descAdmin")),
     contractEndDate: initial?.contractEndDate ? String(initial.contractEndDate) : "",
   });
   const [onSale, setOnSale] = useState<boolean>(initial?.onSale != null ? Boolean(initial.onSale) : true);
@@ -149,6 +151,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       salesCenterReward: num(f.salesCenterReward), mgmtCenterReward: num(f.mgmtCenterReward),
       divisionReward: num(f.divisionReward), hqReward: num(f.hqReward),
       description: f.description, installPolicy: f.installPolicy, returnPolicy: f.returnPolicy, onSale,
+      descGuest: f.descGuest, descBuzz: f.descBuzz, descManager: f.descManager, descPartner: f.descPartner, descAdmin: f.descAdmin,
       contractEndDate: f.contractEndDate || null, installProduct, simpleDelivery,
       cancelFeeFlag, cancelAmount: cancelFeeFlag ? Number(cancelAmount || 0) : 0,
       popular, recommended,
@@ -342,8 +345,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
         <h3 className="mb-3 text-sm font-black text-white">상품 설명 및 규정</h3>
         <div className="space-y-4">
           <div className="block">
-            <span className="text-xs font-semibold text-slate-400">상품 설명</span>
-            <div className="mt-1"><RichTextEditor theme="dark" value={f.description} onChange={set("description")} placeholder="상품 상세 설명 (서식·이미지 삽입·크기조절 지원)" /></div>
+            <span className="text-xs font-semibold text-slate-400">상품 설명 (대상별 분리 등록)</span>
+            <DescTabs f={f} set={set} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
@@ -367,5 +370,34 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
         </button>
       </div>
     </form>
+  );
+}
+
+const DESC_TABS: { key: string; label: string; note: string }[] = [
+  { key: "descGuest", label: "비로그인 전용", note: "홈(비로그인) 노출용 — 차후 개발 시 적용 예정" },
+  { key: "descBuzz", label: "버즈회원 전용", note: "버즈admin [상품마켓] [상세보기]에 노출" },
+  { key: "descManager", label: "매니저회원 전용", note: "매니저admin [관리마켓] [상세보기]에 노출" },
+  { key: "descPartner", label: "파트너 전용", note: "파트너admin [상품관리] [상품수정]에 노출" },
+  { key: "descAdmin", label: "관리자 전용", note: "본사 관리자 열람용" },
+];
+
+function DescTabs({ f, set }: { f: Record<string, string>; set: (k: string) => (v: string) => void }) {
+  const [tab, setTab] = useState("descBuzz");
+  const cur = DESC_TABS.find((t) => t.key === tab)!;
+  return (
+    <div className="mt-1">
+      <div className="flex flex-wrap gap-1 rounded-lg bg-navy-950 p-1 ring-1 ring-line">
+        {DESC_TABS.map((t) => (
+          <button key={t.key} type="button" onClick={() => setTab(t.key)}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${tab === t.key ? "bg-brand-600 text-white" : "text-slate-400 hover:bg-navy-800 hover:text-slate-200"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-slate-500">{cur.note}</p>
+      <div className="mt-1">
+        <RichTextEditor key={tab} theme="dark" value={f[tab] ?? ""} onChange={set(tab)} placeholder={`${cur.label} 상품 설명`} />
+      </div>
+    </div>
   );
 }

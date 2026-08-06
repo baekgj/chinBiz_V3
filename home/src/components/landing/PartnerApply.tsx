@@ -2,8 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import TermModal from "@/components/site/TermModal";
 
 type Cat = { id: number; name: string };
+
+const STAGE_LABELS: Record<string, string> = {
+  research: "아직 리서치 단계입니다",
+  planning: "구체적인 계획을 세우고 있습니다",
+  ready: "즉시 시작할 수 있습니다",
+  active: "이미 영업 활동 중입니다",
+};
 
 const inputCls = "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-forest-400 placeholder:text-muted";
 const labelCls = "text-xs font-semibold text-ink-soft";
@@ -17,7 +25,8 @@ function Field({ label, req, children }: { label: string; req?: boolean; childre
   );
 }
 
-export default function PartnerApply() {
+export default function PartnerApply({ initialStage }: { initialStage?: string }) {
+  const stageLabel = initialStage ? STAGE_LABELS[initialStage] : undefined;
   const [cats, setCats] = useState<Cat[]>([]);
   const [f, setF] = useState({
     companyName: "", bizNo: "", ceoName: "", contactName: "", phone: "", email: "", website: "",
@@ -46,6 +55,7 @@ export default function PartnerApply() {
 
     setSending(true);
     const message =
+      (stageLabel ? `[현재 단계] ${stageLabel}\n` : "") +
       `[제안상품/서비스] ${f.productName}\n` +
       `[제안 카테고리] ${f.category}\n` +
       `[주요 타겟 고객] ${f.target}\n` +
@@ -73,6 +83,14 @@ export default function PartnerApply() {
 
   return (
     <div className="space-y-6">
+      {/* 홈에서 선택한 현재 단계 표시 */}
+      {stageLabel && (
+        <div className="flex items-center gap-2 rounded-2xl border border-forest-200 bg-forest-50 px-5 py-3.5 text-sm">
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-forest-700 text-xs font-black text-white">✓</span>
+          <span className="text-ink-soft">선택하신 단계: <b className="text-forest-700">{stageLabel}</b></span>
+        </div>
+      )}
+
       {/* 1. 기업 및 담당자 기본 정보 */}
       <section className="rounded-2xl border border-line bg-white p-6 shadow-sm">
         <h3 className="mb-4 flex items-center gap-2 text-base font-black text-ink"><span className="text-gold-500">🏢</span> 1. 기업 및 담당자 기본 정보</h3>
@@ -129,30 +147,14 @@ export default function PartnerApply() {
         </button>
       </div>
 
-      {/* 개인정보 동의서 모달 */}
+      {/* 개인정보 수집·이용 동의서 모달 (본사 [약관설정] PRIVACY_CONSENT) */}
       {showAgree && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setShowAgree(false)}>
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-black text-ink">개인정보 수집·이용 동의서 (입점 제안용)</h3>
-                <p className="mt-1 text-xs text-muted">친비즈 파트너 입점 제안 접수를 위한 개인정보 수집 및 이용 안내</p>
-              </div>
-              <button onClick={() => setShowAgree(false)} className="text-muted hover:text-ink">✕</button>
-            </div>
-            <div className="mt-4 space-y-3 text-sm">
-              {[
-                ["수집 목적", "파트너 입점 제안 검토, 상담 연락, 서비스 제공을 위한 계약 체결 및 파트너 관리"],
-                ["수집 항목", "회사명, 사업자등록번호, 대표자명, 담당자 성명/직급/연락처/이메일, 제안 상품 정보, 첨부 제안서 내 개인정보"],
-                ["보유 및 이용 기간", "입점 제안 검토 완료 후 1년 간 보관 후 파기 (단, 계약 체결 시 계약 종료 시까지 보관)"],
-                ["동의 거부 권리", "귀하는 동의를 거부할 권리가 있으나, 필수 항목 미동의 시 입점 제안 접수 및 상담이 제한될 수 있습니다."],
-              ].map(([t, d]) => (
-                <div key={t}><p className="font-bold text-ink">{t}</p><p className="mt-0.5 text-ink-soft">{d}</p></div>
-              ))}
-            </div>
-            <button onClick={() => { setAgree(true); setShowAgree(false); }} className="mt-5 w-full rounded-xl bg-forest-800 px-6 py-3 text-sm font-bold text-white hover:bg-forest-700">확인 (동의)</button>
-          </div>
-        </div>
+        <TermModal
+          code="PRIVACY_CONSENT"
+          title="개인정보 수집·이용 동의"
+          onClose={() => setShowAgree(false)}
+          onAgree={() => { setAgree(true); setShowAgree(false); }}
+        />
       )}
     </div>
   );

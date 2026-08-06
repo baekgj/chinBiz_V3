@@ -57,6 +57,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/public/partner-inquiry").permitAll()
                         // 업로드된 이미지 정적 서빙은 공개 (img 태그가 토큰 못 보냄)
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        // 웹푸시 VAPID 공개키는 공개(구독 전 클라이언트가 조회), 나머지 push는 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/api/push/vapid-public-key").permitAll()
+                        .requestMatchers("/api/push/**").authenticated()
                         // 로그인 사용자 본인 정보(내 정보 수정) — user 테이블 역할 공용
                         .requestMatchers("/api/user/**").authenticated()
                         // 파트너사 본인(자기 정보·본인 상품) 전용

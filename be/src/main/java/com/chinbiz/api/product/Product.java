@@ -52,7 +52,13 @@ public class Product {
     @Column(name = "division_reward") private Long divisionReward = 0L;
     @Column(name = "hq_reward") private Long hqReward = 0L;
 
-    @Column(columnDefinition = "TEXT") private String description;
+    @Column(columnDefinition = "TEXT") private String description;   // 레거시(하위호환 폴백)
+    // 대상별 상품설명 (docs/18): 비로그인/버즈/매니저/파트너/관리자
+    @Column(name = "desc_guest", columnDefinition = "LONGTEXT") private String descGuest;
+    @Column(name = "desc_buzz", columnDefinition = "LONGTEXT") private String descBuzz;
+    @Column(name = "desc_manager", columnDefinition = "LONGTEXT") private String descManager;
+    @Column(name = "desc_partner", columnDefinition = "LONGTEXT") private String descPartner;
+    @Column(name = "desc_admin", columnDefinition = "LONGTEXT") private String descAdmin;
     @Column(name = "install_policy", columnDefinition = "TEXT") private String installPolicy;
     @Column(name = "return_policy", columnDefinition = "TEXT") private String returnPolicy;
 
@@ -109,6 +115,11 @@ public class Product {
     public Long getDivisionReward() { return divisionReward; } public void setDivisionReward(Long v) { divisionReward = v; }
     public Long getHqReward() { return hqReward; } public void setHqReward(Long v) { hqReward = v; }
     public String getDescription() { return description; } public void setDescription(String v) { description = v; }
+    public String getDescGuest() { return descGuest; } public void setDescGuest(String v) { descGuest = v; }
+    public String getDescBuzz() { return descBuzz; } public void setDescBuzz(String v) { descBuzz = v; }
+    public String getDescManager() { return descManager; } public void setDescManager(String v) { descManager = v; }
+    public String getDescPartner() { return descPartner; } public void setDescPartner(String v) { descPartner = v; }
+    public String getDescAdmin() { return descAdmin; } public void setDescAdmin(String v) { descAdmin = v; }
     public String getInstallPolicy() { return installPolicy; } public void setInstallPolicy(String v) { installPolicy = v; }
     public String getReturnPolicy() { return returnPolicy; } public void setReturnPolicy(String v) { returnPolicy = v; }
     public boolean isOnSale() { return onSale; } public void setOnSale(boolean v) { onSale = v; }

@@ -165,9 +165,10 @@ public class BuzzMarketController {
         return ResponseEntity.ok(Map.of("autoAssign", autoAssign, "message", autoAssign ? "자동배정 동의로 저장되었습니다." : "자동배정 미동의로 저장되었습니다."));
     }
 
-    /** 상품 상세 (수당 전 항목 반환 — 역할별 표시 필터는 FE 담당) */
+    /** 상품 상세 (수당 전 항목 반환 — 역할별 표시 필터는 FE 담당).
+     *  as=buzz(기본) → 버즈용 상품설명, as=manager → 매니저용 상품설명 (docs/18, 미등록 시 레거시 description 폴백) */
     @GetMapping("/products/{id}")
-    public ResponseEntity<?> detail(@PathVariable Long id) {
+    public ResponseEntity<?> detail(@PathVariable Long id, @RequestParam(required = false, defaultValue = "buzz") String as) {
         Product p = productRepo.findById(id).orElse(null);
         if (p == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "상품을 찾을 수 없습니다."));
         Map<Long, String> pn = partnerNames(), cn = categoryNames();
@@ -181,7 +182,9 @@ public class BuzzMarketController {
         m.put("mgmtCenterReward", p.getMgmtCenterReward());
         m.put("divisionReward", p.getDivisionReward());
         m.put("hqReward", p.getHqReward());
-        m.put("description", p.getDescription());
+        String roleDesc = "manager".equals(as) ? p.getDescManager() : p.getDescBuzz();
+        if (roleDesc == null || roleDesc.isBlank()) roleDesc = p.getDescription(); // 레거시 폴백
+        m.put("description", roleDesc);
         m.put("installPolicy", p.getInstallPolicy());
         m.put("returnPolicy", p.getReturnPolicy());
         return ResponseEntity.ok(m);

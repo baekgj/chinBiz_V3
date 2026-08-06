@@ -17,11 +17,21 @@ const TOOLS: Tool[] = [
   { cmd: "italic", label: "I", title: "기울임" },
   { cmd: "underline", label: "U", title: "밑줄" },
   { cmd: "strikeThrough", label: "S", title: "취소선" },
+  { cmd: "__divider", label: "", title: "" },
+  { cmd: "fontSize", arg: "2", label: "작게", title: "작은 글씨" },
+  { cmd: "fontSize", arg: "4", label: "보통", title: "보통 글씨" },
+  { cmd: "fontSize", arg: "6", label: "크게", title: "큰 글씨" },
   { cmd: "formatBlock", arg: "h2", label: "H2", title: "제목2" },
   { cmd: "formatBlock", arg: "h3", label: "H3", title: "제목3" },
   { cmd: "formatBlock", arg: "p", label: "본문", title: "본문" },
+  { cmd: "formatBlock", arg: "blockquote", label: "❝ 인용", title: "인용구" },
+  { cmd: "__divider", label: "", title: "" },
   { cmd: "insertUnorderedList", label: "• 목록", title: "글머리 목록" },
   { cmd: "insertOrderedList", label: "1. 목록", title: "번호 목록" },
+  { cmd: "justifyLeft", label: "⯇", title: "왼쪽 정렬" },
+  { cmd: "justifyCenter", label: "≡", title: "가운데 정렬" },
+  { cmd: "justifyRight", label: "⯈", title: "오른쪽 정렬" },
+  { cmd: "insertHorizontalRule", label: "─", title: "구분선" },
 ];
 const PRESETS = [{ label: "25%", w: "25%" }, { label: "50%", w: "50%" }, { label: "75%", w: "75%" }, { label: "원본", w: "100%" }];
 type Box = { l: number; t: number; w: number; h: number; pct: number };
@@ -41,6 +51,7 @@ export default function RichTextEditor({ value, onChange, theme = "light", place
   const [empty, setEmpty] = useState(!value || value === "<br>");
   const [uploading, setUploading] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
+  const [htmlMode, setHtmlMode] = useState(false); // HTML 코드 직접 편집 모드
 
   const isEmpty = (html: string) => html.replace(/<br\s*\/?>/gi, "").replace(/<img[^>]*>/gi, "IMG").replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, "").trim() === "";
 
@@ -68,6 +79,12 @@ export default function RichTextEditor({ value, onChange, theme = "light", place
   useEffect(() => {
     if (ref.current && !inited.current) { ref.current.innerHTML = value || ""; inited.current = true; setEmpty(isEmpty(ref.current.innerHTML)); }
   }, [value]);
+
+  // HTML 코드 모드 → 서식 모드 복귀 시, 편집된 최신 HTML을 에디터에 재주입
+  useEffect(() => {
+    if (!htmlMode && ref.current) { ref.current.innerHTML = value || ""; setEmpty(isEmpty(ref.current.innerHTML)); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [htmlMode]);
 
   // 이미지 선택/해제는 네이티브 리스너로 (React 합성이벤트 간섭 회피)
   useEffect(() => {
@@ -98,6 +115,7 @@ export default function RichTextEditor({ value, onChange, theme = "light", place
   const exec = (t: Tool) => { if (!armed.current) return; armed.current = false; selectImage(null); ref.current?.focus(); document.execCommand(t.cmd, false, t.arg); sync(); };
   const addLink = () => { const url = window.prompt("링크 URL", "https://"); if (!url) return; ref.current?.focus(); document.execCommand("createLink", false, url); sync(); };
   const clearFmt = () => { ref.current?.focus(); document.execCommand("removeFormat", false); document.execCommand("formatBlock", false, "p"); sync(); };
+  const applyColor = (cmd: string, val: string) => { restoreSel(); document.execCommand(cmd, false, val); sync(); };
 
   async function onPickImage(list: FileList | null) {
     const file = list?.[0];
@@ -129,23 +147,53 @@ export default function RichTextEditor({ value, onChange, theme = "light", place
   const divider = dark ? "mx-1 h-4 w-px bg-line" : "mx-1 h-4 w-px bg-slate-300";
   const sizeBar = dark ? "bg-navy-800 ring-1 ring-line shadow-lg" : "bg-white ring-1 ring-slate-300 shadow-lg";
   const presetBtn = dark ? "rounded px-2 py-0.5 text-[11px] font-bold text-slate-200 hover:bg-cyan-500/20" : "rounded px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:bg-sky-100";
+  const codeBtnOn = dark ? "bg-brand-600 text-white" : "bg-sky-600 text-white";
+  const codeBtn = htmlMode ? `rounded px-2 py-1 text-xs font-bold ${codeBtnOn}` : btn;
+  const htmlArea = dark ? "bg-navy-950 text-slate-200" : "bg-white text-slate-900";
 
   return (
     <div className={wrap}>
       <div className={bar}>
-        {TOOLS.map((t, i) => (
-          <button key={i} type="button" title={t.title} onMouseDown={(e) => { e.preventDefault(); armed.current = true; }} onClick={() => exec(t)} className={btn}>{t.label}</button>
-        ))}
-        <button type="button" title="링크" onMouseDown={(e) => e.preventDefault()} onClick={addLink} className={btn}>🔗</button>
-        <button type="button" title="서식 지우기" onMouseDown={(e) => e.preventDefault()} onClick={clearFmt} className={btn}>✕서식</button>
-        <span className={divider} />
-        <button type="button" title="이미지 삽입" disabled={uploading}
-          onMouseDown={(e) => { e.preventDefault(); saveSel(); }} onClick={() => imgFileRef.current?.click()} className={imgBtn}>
-          {uploading ? "업로드 중…" : "🖼 이미지"}
+        {!htmlMode && (
+          <>
+            {TOOLS.map((t, i) => (
+              t.cmd === "__divider"
+                ? <span key={i} className={divider} />
+                : <button key={i} type="button" title={t.title} onMouseDown={(e) => { e.preventDefault(); armed.current = true; }} onClick={() => exec(t)} className={btn}>{t.label}</button>
+            ))}
+            <span className={divider} />
+            {/* 글자색 / 배경색 */}
+            <label title="글자색" onMouseDown={(e) => { e.preventDefault(); saveSel(); }} className={`${btn} flex cursor-pointer items-center gap-1`}>
+              <span className="font-black">A</span>
+              <input type="color" defaultValue="#e11d48" onChange={(e) => applyColor("foreColor", e.target.value)} className="h-4 w-4 cursor-pointer border-0 bg-transparent p-0" />
+            </label>
+            <label title="배경색(형광펜)" onMouseDown={(e) => { e.preventDefault(); saveSel(); }} className={`${btn} flex cursor-pointer items-center gap-1`}>
+              <span>🖍</span>
+              <input type="color" defaultValue="#fde047" onChange={(e) => applyColor("hiliteColor", e.target.value)} className="h-4 w-4 cursor-pointer border-0 bg-transparent p-0" />
+            </label>
+            <span className={divider} />
+            <button type="button" title="링크" onMouseDown={(e) => e.preventDefault()} onClick={addLink} className={btn}>🔗</button>
+            <button type="button" title="서식 지우기" onMouseDown={(e) => e.preventDefault()} onClick={clearFmt} className={btn}>✕서식</button>
+            <span className={divider} />
+            <button type="button" title="이미지 삽입" disabled={uploading}
+              onMouseDown={(e) => { e.preventDefault(); saveSel(); }} onClick={() => imgFileRef.current?.click()} className={imgBtn}>
+              {uploading ? "업로드 중…" : "🖼 이미지"}
+            </button>
+            <input ref={imgFileRef} type="file" accept="image/*" hidden onChange={(e) => { onPickImage(e.target.files); e.currentTarget.value = ""; }} />
+            <span className={divider} />
+          </>
+        )}
+        <button type="button" title={htmlMode ? "서식 편집으로 전환" : "HTML 코드 직접 편집"}
+          onMouseDown={(e) => e.preventDefault()} onClick={() => setHtmlMode((m) => !m)} className={codeBtn}>
+          {htmlMode ? "✎ 서식 편집" : "</> HTML"}
         </button>
-        <input ref={imgFileRef} type="file" accept="image/*" hidden onChange={(e) => { onPickImage(e.target.files); e.currentTarget.value = ""; }} />
       </div>
 
+      {htmlMode ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} spellCheck={false}
+          placeholder="<h2>제목</h2><p>내용</p> 형태의 HTML 코드를 직접 작성/수정하세요"
+          className={`w-full resize-y px-3 py-3 font-mono text-xs leading-relaxed outline-none ${htmlArea}`} style={{ minHeight }} />
+      ) : (
       <div className="relative">
         {empty && <div className={`pointer-events-none absolute left-3 top-3 text-sm ${ph}`}>{placeholder}</div>}
         <div ref={ref} contentEditable suppressContentEditableWarning onInput={sync} onBlur={sync} onKeyUp={saveSel} onMouseUp={saveSel}
@@ -167,6 +215,7 @@ export default function RichTextEditor({ value, onChange, theme = "light", place
             style={{ left: box.l + box.w - 7, top: box.t + box.h - 7 }} title="드래그하여 크기 조절" />
         )}
       </div>
+      )}
     </div>
   );
 }

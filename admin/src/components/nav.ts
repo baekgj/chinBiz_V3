@@ -62,7 +62,14 @@ export const NAV: NavItem[] = [
     ],
   },
   { href: "/master/complaints", label: "민원 관리 센터", desc: "VOC·정산 동결(Freeze)", icon: "headset" },
-  { href: "/master/settings", label: "시스템 설정", desc: "RBAC·배정 알고리즘", icon: "gear" },
+  {
+    href: "/master/settings", label: "시스템 설정", desc: "RBAC·배정·약관·알람", icon: "gear",
+    children: [
+      { href: "/master/settings", label: "환경설정" },
+      { href: "/master/settings/terms", label: "약관설정" },
+      { href: "/master/settings/alarms", label: "알람설정" },
+    ],
+  },
 ];
 
 // titleForPath 용 평면 목록 (부모 + 자식)

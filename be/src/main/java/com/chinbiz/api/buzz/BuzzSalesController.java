@@ -41,14 +41,21 @@ public class BuzzSalesController {
     private final CenterMatcher centerMatcher;
     private final com.chinbiz.api.allowance.AllowanceService allowanceService;
     private final com.chinbiz.api.allowance.AllowanceRepository allowanceRepo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
+    private final com.chinbiz.api.org.CenterCodeRepository centerCodeRepo;
+    private final ManagerCenterRepository managerCenterRepo;
 
     public BuzzSalesController(SaleRepository saleRepo, ProductRepository productRepo, PartnerRepository partnerRepo,
                                UserRepository userRepo, EducationRepository eduRepo, CenterMatcher centerMatcher,
                                com.chinbiz.api.allowance.AllowanceService allowanceService,
-                               com.chinbiz.api.allowance.AllowanceRepository allowanceRepo) {
+                               com.chinbiz.api.allowance.AllowanceRepository allowanceRepo,
+                               com.chinbiz.api.alarm.AlarmService alarmService,
+                               com.chinbiz.api.org.CenterCodeRepository centerCodeRepo,
+                               ManagerCenterRepository managerCenterRepo) {
         this.saleRepo = saleRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo;
         this.userRepo = userRepo; this.eduRepo = eduRepo; this.centerMatcher = centerMatcher;
         this.allowanceService = allowanceService; this.allowanceRepo = allowanceRepo;
+        this.alarmService = alarmService; this.centerCodeRepo = centerCodeRepo; this.managerCenterRepo = managerCenterRepo;
     }
 
     /** 파트너사명 */
@@ -102,6 +109,9 @@ public class BuzzSalesController {
         m.put("customerName", s.getCompanyName());
         m.put("buzzName", userName(s.getBuzzId()));
         m.put("status", s.getStatus());
+        // 활동센터 지역 (고객 주소 지역 센터, docs/19)
+        m.put("centerName", s.getCustomerCenterId() == null ? null
+                : centerCodeRepo.findById(s.getCustomerCenterId()).map(com.chinbiz.api.org.CenterCode::displayName).orElse(null));
         // 배정 상태
         m.put("managerId", s.getManagerId());
         m.put("assignedManagerName", userName(s.getManagerId()));
@@ -174,12 +184,14 @@ public class BuzzSalesController {
         User me = me(auth);
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         if (me.getRole() != Role.MANAGER) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "관리매니저 전용"));
-        Long mcid = me.getManagerCenterId();
-        if (mcid == null)
+        // 내 활동센터(승인된 manager_center, 최대 3개) — docs/19
+        List<Long> myCenters = managerCenterRepo.findByBuzzIdAndStatus(me.getId(), "Y").stream()
+                .map(ManagerCenter::getCenterId).toList();
+        if (myCenters.isEmpty())
             return ResponseEntity.ok(Map.of("content", List.of(), "page", 0, "size", size, "totalElements", 0, "totalPages", 0));
 
         List<Specification<Sale>> specs = new ArrayList<>();
-        specs.add((r, q, cb) -> cb.equal(r.get("customerCenterId"), mcid)); // 고객 주소 지역 == 내 관리센터
+        specs.add((r, q, cb) -> r.get("customerCenterId").in(myCenters)); // 고객 주소 지역 ∈ 내 활동센터들
         specs.add((r, q, cb) -> cb.isNull(r.get("managerId")));  // 아직 매니저 미선정
         if (keyword != null && !keyword.isBlank())
             specs.add((r, q, cb) -> cb.like(r.get("companyName"), "%" + keyword.trim() + "%"));
@@ -253,6 +265,17 @@ public class BuzzSalesController {
                 ? userRepo.findByUserId(me.getReferralCode().trim()).orElse(null) : null;
         allowanceService.createForSale(s, me, referrer);
 
+        // [1차영업신청] 알람 (버즈/센터/본부/본사/추천인/파트너) — docs/16
+        try { alarmService.fireSaleEvent("SALE1", s); } catch (Exception ignore) {}
+
+        // 가입 추천마일리지(JOIN/CP) → MP 전환 (docs/18): 첫 1차영업 등록 시 확정
+        try {
+            var joinRows = allowanceRepo.findByMemberIdAndTypeAndStatus(me.getUserId(),
+                    com.chinbiz.api.allowance.Allowance.Type.JOIN, com.chinbiz.api.allowance.Allowance.Status.CP);
+            for (var a : joinRows) { a.setStatus(com.chinbiz.api.allowance.Allowance.Status.MP); a.setConfirmDate(java.time.LocalDate.now()); }
+            allowanceRepo.saveAll(joinRows);
+        } catch (Exception ignore) {}
+
         return ResponseEntity.status(HttpStatus.CREATED).body(detail(s, me));
     }
 
@@ -291,6 +314,9 @@ public class BuzzSalesController {
 
         // 영업권 확보 시 매니저·관리센터 수당 원장 레코드 생성
         allowanceService.createForAssign(s, me);
+
+        // [2차영업신청] 알람 (매니저/관리센터/파트너) — docs/16
+        try { alarmService.fireSaleEvent("SALE2", s); } catch (Exception ignore) {}
 
         return ResponseEntity.ok(detail(s, me));
     }

@@ -31,15 +31,18 @@ public class MasterSettlementController {
     private final AllowancePaymentRepository paymentRepo;
     private final UserRepository userRepo;
     private final SaleRepository saleRepo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     private static final Map<String, String> MT = Map.of(
             "BUZZ", "버즈회원", "TOPBUZZ", "추천(친쿠)", "MANAGER", "관리매니저",
             "BUZZ_CENTER", "소속센터", "MANAGER_CENTER", "관리센터", "DIVISION", "본부", "HQ", "본사", "MASTER", "본사");
 
     public MasterSettlementController(AllowanceRepository allowanceRepo, AllowancePaymentRepository paymentRepo,
-                                      UserRepository userRepo, SaleRepository saleRepo) {
+                                      UserRepository userRepo, SaleRepository saleRepo,
+                                      com.chinbiz.api.alarm.AlarmService alarmService) {
         this.allowanceRepo = allowanceRepo; this.paymentRepo = paymentRepo;
         this.userRepo = userRepo; this.saleRepo = saleRepo;
+        this.alarmService = alarmService;
     }
 
     private LocalDate[] range(String month) {
@@ -49,6 +52,12 @@ public class MasterSettlementController {
         return new LocalDate[]{ from, from.plusMonths(1) };
     }
     private String label(Allowance.MemberType t) { return t == null ? null : MT.getOrDefault(t.name(), t.name()); }
+    /** "202607" → "202608" (익월) */
+    private String nextMonth(String yyyymm) {
+        int y = Integer.parseInt(yyyymm.substring(0, 4)), m = Integer.parseInt(yyyymm.substring(4));
+        if (++m > 12) { m = 1; y++; }
+        return String.format("%04d%02d", y, m);
+    }
     private User byUserId(String uid) { return uid == null ? null : userRepo.findByUserId(uid).orElse(null); }
 
     // ───────── 1) 매출현황 ─────────
@@ -87,6 +96,12 @@ public class MasterSettlementController {
         List<Allowance> rows = allowanceRepo.findSalesForClose(Allowance.Status.MP, r[0], r[1]);
         for (Allowance a : rows) { a.setFixedDate(now); a.setFixedMonth(month); }
         allowanceRepo.saveAll(rows);
+        // [마감완료] 알람 (버즈/매니저/센터/본부) — docs/17
+        try {
+            List<String[]> members = new ArrayList<>();
+            for (Allowance a : rows) if (a.getMemberType() != null) members.add(new String[]{ a.getMemberType().name(), a.getMemberId() });
+            alarmService.fireSettlement("CLOSE", month, members);
+        } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", rows.size() + "건 마감완료 (확정월 " + month + ")", "count", rows.size()));
     }
 
@@ -126,11 +141,25 @@ public class MasterSettlementController {
             String key = a.getMemberType() + "|" + a.getMemberId();
             Object[] g = grp.computeIfAbsent(key, k -> new Object[]{ a.getMemberType(), a.getMemberId(), 0L });
             g[2] = (Long) g[2] + (a.getAmount() == null ? 0 : a.getAmount());
-            a.setPaid(true); // 정산완료 표시
+        }
+        // MP 1만원 미만 → 익월 이월(미정산). 1만원 이상 → 당월 정산.
+        final long MIN = 10000;
+        String next = nextMonth(month);
+        java.util.Set<String> settledKeys = new java.util.HashSet<>();
+        for (Object[] g : grp.values()) if ((Long) g[2] >= MIN) settledKeys.add(g[0] + "|" + g[1]);
+        for (Allowance a : rows) {
+            String key = a.getMemberType() + "|" + a.getMemberId();
+            if (settledKeys.contains(key)) a.setPaid(true);        // 정산완료
+            else a.setFixedMonth(next);                             // 익월 이월
         }
         allowanceRepo.saveAll(rows);
-        int created = 0;
+        int created = 0, skipped = 0;
+        List<String[]> settledMembers = new ArrayList<>(), skippedMembers = new ArrayList<>();
         for (Object[] g : grp.values()) {
+            boolean ok = (Long) g[2] >= MIN;
+            String[] mp = new String[]{ ((Allowance.MemberType) g[0]).name(), (String) g[1] };
+            if (!ok) { skipped++; skippedMembers.add(mp); continue; }
+            settledMembers.add(mp);
             AllowancePayment p = new AllowancePayment();
             p.setMemberType((Allowance.MemberType) g[0]);
             p.setMemberId((String) g[1]);
@@ -143,7 +172,12 @@ public class MasterSettlementController {
             paymentRepo.save(p);
             created++;
         }
-        return ResponseEntity.ok(Map.of("message", "정산완료 — " + rows.size() + "건 지급대상 처리, 정산전표 " + created + "건 생성", "count", created));
+        // [정산완료] 알람(정산대상) / [정산완료(미정산대상)] 알람(1만원 미만 이월) — docs/17·18
+        try { alarmService.fireSettlement("SETTLE", month, settledMembers); } catch (Exception ignore) {}
+        try { alarmService.fireSettlement("SETTLE_SKIP", month, skippedMembers); } catch (Exception ignore) {}
+        return ResponseEntity.ok(Map.of(
+                "message", "정산완료 — 정산전표 " + created + "건 생성, 미정산(1만원 미만) " + skipped + "명 익월(" + next + ") 이월",
+                "count", created, "skipped", skipped));
     }
 
     // ───────── 3) 정산내역 (미지급) / 4) 지급내역 (지급완료) ─────────
@@ -179,6 +213,12 @@ public class MasterSettlementController {
         List<AllowancePayment> rows = paymentRepo.findByFixedMonthAndPaymentFlagOrderByIdDesc(month, "N");
         for (AllowancePayment p : rows) { p.setPaymentFlag("Y"); p.setPaymentDate(now); }
         paymentRepo.saveAll(rows);
+        // [지급완료] 알람 (버즈/매니저/센터/본부) — docs/17
+        try {
+            List<String[]> members = new ArrayList<>();
+            for (AllowancePayment p : rows) if (p.getMemberType() != null) members.add(new String[]{ p.getMemberType().name(), p.getMemberId() });
+            alarmService.fireSettlement("PAY", month, members);
+        } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", rows.size() + "건 지급완료 처리", "count", rows.size()));
     }
 

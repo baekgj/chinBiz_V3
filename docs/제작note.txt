@@ -331,6 +331,9 @@ FE (home/src/)
 ── [신규 테이블] ───────────────────────────────────────────────
 -- 수당 원장(7주체 정산) : db/migration_new_fields.sql 의 CREATE TABLE `allowance` 참조
 -- 파트너 입점 상담신청   : db/migration_new_fields.sql 의 CREATE TABLE `partner_inquiry` 참조
+-- 웹푸시 구독(모바일 PWA) : db/migration_new_fields.sql 의 CREATE TABLE `push_subscription` 참조 (2026-08-01)
+--   CREATE TABLE `push_subscription` (id, account, endpoint UNIQUE, p256dh, auth, created_at)
+--   ddl-auto 자동 생성되나 배포용 병행. PWA 알림권한 허용 시 브라우저 구독을 로그인 계정과 저장.
 
 ── [컬럼 추가] 서버 즉시 적용용(개별 ALTER) ─────────────────────
 -- product (계약종료일/설치상품/키워드배지)
@@ -379,6 +382,17 @@ CREATE TABLE IF NOT EXISTS `allowance_payment` (
 ALTER TABLE `product` ADD COLUMN `simple_delivery` bit(1) NOT NULL DEFAULT b'0';
 ALTER TABLE `product` ADD COLUMN `cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0';
 ALTER TABLE `product` ADD COLUMN `cancel_amount` bigint DEFAULT 0;
+
+-- terms (약관/동의서 테이블 신규; 2026-07-27 docs/15) ★최근 추가
+--   본사 [시스템설정]-[약관설정]에서 10종 약관 등록·수정. home/버즈admin 노출.
+CREATE TABLE IF NOT EXISTS `terms` (
+  `code` varchar(40) NOT NULL,
+  `title` varchar(120) NOT NULL,
+  `content` longtext,
+  `sort_order` int DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- (이후 신규 필드는 여기 아래에 날짜/사유와 함께 계속 추가)
 
@@ -488,3 +502,281 @@ ALTER TABLE `product` ADD COLUMN `cancel_amount` bigint DEFAULT 0;
    * GNB(헤더) 링크는 지시 범위(하단=footer)에 따라 기존 해시 스크롤 유지.
    검증: /products(검색·카테고리 10→5·정렬·페이징·가드레일), /partner-apply·/process·/about 렌더, 콘솔 에러 0.
    docx 목업이 수당/단가를 노출하나 프로젝트 가드레일(CLAUDE.md §11·12) 우선하여 비로그인 노출 금지 준수.
+
+====================================================================
+[추가] docs/15.txt 작업 — 본사 [약관설정] + 약관 10종 노출 (2026-07-27)
+====================================================================
+■ 개요: 본사 [시스템설정]-[약관설정]에서 10종 약관/동의서를 원본파일 기반으로 등록·수정하고,
+   지정된 지점(home/버즈admin)에 노출. 약관 code/제목:
+   1 TOTAL 통합이용약관 / 2 PRIVACY 개인정보처리방침 / 3 BUZZ 버즈회원 이용약관 /
+   4 MANAGER 관리매니저 이용약관 / 5 CENTER 센터 이용약관 / 6 DIVISION 본부 이용약관(파일없음·빈값) /
+   7 CENTER_PAPER 센터 위수탁계약서 / 8 DIVISION_PAPER 본부 위수탁계약서 / 9 PARTNER 파트너 이용약관 /
+   10 PRIVACY_CONSENT 개인정보 수집·이용 동의.
+■ BE(be, com.chinbiz.api.terms): Term 엔티티(code PK, title, content LONGTEXT, sortOrder, updatedAt),
+   TermRepository, TermController(GET /api/public/terms/{code} 공개 / GET·PUT /api/org/terms[/{code}] MASTER),
+   TermSeeder(@Order(20): 10종 code+제목 빈content 시딩). content는 평문 \n 단락 저장.
+   ※ 6 DIVISION은 원본 파일 없음 → 빈 content로 유지(등록기능만).
+■ 콘텐츠 적재: docs/agree_*.docx(9종) 텍스트 추출 → PUT /api/org/terms/{code}로 적재(관리자 로그인 후).
+■ admin(3100): nav.ts 시스템설정 하위 [환경설정]/[약관설정] 서브메뉴, /master/settings/terms
+   (components/master/TermsManager.tsx: 좌 10종 목록·미등록표시 + 우 제목/내용 편집·저장).
+■ home(8001) 노출:
+   - components/site/TermView.tsx(공개 조회 렌더) + app/terms/[code]/page.tsx(전체 페이지) +
+     components/site/TermModal.tsx(보기 모달, onAgree 옵션).
+   - Footer [법적고지] 이용약관→/terms/total(TOTAL), 개인정보처리방침→/terms/privacy(PRIVACY).
+   - 회원가입(signup): (필수)이용약관 [보기]→BUZZ 모달, (필수)개인정보 수집·이용 [보기]→PRIVACY_CONSENT 모달.
+   - 파트너 입점신청(PartnerApply): 하드코딩 개인정보 동의서 모달 → TermModal(PRIVACY_CONSENT)로 교체, [동의] 버튼.
+■ 버즈admin(3100): ManagerApplyForm(매니저신청) — MANAGER 약관 스크롤 박스 + 동의 체크(미동의 시 신청 불가).
+■ DB: terms 테이블 신규 → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+   ⚠ 현재 세션 BE는 원격 서버 DB(175.125.94.198)에 연결되어 있어 terms 행/내용도 원격 DB에 적재됨.
+
+  [보완 2026-07-27] 약관설정 에디터 적용 (요청: editor기능 + HTML코드 등록)
+   · admin TermsManager: 기존 plain textarea → 기존 RichTextEditor(서식툴바 B/I/U/S·H2/H3·목록·링크·이미지) 재사용
+     + [서식 편집]/[HTML 코드] 모드 토글. HTML 코드 탭에서 태그 직접 작성/수정 가능.
+   · 저장 형식이 HTML로 전환됨. 기존 평문(\n)은 pick 시 toHtml()로 <br> 변환(편집 시 자연 마이그레이션).
+   · 렌더 전환(평문/HTML 자동판별 looksHtml): home TermView(+terms 페이지/모달), 버즈admin ManagerApplyForm(MANAGER).
+     - home globals.css에 .term-content(h1~h4/p/ul·ol/li/a/strong/hr/img/table) 스타일 추가(Tailwind preflight 상쇄).
+     - admin은 기존 .rte-content 스타일 재사용(앱 전역).
+   · 검증: 약관설정 툴바+모드토글 렌더, 평문→<br> 자동변환, HTML코드 탭 소스편집, DIVISION에 HTML PUT→home /terms/division
+     h2 20px/800·ul disc 정상 렌더 확인 후 원복. 콘솔 에러 0.
+
+  [보완 2026-07-27b] 상품설명 에디터 HTML 코드 등록 (본사·파트너 상품등록)
+   · RichTextEditor에 [</> HTML] 토글 내장: 서식(WYSIWYG) ↔ HTML 코드(textarea) 전환. 코드 탭에서 태그 직접 작성,
+     서식 탭 복귀 시 편집된 HTML을 contentEditable에 재주입(useEffect [htmlMode]).
+   · 본사 master/ProductForm(dark)·파트너 partner/ProductForm(light)은 컴포넌트 공유로 자동 적용(코드 수정 불필요).
+   · TermsManager는 자체 토글 제거하고 내장 토글 사용(중복 제거, key={sel}로 약관 전환 시 재마운트).
+   · 검증: master(dark)/partner(light) 상품등록 [</> HTML] 표시, HTML 입력→서식복귀 시 h2 20px/800·ul disc 렌더,
+     light 코드영역 흰 배경. 콘솔 에러 0.
+
+  [보완 2026-07-28] 본사 대시보드 DB 연동 (KPI 외 나머지 3개 섹션)
+   · 기존 KPI(GMV/확정수익)는 이미 /api/org/dashboard 연동. 나머지 mock(플랫폼현황/처리대기/피드)을 DB 연동.
+   · BE MasterDashboardController에 GET /api/org/dashboard/overview 추가:
+     - platform: partner수/활성상품(on_sale)/본부(DIVISION_ADMIN)/센터(CENTER_ADMIN)/매니저(MANAGER)/버즈(BUZZ) 카운트
+     - pending: 입점심사(partner_inquiry status=NEW)/출금승인(allowance_payment payment_flag=N)/민원동결(테이블 없어 0)
+     - feed: 최근 sale 8건 + 최근 partner_inquiry 5건 병합·시간내림차순 top6 (상대시간 방금전/N분·시간·일 전,
+       상태별 tone: 구매확정=pos/취소·반품=danger/그외=brand, 입점=warn·완료=pos)
+   · repo 추가: ProductRepository.countByOnSaleTrue, PartnerInquiryRepository.countByStatus,
+     AllowancePaymentRepository.countByPaymentFlag.
+   · FE: components/master/MasterOverview.tsx(클라이언트, overview fetch→3섹션 렌더, 처리대기는 해당 메뉴 Link),
+     master/page.tsx는 MasterKpi + MasterOverview만 렌더(mock 배열 제거).
+   · 검증(admin 로그인): KPI ₩33,620,000/₩5,300, 플랫폼 3/10/2/3/4/9, 처리대기 2/0/0, 피드 6건 실데이터. 콘솔 에러 0.
+   · BE 재기동: 로컬 chin4(chin4_test) 기본값으로 spring-boot:run (start-all.ps1과 동일).
+
+  [보완 2026-07-28b] 센터/본부 최초 로그인 약관 동의 게이트
+   · 요구: 센터/본부 담당자 최초 로그인 시 해당 이용약관(약관설정 CENTER/DIVISION)을 창으로 띄우고,
+     [동의하기] 체크 후 동의하면 로그인ID·IP주소·동의시간·user.role 을 DB 저장.
+   · 신규 테이블 term_agreement(id, login_id, term_code, role, ip, agreed_at) + JPA 자동생성.
+     migration_new_fields.sql / schema_chin4.sql 반영.
+   · BE terms/TermAgreement(Entity)·TermAgreementRepository(existsByLoginIdAndTermCode)·TermAgreementController
+     (/api/my/agreement : GET ?code= 동의여부, POST {code} 저장). IP=X-Forwarded-For/X-Real-IP/remoteAddr,
+     role=user.role, 멱등(중복 동의 시 재저장 안 함). /api/my/** = 인증 공용.
+   · FE components/AgreementGate.tsx(클라이언트, 블로킹 모달): code로 동의여부 확인→미동의면 약관 노출
+     (HTML/평문 자동렌더) + [동의하기] 체크 + [동의하고 시작하기]→POST→닫힘. 이미 동의면 렌더 안 함.
+     center/layout.tsx(code=CENTER), division/layout.tsx(code=DIVISION)에 삽입.
+   · 검증: center 로그인→게이트 노출(센터약관 내용)→동의→term_agreement 저장(center/CENTER/CENTER_ADMIN/IP/시간)
+     →새로고침 재노출 안 됨. division 게이트도 노출 확인. 콘솔 에러 0.
+   · ⚠ DIVISION(본부 이용약관) 내용은 아직 미등록(docs/15 원본파일 없음) → 게이트는 뜨나 본문 공란.
+     본사 [약관설정]에서 본부 이용약관 내용을 등록하면 그대로 노출됨.
+
+  [보완 2026-07-28c] 운영 도메인 chinbiz.kr 적용 시 "서버 연결 실패(백엔드 9001)" 수정
+   · 원인: FE는 접속 host 기준 http(s)://chinbiz.kr:9001 로 API 호출하나, BE CORS allowed-origin-patterns 가
+     localhost/127.0.0.1/175.125.94.198 만 허용 → chinbiz.kr Origin preflight 차단 → fetch throw → 연결실패 메시지.
+   · 수정: application.yml app.cors.allowed-origin-patterns 기본값에 chinbiz.kr 추가
+     (http/https + 포트유무 + 서브도메인: http(s)://chinbiz.kr, :* , *.chinbiz.kr, *.chinbiz.kr:*).
+     CORS_ORIGINS 환경변수로 override 가능.
+   · 검증(로컬 BE 재기동): Origin http/https://chinbiz.kr, :8001, admin.chinbiz.kr preflight 200 + ACAO 반환,
+     evil.com 은 403. 
+   · ★ 서버 반영: 서버 BE 재패키지/재기동 필요(코드 반영 완료).
+   · ⚠ HTTPS 주의: 페이지를 https://chinbiz.kr 로 서비스하면 FE가 https://chinbiz.kr:9001 을 호출하는데
+     BE 9001은 평문 HTTP라 실패(혼합콘텐츠/TLS). 해결: (a) http://chinbiz.kr(80)+9001 포트개방으로 서비스,
+     또는 (b) 리버스프록시로 API를 https 노출(https://chinbiz.kr/api 또는 https://api.chinbiz.kr) 후
+     home/.env.local·admin/.env.local 의 NEXT_PUBLIC_API_URL 에 그 주소를 지정(자동host해석 override).
+
+  [보완 2026-07-28d] HTTPS 전환 대비 — FE API주소 해석 프로토콜 인식형으로 개선
+   · 배경: 지금은 HTTP 서비스(chinbiz.kr), 추후 HTTPS 전환 예정.
+   · resolveServiceUrl(home/src/lib/api.ts, admin/src/lib/auth.ts) 개선:
+     - HTTP : 기존과 동일 (접속host + 포트 9001/8001/3100 직결). ← 현재 서비스 무영향.
+     - HTTPS: same-origin(포트 미지정) 반환 → 리버스 프록시가 /api 를 BE(9001)로 전달하는 표준 배포 가정.
+       (https 에서 :9001 직결은 평문/TLS 불일치로 불가하므로 자동 회피)
+   · 검증: http://localhost:8001 접속 시 resolvedApiBase=http://localhost:9001, check-id 200 (기존 동작 유지).
+   · HTTPS 전환 시 서버 준비물:
+     (1) 리버스 프록시(nginx 등): https://chinbiz.kr/  → FE, https://chinbiz.kr/api/ → http://localhost:9001/api/
+     (2) 위 CORS 기본값에 https://chinbiz.kr 이미 포함(보완 c) → 추가 설정 불필요.
+     (3) admin/home 을 서브도메인으로 분리 서비스하면 NEXT_PUBLIC_API_URL/HOME_URL 로 override(빌드시 주입).
+
+  [트러블슈팅 2026-07-28e] next build 타입에러 ".next/dev/types/routes.d.ts ';' expected"
+   · 증상: Compiled successfully → Running TypeScript → Failed to type check,
+     routes.d.ts 특정 줄이 깨진 문자열(예: 'ement/paid"...')로 잘려 있음.
+   · 원인: Next(App Router/Turbopack) 자동생성 라우트 타입 캐시 손상(개발 중 새 라우트 추가 후 흔함). 소스 문제 아님.
+   · 해결: 해당 앱 .next 삭제 후 재빌드. admin: rm -rf admin/.next && (cd admin && npm run build).
+     PowerShell: Remove-Item -Recurse -Force .next. home 도 동일.
+   · 검증: admin/.next 삭제 후 npm run build exit 0, 전 라우트(/master/settings/terms 포함) 정상 생성.
+
+====================================================================
+[추가] docs/16.txt 작업 — 알람(알림) 발송 시스템 + [알람설정] (2026-07-30)
+====================================================================
+■ 개요: 프로세스 발생 시 대상(버즈/매니저/센터/본부/추천인/파트너 등)에게 알람 발송. 본사 [시스템설정]-[알람설정]
+   에서 프로세스별 수신대상·문구를 등록/수정. 참조: docs/chinbiz3_alramlist.xlsx(13개 프로세스).
+■ 수신대상 8종(AlarmTarget): 버즈/매니저/소속센터(CENTER)/관리센터(MGMT_CENTER)/본부/본사/추천인/파트너.
+■ 신규 테이블:
+   - alram_setting : 프로세스×대상 1행(process_code·target UNIQUE, message, enabled, 메타). 시더가 13×8=104행 보장.
+     엑셀 기본 (프로세스,대상)만 enabled=true+기본문구(총 42행), 나머지는 off+공란. 관리자가 on/off·문구 편집.
+   - alram : 발생 알람(process_code,target,recipient_id/name/role,message,ref_type/id,read_flag,created_at).
+   (migration_new_fields.sql / schema_chin4.sql 반영. JPA ddl-auto 자동생성)
+■ BE(com.chinbiz.api.alarm): AlarmTarget/AlarmSetting/Alarm(엔티티)·리포지토리·AlarmDefs(엑셀 13프로세스 정의)·
+   AlarmSettingSeeder(@Order 21)·AlarmService(fire+수신자해석+문구렌더)·AlarmSettingController
+   (GET/PUT /api/org/alarm-settings, GET /api/org/alarms; MASTER 전용).
+   - 문구 토큰 치환: OOO=회원명, ㅁㅁㅁㅁ=센터명, @@@=고객, $$$$$=수당, *****=상품, ______=주문번호.
+   - 수신자 해석: CENTER=sales_center_id 동일 CENTER_ADMIN, DIVISION=센터 head_code→본부 idx의 DIVISION_ADMIN,
+     HQ=MASTER_ADMIN, REFERRER=referral_code 회원.
+■ 연동(트리거): [회원가입] AuthController.signup → alarmService.fireSignup(신규회원). (알람 실패는 가입 비차단 try/catch)
+   ※ 현재 라이브 연동은 SIGNUP 1건(예시). 나머지 12개 프로세스는 설정/시드 완비 상태이며 각 트리거 지점에서
+     alarmService.fire(processCode, 대상별수신자, 토큰, refType, refId) 호출만 추가하면 됨(동일 패턴).
+■ FE: nav 시스템설정에 [알람설정] 추가, /master/settings/alarms + components/master/AlarmSettingsManager.tsx
+   (좌 프로세스목록[수신 개수] / 우 대상8종 체크박스+문구 textarea + 저장). 약관설정과 유사 구조.
+■ 검증: 시드 104행(42 enabled), 설정 GET(13프로세스)·PUT(persist+revert) 정상. 화면 렌더 정상, 콘솔 에러 0.
+   ★ 테스트 실증: 추천인(buzzgn1) 있는 회원가입 → alram 5건 생성:
+     CENTER(ctr_gangnam1,center)·DIVISION(div_seoul1)·HQ(admin)="알람테스트 버즈회원이 강남구센터 소속으로 가입되었습니다.",
+     REFERRER(buzzgn1)="알람테스트 버즈회원이 추천인으로 가입되었습니다." (테스트 계정/알람은 검증 후 삭제).
+
+  [보완 2026-07-30] docs/16 나머지 12개 프로세스 트리거 실연동
+   · AlarmService 에 프로세스별 진입점 추가: fireMemberReferral/firePartnerInquiry/fireManagerApply/
+     fireManagerApprove/fireProductRegister/fireEduApply/fireEduApprove + fireSaleEvent(SALE1/SALE2/
+     MANAGER_CANCEL/ORDER_CANCEL/ORDER_CONFIRM 공통, Sale로부터 8대상 해석). 문구토큰 OOOO=회사(4자,OOO보다 먼저),
+     OOO=회원, ㅁㅁㅁㅁ=센터, @@@=고객, $$$$$=수당(AllowanceService 규칙 총수당×reward/100), *****=상품, ______=주문번호.
+   · 트리거 연동(각 컨트롤러 성공지점 try/catch 1줄): PartnerInquiryController.submit / BuzzMemberController.create /
+     BuzzManagerController.apply / CenterManagerController.approve / ProductController.create /
+     BuzzEducationController.complete / EducationAdminController.approve / BuzzSalesController.create·assign /
+     AdminSalesController.reassign(매니저 초기화 前 발송) / PartnerSalesController.confirm·cancel.
+   · 검증(로컬): 파트너상담→HQ, 상품등록→전체 버즈/매니저/센터 브로드캐스트, 1차영업→버즈·센터·본부·본사(CP 135,000원)
+     +파트너(상품명 문구) 실증. 콘솔 에러 0.
+
+====================================================================
+[추가] docs/17.txt 작업 — 정산 알람 3종 + admin 알람 벨 (2026-07-30)
+====================================================================
+■ A. 알람 프로세스 3종 추가([알람설정]) — 대상 버즈/매니저/센터/본부, 문구 "0000년 00월…"(period 토큰):
+   - CLOSE(마감완료) : 본사 [매출현황] [마감완료] → MasterSettlementController.closeSales
+   - SETTLE(정산완료): 본사 [마감내역] [정산완료] → settle
+   - PAY(지급완료)   : 본사 [정산내역] [지급완료] → pay
+   AlarmService.fireSettlement(processCode, fixedMonth, members(memberType,memberId)) — allowance/allowance_payment
+   의 member_type→대상(BUZZ·TOPBUZZ→버즈 / MANAGER→매니저 / BUZZ_CENTER·MANAGER_CENTER→센터 / DIVISION→본부, HQ 제외),
+   memberId 중복제거·이름해석. period "202607"→"2026년 07월". AlarmDefs/시더 확장(16 프로세스×8 = 128행, CLOSE/SETTLE/PAY 각 4 enabled).
+■ B. admin 우측 상단 알람 벨 (전 역할 공용):
+   - Alarm 엔티티 read_at(확인완료 일시) 추가. AlarmRepository countByRecipientIdAndReadFlag / findByRecipientIdAndReadFlag.
+   - MyAlarmController(/api/my/alarms): GET {unread, items(최근50)} / POST /read (미확인 전체 read_flag=Y·read_at=now).
+   - components/AlarmBell.tsx(미확인 배지+팝다운, 열면 read 처리·배지 0·1분 폴링). 5개 topbar(master/partner/buzz/center/division)
+     기존 정적 벨 → AlarmBell 교체(tone dark/light). recipient_id=로그인ID 기준.
+   - DB: alram.read_at 추가(ddl-auto 자동, migration/schema 반영).
+■ 검증: 마감완료/정산완료/지급완료 실행 → alram CLOSE/SETTLE/PAY 각 버즈·센터·본부 "2026년 07월…" 생성.
+   벨 API(unread 조회·read 처리·0), 마스터 화면 벨 배지 3→클릭 팝다운 목록→배지 0, read_at 저장 실증. 콘솔 에러 0.
+   ※ 테스트 데이터(미삭제): product14 정산알람테스트상품, sale54(OD20260730-000054, 202607 마감/정산/지급 완료),
+     관련 allowance/allowance_payment/alram + docs/16 검증분(partner_inquiry '알람테스트파트너' 등). 정리 필요 시 삭제 가능.
+
+====================================================================
+[추가] docs/18.txt 작업 — 추천링크·모바일알림·추천마일리지·정산이월·상품설명5분리·에디터 (2026-07-31)
+====================================================================
+■ P1. 버즈 [버즈네트워크] 내 추천링크 → https://chinbiz.kr/signup?ref=회원id. [링크복사]는 전체 URL 복사
+   (HTTPS=Clipboard API / HTTP=execCommand textarea 폴백). NetworkSection.tsx.
+■ P2. 모바일 알림창(AlarmBell 팝다운) 반응형: w-[calc(100vw-1.5rem)] max-w-sm sm:w-80, max-h-[70vh] sm:max-h-96.
+■ P3. [환경설정] [추천마일리지 지급] 카드(가입버즈/추천인 CP) — DB 연동.
+   - 신규: app_setting(key-value) 테이블 + AppSetting/Repo/Controller(GET·PUT /api/org/app-settings) + 시더(500/500).
+   - 회원가입(AuthController.signup): 추천인 없거나 미존재 → referralCode 강제 'dukebaek'. 가입버즈+추천인 모두 CP 지급.
+     allowance INSERT: order_no=join_<yyyyMMddHHmmss>_<가입id>, type=JOIN, status=CP (가입버즈=BUZZ, 추천인=TOPBUZZ).
+   - Allowance.Type 에 JOIN 추가. ★allowance.type 은 ENUM → 수동 ALTER 필수:
+     ALTER TABLE allowance MODIFY COLUMN type ENUM('ORDER','CANCEL','CANCEL_FEE','JOIN') NOT NULL;
+■ P4. 버즈 [1차영업등록] 완료 시 해당 회원(memberId=본인)의 JOIN·CP → MP 전환(confirm_date=오늘). BuzzSalesController.create.
+■ P5. [정산완료](settle) 시 회원 MP 합계 1만원 미만 → 당월 미정산·익월(fixed_month+1) 이월 + [정산완료(미정산대상)]
+   알람 발송("정산 대상금액이 1만원 미만…좀더 노력해 주세요~"). 1만원 이상만 정산전표 생성/paid. AlarmDefs SETTLE_SKIP 추가.
+■ P6. 상품설명 5분리 + 에디터 강화:
+   - Product 5컬럼(desc_guest/buzz/manager/partner/admin, longtext). 본사 ProductForm=5탭 에디터(DescTabs),
+     파트너 ProductForm=파트너전용(desc_partner). 노출: 버즈마켓상세 as=buzz→desc_buzz / 매니저 as=manager→desc_manager
+     (BuzzMarketController.detail?as=, ProductDetail 역할별 as 전달), 파트너 상품수정→desc_partner (미등록 시 레거시 description 폴백).
+     비로그인=desc_guest(차후). ProductController DTO/apply/dto 5필드 반영.
+   - RichTextEditor 강화: 글자크기(작게/보통/크게)·인용(blockquote)·정렬(좌/중/우)·구분선·글자색/배경색(color input). globals .rte-content 보강.
+■ 검증(로컬): P3 signup(추천없음)→dukebaek·500/500 JOIN CP, P4 1차영업→JOIN MP전환, P5 close→settle 500<1만 미정산·익월(202608)
+   이월+SETTLE_SKIP 알람, P6 상품 5설명 등록→buzz/manager/partner 각 전용설명 반환, 폼 5탭+에디터 확장 렌더. 콘솔 에러 0.
+   ※ 테스트 데이터(미삭제): miltest01(가입/JOIN), product15(5분리테스트) 등. 정리 필요 시 삭제 가능.
+
+★ DB 마이그레이션(수동 적용): app_setting/alram.read_at 신규, product desc_* 5컬럼,
+   allowance.type ENUM 에 JOIN 추가 — migration_new_fields.sql / schema_chin4.sql 반영.
+
+  [보완 2026-07-31b] 홈 포트 8001→80 (도메인 chinbiz.kr 직접 접속) + FE API 네트워크오류 처리
+   · home 포트 80: home/package.json dev·start "-p 80". start-all.ps1/stop-all.ps1 HOME 포트 80.
+     → http://chinbiz.kr (기본 80포트)로 홈 직접 접속. (서버 배포 시 80 바인딩 권한 필요: root/CAP_NET_BIND_SERVICE
+       또는 nginx 리버스프록시 80→next. 윈도우 로컬은 80 여유 시 바로 가능.)
+   · resolveServiceUrl(home api.ts / admin auth.ts): HTTP 분기에서 포트 80이면 :80 생략 → http://호스트.
+     admin HOME_URL 포트 8001→80 (goToLogin=http://chinbiz.kr/login). API(9001)·admin(3100) 포트는 유지.
+   · CORS(application.yml): 포트없는 오리진 추가 — http://localhost, http://127.0.0.1, http://175.125.94.198
+     (기존 :* 패턴은 80 무포트 오리진 미매칭이라 홈80 접속 시 차단됨 → 무포트 오리진 명시). chinbiz.kr 는 기존 포함.
+   · FE API 헬퍼 네트워크실패 처리(unhandledRejection 방지): admin/home lib/api.ts apiGet/apiPost/send/apiUpload
+     를 try/catch로 감싸 실패 시 {ok:false,status:0,message:"서버에 연결할 수 없습니다."} 반환.
+     AlarmBell.load()·read 도 catch 추가. (BE 미연결 시 콘솔 unhandledRejection 스팸 제거)
+   · 검증: http://localhost(80) 홈 렌더 + check-id 200(CORS 무포트 오리진 통과), resolveApi=localhost:9001,
+     admin /master 콘솔 에러 0. BE=200/HOME=200(80)/ADMIN=200.
+
+  [보완 2026-07-31c] nginx 리버스 프록시 배포 예시 (chinbiz.kr)
+   · deploy/nginx/chinbiz.kr.conf : nginx(80→443) + 서브도메인 라우팅
+     - https://chinbiz.kr → home(내부8001), https://admin.chinbiz.kr → admin(내부3100),
+       각 도메인 /api·/uploads → BE(9001). API 는 same-origin 프록시라 CORS 미발생.
+     - HTTP→HTTPS 리다이렉트 + certbot(acme-challenge) 경로, 하단에 [HTTP 전용 임시] 블록 포함.
+   · deploy/nginx/README.md : DNS(A 3개), 내부포트(home 80→8001 환원), FE env(빌드전 NEXT_PUBLIC_ADMIN_URL=
+     https://admin.chinbiz.kr / NEXT_PUBLIC_HOME_URL=https://chinbiz.kr — 서브도메인 이동 링크용, API는 불필요),
+     PM2 기동, certbot 발급, 방화벽(80/443 열고 3100/9001/8001 내부만) 절차.
+   · ※ nginx 사용 시 home 은 80이 아닌 8001 내부포트로 구동(nginx가 80/443 점유).
+
+====================================================================
+[추가] docs/19.txt 작업 — 매니저 다중센터 신청(manager_center) (2026-08-01)
+====================================================================
+■ 신규 테이블 manager_center (buzz_id, center_id, apply_date, approve_date, status[I신청/Y승인]).
+   버즈회원 매니저신청 시 최대 3개 센터 선택 → 센터별 1행. UNIQUE(buzz_id,center_id).
+   migration_new_fields.sql / schema_chin4.sql 반영.
+■ BE:
+   - ManagerCenter 엔티티/Repo. BuzzManagerController.apply(centerIds[] 최대3, 검증·중복제거) → manager_center INSERT(I).
+     status(GET) = manager_center 기준 종합(Y>I>N) + 센터별 내역(status/신청일/승인일).
+   - CenterManagerController: applications/managers = manager_center(status I/Y, center=내센터), approve = 해당
+     (buzz,내센터) 행 Y+승인일. user.role=MANAGER 승급 + user.manager_* denorm 동기화(공지/알람 라우팅 호환).
+   - BuzzSalesController.intake = 내 승인센터(manager_center Y, 최대3)들의 customerCenterId IN → 미배정 1차영업.
+     row()에 활동센터명(customer_center_id→center 표시명) 추가(intake·managed 공용).
+   - ManagerCenterBackfill(@Order25): 기존 user.manager_status(I/Y)+manager_center_id → manager_center 멱등 이관.
+■ FE:
+   - ManagerApplyForm: 지역본부→센터 선택 후 [추가]로 최대3개 칩 관리, centerIds 전송. 신청현황=센터별 승인/심사중 배지.
+   - ManagerSalesSection(버즈1차접수현황/2차영업관리): [활동센터] 컬럼 추가.
+■ 검증(로컬): buzz19test 3센터(강남/강동/광명) 신청→status 3행 I, center21 승인→강남 Y·나머지 I·role MANAGER,
+   intake 4건(활동센터=강남구) 반환·표시, backfill로 기존 매니저(buzzgn2/p5manager/test002 등) 이관. 콘솔 에러 0.
+   ※ 테스트 데이터: buzz19test(승인 매니저)/buzz19b(신청폼용) 등.
+
+  [보완 2026-08-01b] 다중센터 매니저 공지/PWA 미수신 문제 수정 (docs/19 후속)
+   · 원인: 공지 대상해석/가시성이 user.manager_center_id(대표 1센터)만 참조 → 매니저의 2·3번째 승인센터로
+     발행한 공지는 대상에서 누락(웹푸시 미발송) + 매니저 목록에도 미표시.
+   · 수정(manager_center 승인(Y) 전체 활동센터 참조):
+     - NoticeRecipientResolver.resolveAccounts(MANAGER): findByRoleAndManagerCenterId → managerCenterRepo
+       .findByCenterIdAndStatus(targetId,'Y') 의 buzzId 매니저 전원. (웹푸시 대상 = 해당 센터 승인 매니저 전원)
+     - MyNoticeController: context/mySpec/get 을 단일 managerCenterId → 승인센터 List(targetId IN centers)로 변경.
+   · 검증: buzz19test(대표 21, 승인 21·22) → 강동구(22) 매니저 공지 발행 시 /api/my/notices 에 정상 노출(수정 전 미노출).
+   · [관련 미수정, 참고] AlarmService.fireSaleEvent 의 MGMT_CENTER, fireManagerApply/Approve 는 아직 단일
+     manager_center_id 사용 → 영업 관련 '관리센터' 알람은 대표센터에만 라우팅. 필요 시 동일 방식으로 확장 가능.
+
+  [정리 2026-08-01c] user 매니저 denorm 필드 5종 제거 → 전부 manager_center 로 이전 (docs/19 마무리)
+   · 남은 소비처 이전:
+     - AllowanceService.createForAssign: MANAGER_CENTER 수당 = manager.managerCenterId → sale.customerCenterId
+       (이 영업의 지역센터 = 매니저 활동센터 중 하나). 다중센터 정확.
+     - AlarmService: fireManagerApply(신청 각 센터 루프·센터별 문구), fireManagerApprove(centerId 인자),
+       fireEduApply(managerCenterAdmins=승인 활동센터 전원), fireSaleEvent MGMT_CENTER = sale.customerCenterId.
+       + managerCenterRepo 주입, managerCenterAdmins() 헬퍼.
+     - CenterSalesController: 소속매니저 = managerIdsOfCenter(manager_center Y) 헬퍼로 교체(2곳).
+     - CenterManagerController.approve / BuzzManagerController.apply: user denorm 동기화 write 제거(역할 승급만 유지).
+   · 제거: User.managerCenterId/managerCode/managerStatus/managerSdate/managerEdate + getter/setter,
+     UserRepository.findByRoleAndManagerCenterId, ManagerCenterBackfill.java(→ SQL backfill 로 대체).
+   · DB: migration_new_fields.sql 에 (1)user→manager_center INSERT IGNORE backfill (2)user 5컬럼 DROP 추가.
+     schema_chin4.sql user 정의에서 5컬럼 제거. 로컬 chin4 는 컬럼 DROP 적용 완료.
+   · 검증(로컬, denorm 제거 후): buzz19test status(role MANAGER·강남Y/강동Y/광명I), center21 승인매니저 목록,
+     강동구(22) 공지 수신 유지, center /sales/manager 200, buzz19b 2센터 신청→MANAGER_APPLY 알람 각 센터별 발송.
+     기동 오류 0.
+   ★ 서버(원격 DB) 반영: migration_new_fields.sql 의 backfill INSERT → 5컬럼 DROP 순서로 1회 실행 필요.
+
+  [보완 2026-08-01d] 영업 이벤트 알람 관리센터(MGMT_CENTER) 다중센터 확장 (요청)
+   · AlarmService.fireSaleEvent: MGMT_CENTER = centerAdmins(managerActivityCenterFor(managerId, sale.customerCenterId))
+     — 매니저의 승인 활동센터(manager_center Y) 중 이 영업의 지역센터로만 매칭(다른 센터로 미확산).
+     헬퍼 managerActivityCenterFor(managerId, saleCenterId): saleCenterId 가 매니저 승인센터에 포함되면 그 값, 아니면 null.
+   · ★소속센터(BUZZ_CENTER=CENTER 타겟)는 그대로 buzz.sales_center_id(대표센터) 매칭 유지(요청).
+   · 검증: sale56(매니저 buzz19test 활동 21·22, 영업지역 21) 구매확정 → MGMT_CENTER=center21 관리자(center,ctr_gangnam1)만,
+     center22(ctruitest01) 0건. BUZZ_CENTER=버즈(miltest01) sales_center_id=30(대표). MANAGER/DIVISION/REFERRER/BUZZ 정상.

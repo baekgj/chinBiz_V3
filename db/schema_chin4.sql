@@ -252,14 +252,88 @@ CREATE TABLE IF NOT EXISTS `user` (
   `account_number` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `bank_name` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `manager_center_id` bigint DEFAULT NULL,
-  `manager_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `manager_edate` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `manager_sdate` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `manager_status` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  -- 매니저 신청/승인/활동센터는 manager_center 테이블 참조 (docs/19에서 user.manager_* 제거)
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_user_id` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+-- 약관/동의서 (본사 [약관설정], docs/15)
+CREATE TABLE IF NOT EXISTS `terms` (
+  `code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci,
+  `sort_order` int DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 약관 동의 이력 (센터/본부 최초 로그인 동의)
+CREATE TABLE IF NOT EXISTS `term_agreement` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `login_id` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `term_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `agreed_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_term_agreement_login_code` (`login_id`,`term_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 알람 설정 (본사 [시스템설정]-[알람설정], docs/16)
+CREATE TABLE IF NOT EXISTS `alram_setting` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `process_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `process_name` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `trigger_desc` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `target` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_order` int DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `enabled` bit(1) NOT NULL DEFAULT b'0',
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_alram_setting_proc_target` (`process_code`,`target`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 매니저 활동센터 신청 (다중센터, docs/19)
+CREATE TABLE IF NOT EXISTS `manager_center` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `buzz_id` bigint NOT NULL,
+  `center_id` bigint NOT NULL,
+  `apply_date` date DEFAULT NULL,
+  `approve_date` date DEFAULT NULL,
+  `status` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT 'I',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_manager_center_buzz_center` (`buzz_id`,`center_id`),
+  KEY `idx_manager_center_center` (`center_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 환경설정 키-값 (본사 [환경설정] 추천마일리지 등, docs/18)
+CREATE TABLE IF NOT EXISTS `app_setting` (
+  `code` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 발생 알람 (docs/16)
+CREATE TABLE IF NOT EXISTS `alram` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `process_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_name` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_role` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `ref_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ref_id` bigint DEFAULT NULL,
+  `read_flag` varchar(1) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N',
+  `read_at` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_alram_recipient` (`recipient_id`),
+  KEY `idx_alram_process` (`process_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

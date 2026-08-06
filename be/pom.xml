@@ -53,6 +53,24 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Web Push (VAPID) — Firebase 없이 웹표준 푸시 발송 -->
+		<dependency>
+			<groupId>nl.martijndwars</groupId>
+			<artifactId>web-push</artifactId>
+			<version>5.1.1</version>
+		</dependency>
+		<!-- web-push가 VAPID/암호화에 쓰는 BouncyCastle (트랜지티브 미포함 → 명시) -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.78.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.78.1</version>
+		</dependency>
+
 		<!-- JWT (jjwt 0.12.6) -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

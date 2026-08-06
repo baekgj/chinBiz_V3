@@ -12,6 +12,8 @@ import java.util.List;
 public interface AllowanceRepository extends JpaRepository<Allowance, AllowanceId>, JpaSpecificationExecutor<Allowance> {
     List<Allowance> findByOrderNo(String orderNo);
     List<Allowance> findByOrderNoAndType(String orderNo, Allowance.Type type);
+    /** 회원의 특정 유형·상태 전표 (docs/18: JOIN 마일리지 CP→MP 전환) */
+    List<Allowance> findByMemberIdAndTypeAndStatus(String memberId, Allowance.Type type, Allowance.Status status);
 
     /** 정산현황용 — 회원(member_id)+회원구분(들) 원장 (최신순) */
     List<Allowance> findByMemberIdAndMemberTypeInOrderBySeqDesc(String memberId, Collection<Allowance.MemberType> types);

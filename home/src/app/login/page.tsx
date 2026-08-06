@@ -47,8 +47,12 @@ export default function LoginPage() {
       if (res.ok && res.data?.token) {
         const storage = remember ? window.localStorage : window.sessionStorage;
         storage.setItem(TOKEN_KEY, res.data.token);
-        // 쿠키에도 저장 (localhost 포트 간 공유 → admin 3100에서 읽음)
-        document.cookie = `${TOKEN_KEY}=${res.data.token}; path=/; SameSite=Lax${remember ? "; max-age=86400" : ""}`;
+        // 쿠키에도 저장. 운영(chinbiz.kr)에서는 Domain=.chinbiz.kr 로 저장해 admin.chinbiz.kr 서브도메인과 공유
+        // (localhost/IP 에서는 Domain 생략 → 포트 간 공유). https 면 Secure.
+        const host = window.location.hostname;
+        const domainAttr = host.endsWith("chinbiz.kr") ? "; Domain=.chinbiz.kr" : "";
+        const secureAttr = window.location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = `${TOKEN_KEY}=${res.data.token}; path=/${domainAttr}; SameSite=Lax${secureAttr}${remember ? "; max-age=86400" : ""}`;
         setNoticeType("success");
         const path = ROLE_PATH[res.data.role] ?? "/master";
         setNotice(`${res.data.name}님 환영합니다! 워크스페이스로 이동합니다… (역할: ${res.data.role})`);

@@ -71,22 +71,7 @@ public class User {
     @Column(name = "agree_marketing", nullable = false)
     private boolean agreeMarketing = false;
 
-    // --- 매니저 승급 신청 (docs/07) ---
-    /** 매니저 신청 상태: N=미신청(기본), I=신청접수, Y=신청승인 */
-    @Column(name = "manager_status", length = 1)
-    private String managerStatus = "N";
-    /** 매니저 코드(승인 시 부여) */
-    @Column(name = "manager_code", length = 20)
-    private String managerCode;
-    /** 매니저 관리센터 ID (신청 시 선택) */
-    @Column(name = "manager_center_id")
-    private Long managerCenterId;
-    /** 매니저 신청일 (YYYY-MM-DD) */
-    @Column(name = "manager_sdate", length = 10)
-    private String managerSdate;
-    /** 매니저 승인/종료일 */
-    @Column(name = "manager_edate", length = 20)
-    private String managerEdate;
+    // 매니저 신청/승인/활동센터는 manager_center 테이블이 소스 (docs/19에서 user.manager_* 필드 제거)
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -132,15 +117,5 @@ public class User {
     public void setAccountHolder(String v) { this.accountHolder = v; }
     public boolean isAgreeMarketing() { return agreeMarketing; }
     public void setAgreeMarketing(boolean agreeMarketing) { this.agreeMarketing = agreeMarketing; }
-    public String getManagerStatus() { return managerStatus; }
-    public void setManagerStatus(String v) { this.managerStatus = v; }
-    public String getManagerCode() { return managerCode; }
-    public void setManagerCode(String v) { this.managerCode = v; }
-    public Long getManagerCenterId() { return managerCenterId; }
-    public void setManagerCenterId(Long v) { this.managerCenterId = v; }
-    public String getManagerSdate() { return managerSdate; }
-    public void setManagerSdate(String v) { this.managerSdate = v; }
-    public String getManagerEdate() { return managerEdate; }
-    public void setManagerEdate(String v) { this.managerEdate = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

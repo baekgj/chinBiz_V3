@@ -32,11 +32,14 @@ public class AdminSalesController {
     private final PartnerRepository partnerRepo;
     private final UserRepository userRepo;
     private final com.chinbiz.api.allowance.AllowanceService allowanceService;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     public AdminSalesController(SaleRepository saleRepo, ProductRepository productRepo, PartnerRepository partnerRepo,
-                                UserRepository userRepo, com.chinbiz.api.allowance.AllowanceService allowanceService) {
+                                UserRepository userRepo, com.chinbiz.api.allowance.AllowanceService allowanceService,
+                                com.chinbiz.api.alarm.AlarmService alarmService) {
         this.saleRepo = saleRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo;
         this.userRepo = userRepo; this.allowanceService = allowanceService;
+        this.alarmService = alarmService;
     }
 
     /** 매니저 변경(재배정) 가능 여부: 매니저 배정됨 + 상태(접수/상담·방문) + 배정 7일 경과 */
@@ -96,6 +99,9 @@ public class AdminSalesController {
 
         // 1) 매니저 수당 상계(CANCEL, −금액)
         allowanceService.cancelManagerAllowance(s.getOrderNo());
+
+        // [매니저취소] 알람 (매니저/관리센터/버즈/센터) — 매니저 정보 초기화 전에 발송. docs/16
+        try { alarmService.fireSaleEvent("MANAGER_CANCEL", s); } catch (Exception ignore) {}
 
         // 2) sale 초기화 + 메모 기록
         String stamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분"));

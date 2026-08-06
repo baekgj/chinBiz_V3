@@ -28,9 +28,12 @@ public class EducationAdminController {
     private final ProductRepository productRepo;
     private final PartnerRepository partnerRepo;
     private final UserRepository userRepo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
-    public EducationAdminController(EducationRepository eduRepo, ProductRepository productRepo, PartnerRepository partnerRepo, UserRepository userRepo) {
+    public EducationAdminController(EducationRepository eduRepo, ProductRepository productRepo, PartnerRepository partnerRepo, UserRepository userRepo,
+                                    com.chinbiz.api.alarm.AlarmService alarmService) {
         this.eduRepo = eduRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo; this.userRepo = userRepo;
+        this.alarmService = alarmService;
     }
 
     private String productName(Long id) { return id == null ? null : productRepo.findById(id).map(p -> p.getName()).orElse(null); }
@@ -69,6 +72,11 @@ public class EducationAdminController {
         User approver = auth == null ? null : userRepo.findByUserId(auth.getName()).orElse(null);
         e.setApproverId(approver == null ? null : approver.getId());
         eduRepo.save(e);
+        // [교육승인] 알람 (매니저 본인) — docs/16
+        try {
+            User mgr = e.getManagerId() == null ? null : userRepo.findById(e.getManagerId()).orElse(null);
+            if (mgr != null) alarmService.fireEduApprove(mgr, productName(e.getProductId()), e.getId());
+        } catch (Exception ignore) {}
         return ResponseEntity.ok(dto(e));
     }
 

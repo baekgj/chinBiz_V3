@@ -33,9 +33,12 @@ public class MyNoticeController {
     private final NoticeRepository repo;
     private final UserRepository userRepo;
     private final CenterCodeRepository centerCodeRepository;
+    private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo;
 
-    public MyNoticeController(NoticeRepository repo, UserRepository userRepo, CenterCodeRepository centerCodeRepository) {
+    public MyNoticeController(NoticeRepository repo, UserRepository userRepo, CenterCodeRepository centerCodeRepository,
+                             com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo) {
         this.repo = repo; this.userRepo = userRepo; this.centerCodeRepository = centerCodeRepository;
+        this.managerCenterRepo = managerCenterRepo;
     }
 
     private User me(Authentication auth) { return auth == null ? null : userRepo.findByUserId(auth.getName()).orElse(null); }
@@ -65,22 +68,30 @@ public class MyNoticeController {
         Role r = u.getRole();
         // 매니저는 버즈 뷰에서 BUZZ 공지를 조회 가능 (버즈admin 공지사항)
         if (r == Role.MANAGER && "BUZZ".equalsIgnoreCase(as))
-            return new Object[]{ Notice.Target.BUZZ, u.getSalesCenterId() };
-        if (r == Role.DIVISION_ADMIN) return new Object[]{ Notice.Target.DIVISION, u.getSalesCenterId() };
-        if (r == Role.CENTER_ADMIN)   return new Object[]{ Notice.Target.CENTER,   u.getSalesCenterId() };
-        if (r == Role.MANAGER)        return new Object[]{ Notice.Target.MANAGER,  u.getManagerCenterId() };
-        if (r == Role.BUZZ)           return new Object[]{ Notice.Target.BUZZ,     u.getSalesCenterId() };
+            return new Object[]{ Notice.Target.BUZZ, centersOf(u.getSalesCenterId()) };
+        if (r == Role.DIVISION_ADMIN) return new Object[]{ Notice.Target.DIVISION, centersOf(u.getSalesCenterId()) };
+        if (r == Role.CENTER_ADMIN)   return new Object[]{ Notice.Target.CENTER,   centersOf(u.getSalesCenterId()) };
+        if (r == Role.MANAGER)        return new Object[]{ Notice.Target.MANAGER,  approvedCenters(u.getId()) };
+        if (r == Role.BUZZ)           return new Object[]{ Notice.Target.BUZZ,     centersOf(u.getSalesCenterId()) };
         return null;
     }
 
-    private Specification<Notice> mySpec(Notice.Target target, Long myCenter) {
+    private List<Long> centersOf(Long id) { return id == null ? List.of() : List.of(id); }
+
+    /** 매니저의 승인된 활동센터(다중, docs/19) */
+    private List<Long> approvedCenters(Long buzzId) {
+        return managerCenterRepo.findByBuzzIdAndStatus(buzzId, "Y").stream()
+                .map(com.chinbiz.api.buzz.ManagerCenter::getCenterId).toList();
+    }
+
+    private Specification<Notice> mySpec(Notice.Target target, List<Long> myCenters) {
         return (r, q, cb) -> cb.and(
                 cb.isTrue(r.get("published")),
                 cb.equal(r.get("targetType"), target),
-                // 전체공지 OR 내 센터 대상
-                myCenter == null
+                // 전체공지 OR 내 센터(들) 대상
+                myCenters.isEmpty()
                         ? cb.isTrue(r.get("allFlag"))
-                        : cb.or(cb.isTrue(r.get("allFlag")), cb.equal(r.get("targetId"), myCenter))
+                        : cb.or(cb.isTrue(r.get("allFlag")), r.get("targetId").in(myCenters))
         );
     }
 
@@ -94,8 +105,9 @@ public class MyNoticeController {
         Object[] ctx = context(u, as);
         if (ctx == null) return ResponseEntity.ok(Map.of("content", List.of(), "page", 0, "size", size, "totalElements", 0, "totalPages", 0));
         Notice.Target target = (Notice.Target) ctx[0];
-        Long myCenter = (Long) ctx[1];
-        Page<Notice> pg = repo.findAll(mySpec(target, myCenter),
+        @SuppressWarnings("unchecked")
+        List<Long> myCenters = (List<Long>) ctx[1];
+        Page<Notice> pg = repo.findAll(mySpec(target, myCenters),
                 PageRequest.of(Math.max(page, 0), Math.max(size, 1), Sort.by(Sort.Direction.DESC, "id")));
         return ResponseEntity.ok(Map.of(
                 "content", pg.getContent().stream().map(n -> dto(n, false)).toList(),
@@ -111,9 +123,10 @@ public class MyNoticeController {
         Notice n = repo.findById(id).orElse(null);
         if (n == null || ctx == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "공지사항을 찾을 수 없습니다."));
         Notice.Target target = (Notice.Target) ctx[0];
-        Long myCenter = (Long) ctx[1];
+        @SuppressWarnings("unchecked")
+        List<Long> myCenters = (List<Long>) ctx[1];
         boolean visible = n.isPublished() && n.getTargetType() == target
-                && (n.isAllFlag() || (myCenter != null && myCenter.equals(n.getTargetId())));
+                && (n.isAllFlag() || myCenters.contains(n.getTargetId()));
         if (!visible) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "공지사항을 찾을 수 없습니다."));
         return ResponseEntity.ok(dto(n, true));
     }

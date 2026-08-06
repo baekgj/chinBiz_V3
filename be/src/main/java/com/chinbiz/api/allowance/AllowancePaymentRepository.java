@@ -20,4 +20,7 @@ public interface AllowancePaymentRepository extends JpaRepository<AllowancePayme
 
     /** [본사 정산내역/지급내역] fixed_month=검색월 + payment_flag(N/Y) */
     List<AllowancePayment> findByFixedMonthAndPaymentFlagOrderByIdDesc(String fixedMonth, String paymentFlag);
+
+    /** 지급여부별 건수 (대시보드 처리대기: payment_flag=N=출금승인 대기) */
+    long countByPaymentFlag(String paymentFlag);
 }

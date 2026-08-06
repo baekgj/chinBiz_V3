@@ -28,10 +28,11 @@ export default function ProductDetail({ id }: { id: string }) {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    apiGet<Detail>(`/api/buzz/products/${id}`).then((r) => {
+    const as = isManager ? "manager" : "buzz"; // 역할별 상품설명(docs/18)
+    apiGet<Detail>(`/api/buzz/products/${id}?as=${as}`).then((r) => {
       if (r.ok && r.data) setP(r.data); else setErr(r.message ?? "상품을 찾을 수 없습니다.");
     });
-  }, [id]);
+  }, [id, isManager]);
 
   if (err) return <p className="text-sm text-red-500">{err}</p>;
   if (!p) return <p className={`text-sm ${theme.cardSub}`}>불러오는 중…</p>;

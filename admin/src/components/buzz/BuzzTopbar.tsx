@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
+import AlarmBell from "@/components/AlarmBell";
 import { useBuzz } from "@/components/buzz/theme";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
@@ -103,9 +104,7 @@ export default function BuzzTopbar() {
               {isManager ? "버즈admin 보기" : "매니저admin 보기"}
             </button>
           )}
-          <button className={`relative grid h-9 w-9 place-items-center rounded-lg ${theme.iconBtn}`} aria-label="알림">
-            <Icon name="bell" className="h-5 w-5" />
-          </button>
+          <AlarmBell tone={isManager ? "dark" : "light"} />
           {/* 계정명 클릭 → 내정보 수정 */}
           <Link href="/buzz/profile"
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/buzz/profile") ? theme.acctActive : theme.acctIdle}`}>

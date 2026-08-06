@@ -84,3 +84,7 @@ html {
 .rte-content:focus { outline: none; }
 .rte-content img { max-width: 100%; height: auto; border-radius: 6px; margin: 0.5rem 0; display: block; }
 .rte-content img.rte-img-sel { outline: 2px solid #0ea5e9; outline-offset: 1px; }
+.rte-content blockquote { border-left: 3px solid #64748b; margin: 0.5rem 0; padding: 0.2rem 0.9rem; color: #94a3b8; }
+.rte-content hr { border: 0; border-top: 1px solid #334155; margin: 0.8rem 0; }
+.rte-content h1 { font-size: 1.4rem; font-weight: 800; margin: 0.6rem 0; }
+.rte-content a { word-break: break-all; }

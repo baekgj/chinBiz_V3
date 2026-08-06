@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Field from "@/components/auth/Field";
+import TermModal from "@/components/site/TermModal";
 import { apiGet, apiPost } from "@/lib/api";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,6 +72,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Form | "agree", string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [viewTerm, setViewTerm] = useState<{ code: string; title: string } | null>(null);
 
   const set = (k: keyof Form) => (v: string) => setF((prev) => ({ ...prev, [k]: v }));
 
@@ -353,8 +355,8 @@ export default function SignupPage() {
             전체 약관에 동의합니다
           </label>
           <div className="mt-3 space-y-2 border-t border-line pt-3">
-            <AgreeRow label="(필수) 이용약관 동의" checked={agree.terms} onChange={(v) => toggleOne("terms", v)} />
-            <AgreeRow label="(필수) 개인정보 수집·이용 동의" checked={agree.privacy} onChange={(v) => toggleOne("privacy", v)} />
+            <AgreeRow label="(필수) 이용약관 동의" checked={agree.terms} onChange={(v) => toggleOne("terms", v)} onView={() => setViewTerm({ code: "BUZZ", title: "버즈회원 이용약관" })} />
+            <AgreeRow label="(필수) 개인정보 수집·이용 동의" checked={agree.privacy} onChange={(v) => toggleOne("privacy", v)} onView={() => setViewTerm({ code: "PRIVACY_CONSENT", title: "개인정보 수집·이용 동의" })} />
             <AgreeRow label="(선택) 마케팅 정보 수신 동의" checked={agree.marketing} onChange={(v) => toggleOne("marketing", v)} />
           </div>
           {errors.agree && <p className="mt-2 text-xs text-danger">{errors.agree}</p>}
@@ -381,6 +383,10 @@ export default function SignupPage() {
           로그인
         </Link>
       </p>
+
+      {viewTerm && (
+        <TermModal code={viewTerm.code} title={viewTerm.title} onClose={() => setViewTerm(null)} />
+      )}
     </AuthLayout>
   );
 }
@@ -389,10 +395,12 @@ function AgreeRow({
   label,
   checked,
   onChange,
+  onView,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  onView?: () => void;
 }) {
   return (
     <label className="flex cursor-pointer items-center justify-between text-sm text-ink-soft">
@@ -405,9 +413,15 @@ function AgreeRow({
         />
         {label}
       </span>
-      <a href="#" className="text-xs text-muted hover:text-forest-600" onClick={(e) => e.stopPropagation()}>
-        보기
-      </a>
+      {onView && (
+        <button
+          type="button"
+          className="text-xs text-muted underline hover:text-forest-600"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onView(); }}
+        >
+          보기
+        </button>
+      )}
     </label>
   );
 }

@@ -27,7 +27,7 @@ function Start-Svc($name, $dir, $cmd, $port) {
 
 $run = @{
     be    = { Start-Svc "BE"    "be"    ".\mvnw.cmd -DskipTests spring-boot:run" 9001 }
-    home  = { Start-Svc "HOME"  "home"  "npm run dev" 8001 }
+    home  = { Start-Svc "HOME"  "home"  "npm run dev" 80 }
     admin = { Start-Svc "ADMIN" "admin" "npm run dev" 3100 }
 }
 
@@ -43,7 +43,7 @@ foreach ($t in $targets) {
 Write-Host ""
 Write-Host "가동 완료. 각 창에서 로그를 확인하세요:" -ForegroundColor Green
 Write-Host "  - BE    : http://localhost:9001  (Swagger: /swagger-ui/index.html)"
-Write-Host "  - HOME  : http://localhost:8001"
+Write-Host "  - HOME  : http://localhost  (포트 80)"
 Write-Host "  - ADMIN : http://localhost:3100"
 Write-Host ""
 Write-Host "종료하려면 각 창을 닫거나  .\stop-all.ps1  실행"

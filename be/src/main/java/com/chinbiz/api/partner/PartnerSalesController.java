@@ -31,11 +31,14 @@ public class PartnerSalesController {
     private final PartnerRepository partnerRepo;
     private final UserRepository userRepo;
     private final com.chinbiz.api.allowance.AllowanceService allowanceService;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     public PartnerSalesController(SaleRepository saleRepo, ProductRepository productRepo, PartnerRepository partnerRepo,
-                                  UserRepository userRepo, com.chinbiz.api.allowance.AllowanceService allowanceService) {
+                                  UserRepository userRepo, com.chinbiz.api.allowance.AllowanceService allowanceService,
+                                  com.chinbiz.api.alarm.AlarmService alarmService) {
         this.saleRepo = saleRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo;
         this.userRepo = userRepo; this.allowanceService = allowanceService;
+        this.alarmService = alarmService;
     }
 
     /** 내 상품에 접수된 sale 인지 검증 후 (sale, product) 반환. 아니면 null */
@@ -61,6 +64,8 @@ public class PartnerSalesController {
         allowanceService.confirmOrder(s.getOrderNo());
         s.setStatus("구매확정");
         saleRepo.save(s);
+        // [거래확정] 알람 (버즈/센터/매니저/관리센터/본부/추천인) — docs/16
+        try { alarmService.fireSaleEvent("ORDER_CONFIRM", s); } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", "구매확정 처리되었습니다.", "status", s.getStatus()));
     }
 
@@ -76,6 +81,8 @@ public class PartnerSalesController {
         allowanceService.cancelOrder(s, p); // 상태 변경 전 현재 상태 기준으로 처리
         s.setStatus("취소/반품");
         saleRepo.save(s);
+        // [주문취소] 알람 (버즈/추천인/센터/본사/관리센터/매니저) — docs/16
+        try { alarmService.fireSaleEvent("ORDER_CANCEL", s); } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", "취소/반품 처리되었습니다.", "status", s.getStatus()));
     }
 

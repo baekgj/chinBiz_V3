@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 
 const NAV = [
-  { label: "친비즈 소개", href: "#service" },
-  { label: "상품 둘러보기", href: "#market" },
-  { label: "업무 프로세스", href: "#process" },
-  { label: "공지사항", href: "#partner" },
+  { label: "친비즈 소개", href: "/about" },
+  { label: "상품 둘러보기", href: "/products" },
+  { label: "업무 프로세스", href: "/process" },
+  { label: "공지사항", href: "/#partner" },
 ];
 
 export default function Header() {

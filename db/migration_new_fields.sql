@@ -97,6 +97,13 @@ CALL chinbiz_add_col('product','simple_delivery', "`simple_delivery` bit(1) NOT 
 CALL chinbiz_add_col('product','cancel_fee_flag', "`cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0'");
 CALL chinbiz_add_col('product','cancel_amount',   "`cancel_amount` bigint DEFAULT 0");
 
+-- ── [product] 대상별 상품설명 5종 (docs/18) ──────────────────────────
+CALL chinbiz_add_col('product','desc_guest',   "`desc_guest` longtext");
+CALL chinbiz_add_col('product','desc_buzz',    "`desc_buzz` longtext");
+CALL chinbiz_add_col('product','desc_manager', "`desc_manager` longtext");
+CALL chinbiz_add_col('product','desc_partner', "`desc_partner` longtext");
+CALL chinbiz_add_col('product','desc_admin',   "`desc_admin` longtext");
+
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
 
 -- ── [신규 테이블] 정산(수당지급) allowance_payment (2026-07-24) ──────
@@ -113,5 +120,130 @@ CREATE TABLE IF NOT EXISTS `allowance_payment` (
   `account_number` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `account_bankname` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [신규 테이블] 약관/동의서 terms (2026-07-27, docs/15) ────────────
+--   본사 [시스템설정]-[약관설정]에서 10종 약관 등록·수정. home/버즈admin 노출.
+--   code: TOTAL/PRIVACY/BUZZ/MANAGER/CENTER/DIVISION/CENTER_PAPER/DIVISION_PAPER/PARTNER/PRIVACY_CONSENT
+CREATE TABLE IF NOT EXISTS `terms` (
+  `code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci,
+  `sort_order` int DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [신규 테이블] 약관 동의 이력 term_agreement (2026-07-28) ──────────
+--   센터/본부 담당자 최초 로그인 시 이용약관 동의 기록: 로그인ID·IP·동의시간·role·약관코드
+CREATE TABLE IF NOT EXISTS `term_agreement` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `login_id` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `term_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `agreed_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_term_agreement_login_code` (`login_id`,`term_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [신규 테이블] 알람 설정 alram_setting (2026-07-30 docs/16) ────────
+--   프로세스×수신대상 별 문구/사용여부. 본사 [시스템설정]-[알람설정]에서 관리.
+CREATE TABLE IF NOT EXISTS `alram_setting` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `process_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `process_name` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `trigger_desc` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `target` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_order` int DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `enabled` bit(1) NOT NULL DEFAULT b'0',
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_alram_setting_proc_target` (`process_code`,`target`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [신규 테이블] 발생 알람 alram (2026-07-30 docs/16) ────────────────
+CREATE TABLE IF NOT EXISTS `alram` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `process_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_name` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recipient_role` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `ref_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ref_id` bigint DEFAULT NULL,
+  `read_flag` varchar(1) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N',
+  `read_at` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_alram_recipient` (`recipient_id`),
+  KEY `idx_alram_process` (`process_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- (기존 alram 테이블이 이미 있는 경우 read_at 컬럼만 추가 — 이미 있으면 오류 무시)
+-- ALTER TABLE `alram` ADD COLUMN `read_at` datetime(6) DEFAULT NULL;  (docs/17, ddl-auto 자동반영)
+
+-- ── [신규 테이블] 환경설정 키-값 app_setting (2026-07-31 docs/18) ─────
+--   추천마일리지: join_cp_buzz(가입버즈 CP), join_cp_referrer(추천인 CP). 본사 [환경설정]에서 관리.
+CREATE TABLE IF NOT EXISTS `app_setting` (
+  `code` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- allowance.type ENUM 에 JOIN 추가(가입 추천마일리지). ★ENUM 컬럼이라 ddl-auto 미반영 → 수동 ALTER 필수:
+ALTER TABLE `allowance` MODIFY COLUMN `type` ENUM('ORDER','CANCEL','CANCEL_FEE','JOIN') NOT NULL;
+
+-- ── [신규 테이블] 매니저 활동센터 신청 manager_center (2026-08-01 docs/19) ──
+--   버즈회원 매니저신청 시 최대 3개 센터 선택 → 센터별 1행. status I=신청 / Y=승인.
+CREATE TABLE IF NOT EXISTS `manager_center` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `buzz_id` bigint NOT NULL,
+  `center_id` bigint NOT NULL,
+  `apply_date` date DEFAULT NULL,
+  `approve_date` date DEFAULT NULL,
+  `status` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT 'I',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_manager_center_buzz_center` (`buzz_id`,`center_id`),
+  KEY `idx_manager_center_center` (`center_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [이관 backfill] 기존 user.manager_* → manager_center (2026-08-01, docs/19) ──
+--   기존 신청/승인 매니저를 manager_center 로 이관. ★user 컬럼 DROP 전에 반드시 실행.
+--   (user 테이블에 아직 manager_* 컬럼이 남아 있을 때만 동작. 컬럼 삭제 후엔 이 INSERT 는 오류 → 스킵)
+INSERT IGNORE INTO `manager_center` (`buzz_id`,`center_id`,`apply_date`,`approve_date`,`status`)
+SELECT id, manager_center_id,
+       CASE WHEN manager_sdate REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}' THEN STR_TO_DATE(manager_sdate,'%Y-%m-%d') ELSE CURDATE() END,
+       CASE WHEN manager_status='Y' AND LEFT(manager_edate,10) REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}' THEN STR_TO_DATE(LEFT(manager_edate,10),'%Y-%m-%d') ELSE NULL END,
+       manager_status
+FROM `user`
+WHERE manager_center_id IS NOT NULL AND manager_status IN ('I','Y');
+
+-- ── [컬럼 제거] user 매니저 denorm 필드 5종 (docs/19에서 manager_center 로 이관 완료) ──
+--   ★위 backfill 실행 후에 1회 실행. 이미 없으면 "check that column exists" 오류(무시 가능).
+ALTER TABLE `user`
+  DROP COLUMN `manager_center_id`,
+  DROP COLUMN `manager_code`,
+  DROP COLUMN `manager_status`,
+  DROP COLUMN `manager_sdate`,
+  DROP COLUMN `manager_edate`;
+-- 완료.
+
+
+-- ── [신규 테이블] 웹푸시 구독 push_subscription (2026-08-01 모바일 PWA) ─────
+--   PWA 알림 권한 허용 시 브라우저 구독(endpoint+키)을 로그인 계정과 묶어 저장. 웹푸시 발송 대상.
+--   account = 로그인 아이디(user.user_id / partner.partner_id 공용). endpoint = 기기/브라우저 단위 고유.
+CREATE TABLE IF NOT EXISTS `push_subscription` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `account` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `endpoint` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `p256dh` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `auth` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_push_endpoint` (`endpoint`),
+  KEY `idx_push_account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- 완료.

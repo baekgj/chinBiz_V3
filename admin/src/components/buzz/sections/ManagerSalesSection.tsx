@@ -10,7 +10,7 @@ import AssignModal from "@/components/buzz/AssignModal";
 
 type Sale = {
   id: number; createdAt: string; productId: number; productName: string; partnerName: string; customerName: string; buzzName: string; status: string;
-  managerId?: number | null; assignedManagerName?: string; mine?: boolean; eduApproved?: boolean;
+  centerName?: string | null; managerId?: number | null; assignedManagerName?: string; mine?: boolean; eduApproved?: boolean;
 };
 type PageResp = { content: Sale[]; page: number; totalPages: number; totalElements: number };
 
@@ -45,7 +45,7 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
 
   useEffect(() => { load(0); }, [load]);
 
-  const colCount = mode === "intake" ? 7 : 6;
+  const colCount = 8;
 
   function IntakeAction({ s }: { s: Sale }) {
     if (s.eduApproved) return <button onClick={() => setAssignId(s.id)} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${theme.primaryBtn}`}>배정받기</button>;
@@ -69,7 +69,7 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
         sub={mode === "intake" ? `총 ${total}건 · 내 관리센터 소속 버즈의 미배정 1차영업` : `총 ${total}건 · 내가 배정받은 2차 관리영업`}
       >
         <div className={`overflow-x-auto rounded-xl border ${theme.tableWrap}`}>
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead>
               <tr className={`text-xs ${theme.thead}`}>
                 <th className="px-4 py-3 text-left font-semibold">등록일</th>
@@ -77,6 +77,7 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
                 <th className="px-4 py-3 text-left font-semibold">파트너사</th>
                 <th className="px-4 py-3 text-left font-semibold">고객명</th>
                 <th className="px-4 py-3 text-left font-semibold">1차영업자</th>
+                <th className="px-4 py-3 text-left font-semibold">활동센터</th>
                 <th className="px-4 py-3 text-center font-semibold">영업단계</th>
                 <th className="px-4 py-3 text-center font-semibold">{mode === "intake" ? "배정" : "관리"}</th>
               </tr>
@@ -97,6 +98,7 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
                     <Link href={`/buzz/pipeline/${s.id}`} className={`font-bold hover:underline ${theme.cellMain}`}>{s.customerName ?? "-"}</Link>
                   </td>
                   <td className={`px-4 py-3 ${theme.cellSub}`}>{s.buzzName ?? "-"}</td>
+                  <td className={`px-4 py-3 ${theme.cellSub}`}>{s.centerName ?? "-"}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${DONE.has(s.status) ? theme.stageDone : theme.stageOn}`}>{s.status}</span>
                   </td>

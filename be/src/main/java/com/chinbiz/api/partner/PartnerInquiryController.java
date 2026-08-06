@@ -18,8 +18,11 @@ import java.util.Map;
 public class PartnerInquiryController {
 
     private final PartnerInquiryRepository repo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
-    public PartnerInquiryController(PartnerInquiryRepository repo) { this.repo = repo; }
+    public PartnerInquiryController(PartnerInquiryRepository repo, com.chinbiz.api.alarm.AlarmService alarmService) {
+        this.repo = repo; this.alarmService = alarmService;
+    }
 
     private Map<String, Object> dto(PartnerInquiry q) {
         Map<String, Object> m = new LinkedHashMap<>();
@@ -53,6 +56,8 @@ public class PartnerInquiryController {
         q.setMessage(req.message());
         q.setStatus("NEW");
         repo.save(q);
+        // [파트너상담] 알람 (본사) — docs/16
+        try { alarmService.firePartnerInquiry(q.getCompanyName(), q.getId()); } catch (Exception ignore) {}
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "입점 상담 신청이 접수되었습니다. 24시간 이내 연락드립니다."));
     }
 

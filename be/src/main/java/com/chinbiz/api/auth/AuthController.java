@@ -31,15 +31,24 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final com.chinbiz.api.org.CenterMatcher centerMatcher;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
+    private final com.chinbiz.api.allowance.AllowanceRepository allowanceRepository;
+    private final com.chinbiz.api.setting.AppSettingRepository appSettingRepository;
 
     public AuthController(UserRepository userRepository, PartnerRepository partnerRepository,
                           JwtUtil jwtUtil, PasswordEncoder passwordEncoder,
-                          com.chinbiz.api.org.CenterMatcher centerMatcher) {
+                          com.chinbiz.api.org.CenterMatcher centerMatcher,
+                          com.chinbiz.api.alarm.AlarmService alarmService,
+                          com.chinbiz.api.allowance.AllowanceRepository allowanceRepository,
+                          com.chinbiz.api.setting.AppSettingRepository appSettingRepository) {
         this.userRepository = userRepository;
         this.partnerRepository = partnerRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.centerMatcher = centerMatcher;
+        this.alarmService = alarmService;
+        this.allowanceRepository = allowanceRepository;
+        this.appSettingRepository = appSettingRepository;
     }
 
     /** 현재 로그인 사용자 정보 (JWT 검증됨). 토큰 없거나 무효면 401. */
@@ -110,7 +119,21 @@ public class AuthController {
         }
         if (scid == null) scid = centerMatcher.matchCenterIdx(req.address());
         u.setSalesCenterId(scid);
+
+        // 추천마일리지(docs/18): 추천인 없거나 미존재 → dukebaek 강제. 추천인/가입버즈 모두 CP 지급.
+        String refInput = req.referralCode();
+        User referrer = (refInput != null && !refInput.isBlank())
+                ? userRepository.findByUserId(refInput.trim()).orElse(null) : null;
+        String effectiveRefId = referrer != null ? referrer.getUserId() : "dukebaek";
+        u.setReferralCode(effectiveRefId); // 강제 지정 반영
+
         userRepository.save(u);
+
+        // 추천마일리지 CP 지급 (allowance JOIN/CP) — docs/18
+        try { grantJoinMileage(u.getUserId(), effectiveRefId); } catch (Exception ignore) {}
+
+        // [회원가입] 알람 발생 (센터/본부/본사 + 추천인) — docs/16
+        try { alarmService.fireSignup(u); } catch (Exception ignore) { /* 알람 실패가 가입을 막지 않음 */ }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "id", u.getId(),
@@ -119,6 +142,28 @@ public class AuthController {
                 "role", u.getRole().name(),
                 "message", "회원가입이 완료되었습니다."
         ));
+    }
+
+    /** 가입 추천마일리지 CP 지급 — 가입버즈(BUZZ) + 추천인(TOPBUZZ) 각각 JOIN/CP 전표 Insert. */
+    private void grantJoinMileage(String joinerId, String referrerId) {
+        long buzzCp = appSettingRepository.getLong(com.chinbiz.api.setting.AppSettingController.JOIN_CP_BUZZ, 500);
+        long refCp = appSettingRepository.getLong(com.chinbiz.api.setting.AppSettingController.JOIN_CP_REFERRER, 500);
+        String orderNo = "join_" + java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "_" + joinerId;
+        allowanceRepository.save(joinAllowance(orderNo, com.chinbiz.api.allowance.Allowance.MemberType.BUZZ, joinerId, buzzCp));
+        allowanceRepository.save(joinAllowance(orderNo, com.chinbiz.api.allowance.Allowance.MemberType.TOPBUZZ, referrerId, refCp));
+    }
+
+    private com.chinbiz.api.allowance.Allowance joinAllowance(String orderNo,
+            com.chinbiz.api.allowance.Allowance.MemberType type, String memberId, long amount) {
+        com.chinbiz.api.allowance.Allowance a = new com.chinbiz.api.allowance.Allowance();
+        a.setType(com.chinbiz.api.allowance.Allowance.Type.JOIN);
+        a.setOrderNo(orderNo);
+        a.setMemberType(type);
+        a.setMemberId(memberId);
+        a.setStatus(com.chinbiz.api.allowance.Allowance.Status.CP);
+        a.setAmount(amount);
+        return a;
     }
 
     public record AccountFindRequest(String userId, String email, String phone, String newPassword) {}

@@ -2,6 +2,9 @@ package com.chinbiz.api.notice;
 
 import com.chinbiz.api.org.CenterCode;
 import com.chinbiz.api.org.CenterCodeRepository;
+import com.chinbiz.api.push.WebPushService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,12 +25,19 @@ import java.util.Map;
 @RequestMapping("/api/notices")
 public class NoticeController {
 
+    private static final Logger log = LoggerFactory.getLogger(NoticeController.class);
+
     private final NoticeRepository repo;
     private final CenterCodeRepository centerCodeRepository;
+    private final NoticeRecipientResolver recipientResolver;
+    private final WebPushService webPushService;
 
-    public NoticeController(NoticeRepository repo, CenterCodeRepository centerCodeRepository) {
+    public NoticeController(NoticeRepository repo, CenterCodeRepository centerCodeRepository,
+                            NoticeRecipientResolver recipientResolver, WebPushService webPushService) {
         this.repo = repo;
         this.centerCodeRepository = centerCodeRepository;
+        this.recipientResolver = recipientResolver;
+        this.webPushService = webPushService;
     }
 
     private String targetName(Long idx) {
@@ -85,6 +95,8 @@ public class NoticeController {
         Notice n = new Notice();
         apply(n, req);
         repo.save(n);
+        // 발행된 공지면 대상 회원에게 웹푸시 발송 (실패해도 공지 저장엔 영향 없음)
+        pushIfPublished(n);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto(n));
     }
 
@@ -94,8 +106,11 @@ public class NoticeController {
         if (n == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "공지사항을 찾을 수 없습니다."));
         String err = validate(req);
         if (err != null) return ResponseEntity.badRequest().body(Map.of("message", err));
+        boolean wasPublished = n.isPublished();
         apply(n, req);
         repo.save(n);
+        // 미발행→발행 전환 시에만 푸시 (수정 시마다 중복 발송 방지)
+        if (!wasPublished) pushIfPublished(n);
         return ResponseEntity.ok(dto(n));
     }
 
@@ -127,5 +142,29 @@ public class NoticeController {
     private Notice.Target parseTarget(String s) {
         if (s == null) return null;
         try { return Notice.Target.valueOf(s.trim().toUpperCase()); } catch (Exception e) { return null; }
+    }
+
+    /** 발행된 공지면 대상 회원 해석 → 웹푸시 발송. 예외는 격리(공지 저장 트랜잭션과 분리). */
+    private void pushIfPublished(Notice n) {
+        if (!n.isPublished()) return;
+        try {
+            List<String> accounts = recipientResolver.resolveAccounts(n);
+            if (accounts.isEmpty()) return;
+            String body = excerpt(n.getContent(), 80);
+            String url = recipientResolver.workspacePath(n.getTargetType());
+            webPushService.sendToAccounts(accounts, n.getTitle(), body, url);
+        } catch (Exception e) {
+            log.warn("[notice] 공지 푸시 발송 실패 noticeId={} : {}", n.getId(), e.getMessage());
+        }
+    }
+
+    /** HTML 태그 제거 후 앞부분 발췌(푸시 본문용) */
+    private String excerpt(String html, int max) {
+        if (html == null) return "";
+        String text = html.replaceAll("<[^>]*>", " ")
+                .replace("&nbsp;", " ").replace("&amp;", "&")
+                .replace("&lt;", "<").replace("&gt;", ">")
+                .replaceAll("\\s+", " ").trim();
+        return text.length() <= max ? text : text.substring(0, max) + "…";
     }
 }

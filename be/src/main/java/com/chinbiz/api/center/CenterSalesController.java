@@ -35,16 +35,24 @@ public class CenterSalesController {
     private final ProductRepository productRepo;
     private final CategoryRepository categoryRepo;
     private final PartnerRepository partnerRepo;
+    private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo;
 
     private static final String STATUS_CONFIRMED = "구매확정";
 
     public CenterSalesController(UserRepository userRepo, SaleRepository saleRepo, ProductRepository productRepo,
-                                 CategoryRepository categoryRepo, PartnerRepository partnerRepo) {
+                                 CategoryRepository categoryRepo, PartnerRepository partnerRepo,
+                                 com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo) {
         this.userRepo = userRepo; this.saleRepo = saleRepo; this.productRepo = productRepo;
-        this.categoryRepo = categoryRepo; this.partnerRepo = partnerRepo;
+        this.categoryRepo = categoryRepo; this.partnerRepo = partnerRepo; this.managerCenterRepo = managerCenterRepo;
     }
 
     private User me(Authentication auth) { return auth == null ? null : userRepo.findByUserId(auth.getName()).orElse(null); }
+
+    /** 내 센터를 활동센터로 승인(Y)받은 매니저 user.id 집합 (docs/19 다중센터) */
+    private Set<Long> managerIdsOfCenter(Long centerIdx) {
+        return managerCenterRepo.findByCenterIdAndStatus(centerIdx, "Y").stream()
+                .map(com.chinbiz.api.buzz.ManagerCenter::getBuzzId).collect(Collectors.toSet());
+    }
 
     /** 소속 버즈회원 — 가입일자·아이디·회원명·영업수·완료수 */
     @GetMapping("/buzz-members")
@@ -103,9 +111,7 @@ public class CenterSalesController {
         Long myCenter = me.getSalesCenterId();
         if (myCenter == null) return ResponseEntity.ok(Map.of("content", List.of()));
 
-        Set<Long> mgrIds = userRepo.findByRole(Role.MANAGER).stream()
-                .filter(u -> myCenter.equals(u.getManagerCenterId()))
-                .map(User::getId).collect(Collectors.toSet());
+        Set<Long> mgrIds = managerIdsOfCenter(myCenter);
         List<Sale> sales = saleRepo.findAll().stream()
                 .filter(s -> s.getManagerId() != null && mgrIds.contains(s.getManagerId())).toList();
         return ResponseEntity.ok(Map.of("content", aggregateByProduct(sales, false)));
@@ -133,8 +139,7 @@ public class CenterSalesController {
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         Long myCenter = me.getSalesCenterId();
         if (myCenter == null) return ResponseEntity.ok(Map.of("content", List.of()));
-        Set<Long> mgrIds = userRepo.findByRole(Role.MANAGER).stream()
-                .filter(u -> myCenter.equals(u.getManagerCenterId())).map(User::getId).collect(Collectors.toSet());
+        Set<Long> mgrIds = managerIdsOfCenter(myCenter);
         List<Sale> sales = saleRepo.findAll().stream()
                 .filter(s -> s.getManagerId() != null && mgrIds.contains(s.getManagerId()))
                 .sorted(Comparator.comparing(Sale::getId).reversed()).toList();

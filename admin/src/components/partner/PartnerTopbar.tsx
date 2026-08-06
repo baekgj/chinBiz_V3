@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
+import AlarmBell from "@/components/AlarmBell";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
@@ -75,10 +76,7 @@ export default function PartnerTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button className="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="긴급 알림">
-            <Icon name="bell" className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[9px] font-bold text-white">2</span>
-          </button>
+          <AlarmBell tone="light" />
           {/* 업체명 클릭 → 내정보 수정 */}
           <Link href="/partner/profile"
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/partner/profile") ? "bg-sky-50 text-sky-700" : "text-slate-600 hover:bg-slate-100"}`}>

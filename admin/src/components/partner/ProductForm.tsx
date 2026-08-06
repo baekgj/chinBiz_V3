@@ -296,8 +296,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
         <h3 className="mb-3 text-sm font-black text-slate-900">상품 설명 및 규정</h3>
         <div className="space-y-4">
           <div className="block">
-            <span className="text-xs font-semibold text-slate-500">상품 설명</span>
-            <div className="mt-1"><RichTextEditor theme="light" value={f.description} onChange={set("description")} placeholder="상품 상세 설명 (서식·이미지 삽입·크기조절 지원)" /></div>
+            <span className="text-xs font-semibold text-slate-500">상품 설명 <span className="font-normal text-slate-400">(파트너 전용)</span></span>
+            <div className="mt-1"><RichTextEditor theme="light" value={f.description} onChange={set("description")} placeholder="파트너 전용 상품 상세 설명 (서식·이미지 삽입·크기조절 지원)" /></div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">

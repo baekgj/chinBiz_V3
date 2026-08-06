@@ -73,7 +73,8 @@ public class PartnerProductController {
         m.put("mgmtCenterReward", p.getMgmtCenterReward());
         m.put("divisionReward", p.getDivisionReward());
         m.put("hqReward", p.getHqReward());
-        m.put("description", p.getDescription());
+        // 파트너 전용 상품설명(docs/18) — 미등록 시 레거시 description 폴백
+        m.put("description", (p.getDescPartner() != null && !p.getDescPartner().isBlank()) ? p.getDescPartner() : p.getDescription());
         m.put("installPolicy", p.getInstallPolicy());
         m.put("returnPolicy", p.getReturnPolicy());
         m.put("onSale", p.isOnSale());
@@ -182,7 +183,7 @@ public class PartnerProductController {
         p.setMgmtCenterReward(n(req.mgmtCenterReward()));
         p.setDivisionReward(n(req.divisionReward()));
         p.setHqReward(n(req.hqReward()));
-        p.setDescription(req.description());
+        p.setDescPartner(req.description()); // 파트너 전용 상품설명(docs/18)
         p.setInstallPolicy(req.installPolicy());
         p.setReturnPolicy(req.returnPolicy());
         p.setOnSale(req.onSale() == null ? true : req.onSale());

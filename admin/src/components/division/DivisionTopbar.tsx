@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
+import AlarmBell from "@/components/AlarmBell";
 import { apiGet } from "@/lib/api";
 import { dv } from "@/components/division/DivisionUI";
 
@@ -73,7 +74,7 @@ export default function DivisionTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button className={`relative grid h-9 w-9 place-items-center rounded-lg ${dv.iconBtn}`} aria-label="알림"><Icon name="bell" className="h-5 w-5" /></button>
+          <AlarmBell tone="dark" />
           <Link href="/division/profile" className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/division/profile") ? dv.acctActive : dv.acctIdle}`}>
             {name ? `${name}님` : "내 정보"}
           </Link>

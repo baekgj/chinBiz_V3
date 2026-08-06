@@ -28,9 +28,12 @@ public class BuzzEducationController {
     private final ProductRepository productRepo;
     private final PartnerRepository partnerRepo;
     private final UserRepository userRepo;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
-    public BuzzEducationController(EducationRepository eduRepo, ProductRepository productRepo, PartnerRepository partnerRepo, UserRepository userRepo) {
+    public BuzzEducationController(EducationRepository eduRepo, ProductRepository productRepo, PartnerRepository partnerRepo, UserRepository userRepo,
+                                   com.chinbiz.api.alarm.AlarmService alarmService) {
         this.eduRepo = eduRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo; this.userRepo = userRepo;
+        this.alarmService = alarmService;
     }
 
     private User me(Authentication auth) { return auth == null ? null : userRepo.findByUserId(auth.getName()).orElse(null); }
@@ -88,6 +91,8 @@ public class BuzzEducationController {
         e.setAutoAssign(autoAssign);
         if (e.getCompletedAt() == null) e.setCompletedAt(LocalDateTime.now());
         eduRepo.save(e);
+        // [교육신청] 알람 (센터/본사) — docs/16
+        try { alarmService.fireEduApply(me, p.getName(), e.getId()); } catch (Exception ignore) {}
         return ResponseEntity.ok(Map.of("message", autoAssign ? "교육완료 및 자동배정 동의로 처리되었습니다." : "교육완료(자동배정 미동의)로 처리되었습니다.",
                 "completed", true, "approved", e.isApproved(), "autoAssign", autoAssign));
     }

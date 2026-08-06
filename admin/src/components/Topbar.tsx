@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { titleForPath } from "./nav";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "./Icon";
+import AlarmBell from "./AlarmBell";
 
 export default function Topbar() {
   const pathname = usePathname();
@@ -20,10 +21,7 @@ export default function Topbar() {
         <span className="hidden items-center gap-1.5 rounded-full border border-pos/30 bg-pos/10 px-3 py-1.5 text-xs font-semibold text-pos sm:inline-flex">
           <span className="h-1.5 w-1.5 rounded-full bg-pos" /> 실시간 정산 연동
         </span>
-        <button className="relative grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-navy-800 hover:text-slate-100" aria-label="알림">
-          <Icon name="bell" className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-danger text-[9px] font-bold text-white">3</span>
-        </button>
+        <AlarmBell tone="dark" />
         <button
           onClick={() => { clearToken(); goToLogin(); }}
           className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-navy-800 hover:text-slate-100"

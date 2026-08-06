@@ -1,9 +1,9 @@
 # =====================================================================
 #  친비즈 V3 · 전체 서버 종료 스크립트
-#  포트 9001(BE) / 8001(HOME) / 3100(ADMIN) 를 점유한 프로세스를 종료한다.
+#  포트 9001(BE) / 80(HOME) / 3100(ADMIN) 를 점유한 프로세스를 종료한다.
 #  사용법:  .\stop-all.ps1
 # =====================================================================
-$ports = @{ 9001 = "BE"; 8001 = "HOME"; 3100 = "ADMIN" }
+$ports = @{ 9001 = "BE"; 80 = "HOME"; 3100 = "ADMIN" }
 
 foreach ($p in $ports.Keys) {
     $conns = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
