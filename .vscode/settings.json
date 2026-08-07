@@ -1,4 +1,20 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+
+    // ── Java 17 고정 (자동 업그레이드 방지) ──────────────────────────
+    // VSCode Java 언어서버/빌드가 항상 JDK 17을 쓰도록 기본 런타임 지정.
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-17",
+            "path": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot",
+            "default": true
+        }
+    ],
+    // 언어서버(JDT) 자체가 구동될 JVM도 17로 고정
+    "java.jdt.ls.java.home": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot",
+    // Maven이 사용할 JDK도 동일하게
+    "maven.terminal.customEnv": [
+        { "environmentVariable": "JAVA_HOME", "value": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot" }
+    ]
 }
