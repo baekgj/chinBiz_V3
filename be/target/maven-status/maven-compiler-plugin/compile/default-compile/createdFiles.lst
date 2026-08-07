@@ -14,6 +14,7 @@ com\chinbiz\api\setting\AppSetting.class
 com\chinbiz\api\partner\PartnerProductController$ProductRequest.class
 com\chinbiz\api\buzz\ManagerCenter.class
 com\chinbiz\api\terms\TermAgreementRepository.class
+com\chinbiz\api\rbac\AdminScopeRepository.class
 com\chinbiz\api\buzz\BuzzSalesController$SaleRequest.class
 com\chinbiz\api\edu\Education.class
 com\chinbiz\api\config\GlobalExceptionHandler.class
@@ -84,6 +85,7 @@ com\chinbiz\api\notice\PublicSiteController.class
 com\chinbiz\api\push\PushController$SubscribeRequest.class
 com\chinbiz\api\auth\dto\LoginRequest.class
 com\chinbiz\api\notice\NoticeController.class
+com\chinbiz\api\org\MasterManagerController.class
 com\chinbiz\api\notice\Notice$Target.class
 com\chinbiz\api\partner\PartnerInquiryController$StatusRequest.class
 com\chinbiz\api\alarm\AlarmDefs$TargetMsg.class
@@ -98,6 +100,7 @@ com\chinbiz\api\category\Category$Level.class
 com\chinbiz\api\category\CategoryRepository.class
 com\chinbiz\api\category\CategoryController.class
 com\chinbiz\api\partner\PartnerInquiryController$InquiryRequest.class
+com\chinbiz\api\rbac\AdminScope.class
 com\chinbiz\api\edu\EducationRepository.class
 com\chinbiz\api\auth\AuthController.class
 com\chinbiz\api\terms\TermSeeder.class
@@ -107,6 +110,7 @@ com\chinbiz\api\partner\PartnerInquiry.class
 com\chinbiz\api\center\CenterSettlementController.class
 com\chinbiz\api\terms\TermAgreementController$AgreeRequest.class
 com\chinbiz\api\org\OrgController$OrgMemberRequest.class
+com\chinbiz\api\rbac\AdminScopeController.class
 com\chinbiz\api\product\PublicProductController.class
 com\chinbiz\api\alarm\AlarmTarget.class
 com\chinbiz\api\setting\AppSettingController$Seeder.class

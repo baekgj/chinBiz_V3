@@ -336,4 +336,11 @@ CREATE TABLE IF NOT EXISTS `alram` (
   KEY `idx_alram_process` (`process_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 본사 RBAC 담당자 지정 (docs/20 Task4). 행 없음 = 슈퍼(전체 접근).
+CREATE TABLE IF NOT EXISTS `admin_scope` (
+  `login_id` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `areas` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`login_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

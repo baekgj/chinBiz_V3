@@ -77,10 +77,10 @@ export default function NetworkSection() {
         sub={`총 ${total}명 · 내가 추천/등록한 회원`}
         right={
           <div className="flex items-center gap-2">
-            {/* BUZZ 전용: 매니저 승급 신청 (신청 전엔 버튼, 접수/승인 시 상태) */}
-            {role === "BUZZ" && (mgrStatus === "N"
-              ? <Link href="/buzz/network/manager-apply" className={`rounded-xl px-4 py-2 text-sm font-bold ${theme.outlineBtn}`}>매니저 신청하기</Link>
-              : <Link href="/buzz/network/manager-apply" className={`rounded-xl px-3 py-2 text-xs font-bold ${theme.goldBadge}`}>{mgrStatus === "Y" ? "매니저 승인됨" : "매니저 신청 접수됨"}</Link>)}
+            {/* 매니저 승급: 신청 이력 없으면 [매니저 신청하기](BUZZ), 있으면 [매니저신청현황] */}
+            {mgrStatus === "N"
+              ? (role === "BUZZ" && <Link href="/buzz/network/manager-apply" className={`rounded-xl px-4 py-2 text-sm font-bold ${theme.outlineBtn}`}>매니저 신청하기</Link>)
+              : <Link href="/buzz/network/manager-apply" className={`rounded-xl px-4 py-2 text-sm font-bold ${theme.outlineBtn}`}>매니저신청현황</Link>}
             <Link href="/buzz/network/new" className={`rounded-xl px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>+ 회원 등록</Link>
           </div>
         }

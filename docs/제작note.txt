@@ -334,6 +334,9 @@ FE (home/src/)
 -- 웹푸시 구독(모바일 PWA) : db/migration_new_fields.sql 의 CREATE TABLE `push_subscription` 참조 (2026-08-01)
 --   CREATE TABLE `push_subscription` (id, account, endpoint UNIQUE, p256dh, auth, created_at)
 --   ddl-auto 자동 생성되나 배포용 병행. PWA 알림권한 허용 시 브라우저 구독을 로그인 계정과 저장.
+-- 본사 RBAC 담당자 지정 : db/migration_new_fields.sql 의 CREATE TABLE `admin_scope` 참조 (2026-08-07 docs/20)
+--   CREATE TABLE `admin_scope` (login_id PK, areas VARCHAR)  -- areas=CSV(A,B,C,D). 행 없음=슈퍼(전체 접근).
+--   ddl-auto 자동 생성되나 배포용 병행. MASTER_ADMIN 계정별 접근 메뉴영역 지정.
 
 ── [컬럼 추가] 서버 즉시 적용용(개별 ALTER) ─────────────────────
 -- product (계약종료일/설치상품/키워드배지)
@@ -780,3 +783,110 @@ CREATE TABLE IF NOT EXISTS `terms` (
    · ★소속센터(BUZZ_CENTER=CENTER 타겟)는 그대로 buzz.sales_center_id(대표센터) 매칭 유지(요청).
    · 검증: sale56(매니저 buzz19test 활동 21·22, 영업지역 21) 구매확정 → MGMT_CENTER=center21 관리자(center,ctr_gangnam1)만,
      center22(ctruitest01) 0건. BUZZ_CENTER=버즈(miltest01) sales_center_id=30(대표). MANAGER/DIVISION/REFERRER/BUZZ 정상.
+
+
+====================================================================
+[추가] docs/20.txt 작업 — 매니저신청 현황/관리 + RBAC 담당자 지정 외 (2026-08-07)
+====================================================================
+■ Task1. 버즈admin [버즈네트워크]: 매니저 신청건이 있으면 [매니저신청현황] 버튼 노출.
+   · NetworkSection.tsx — mgrStatus!=="N" 이면 [매니저신청현황] 링크(→ /buzz/network/manager-apply,
+     docs/19에서 센터별 신청 현황 렌더링). 신청 전(N)에는 기존 [매니저 신청하기].
+
+■ Task2. 버즈admin [내정보수정]: 소속센터명·추천회원(마스킹)·매니저 활동신청 지역 노출.
+   · Mask.java — userId(v): 앞 4자 유지 + 나머지 X. (홍길동→홍O동 name 마스킹은 기존 사용)
+   · UserSelfController.dto(): salesCenterName(center_code), referrerLabel(Mask.name+"("+Mask.userId+")"),
+     managerCenters[{centerName,status}] (manager_center findByBuzzId) 추가. CenterCodeRepository/
+     ManagerCenterRepository 주입 + centerName() 헬퍼.
+   · ProfileForm.tsx — Me 타입 확장 + 계정 섹션에 소속센터/추천회원 + "매니저 활동신청 지역"(센터별 승인/심사중 배지).
+
+■ Task3. 본사 [환경설정] 추천마일리지: 미입력/미존재 시 CP 지급대상(추천인) 설정화(하드코딩 dukebaek 제거).
+   · AppSettingController — JOIN_FALLBACK_REF="join_fallback_ref"(기본 dukebaek). list() putIfAbsent+Seeder.
+   · AppSettingRepository.getStr(code,def). AuthController.signup — fallbackRef = getStr(JOIN_FALLBACK_REF).
+   · settings/page.tsx — fallbackRef 입력칸 "미입력/미존재 시 [___] 에게 CP 지급됨" 저장 연동.
+
+■ Task5. 본사 [알람설정]: [매니저승인] 뒤에 [매니저취소](MANAGER_APPROVE_CANCEL) 알람 추가.
+   · AlarmDefs — MANAGER_APPROVE_CANCEL: [매니저]"매니저 활동량이 미비하여, 매니저 승인이 취소되었습니다."
+     [센터]"OOO회원(@@@)의 매니저 활동량이 미비하여, 매니저 승인이 취소되었습니다." (MANAGER_APPROVE도 센터 문구 보강)
+   · AlarmService — fireManagerApprove(manager,centerId) 센터 타겟 추가, fireManagerApproveCancel(manager,centerId) 신설.
+
+■ Task6. 본사 [조직망 및 영업관리] [회원리스트] 뒤 [매니저신청] 메뉴 신설(탭 신청접수/승인완료).
+   · MasterManagerController(/api/org/manager-applications): GET ?status=I|Y(전 센터), POST .../{buzzId}/{centerId}/approve
+     (mc.status=Y·role=MANAGER·fireManagerApprove), .../cancel(fireManagerApproveCancel→mc 행 삭제, 남은 Y 없으면 role=BUZZ).
+     승인완료(Y) 행은 최근3개월 2차영업 실적(건수·상품판매가 합) 포함.
+   · nav.ts 메뉴 추가, /master/organization/manager-applications 페이지 + ManagerApplications.tsx(탭 테이블).
+
+■ Task4. ★RBAC 담당자 지정 + 메뉴 접근 제어★
+   · 저장: admin_scope 테이블(login_id PK, areas CSV). 행 없음 = 슈퍼(전체 접근).
+     영역 A=파트너·상품·교육 / B=조직망·영업 / C=수당·정산 / D=공지·민원 / (시스템설정=SUPER 전용).
+   · BE: AdminScope 엔티티/repo, AdminScopeController(/api/rbac/admin-scopes) GET/PUT/DELETE.
+     - requireSuper(): 슈퍼(미지정 MASTER_ADMIN)만 RBAC 관리 가능(아니면 403).
+     - 자기잠금 방지: 슈퍼가 본인 계정에 영역 지정 시도 → 400 차단.
+     - /api/auth/me 응답에 adminScopes(A~D) 추가(MASTER_ADMIN만).
+   · FE: nav.ts 각 메뉴에 area 부여 + visibleNav(scopes)/pathAllowed(path,scopes)/isSuperScope 헬퍼.
+     MeContext(AuthGuard가 me 공급) → Sidebar가 visibleNav 로 메뉴 필터. AuthGuard가 담당영역 밖 경로 직접진입 시
+     허용 첫 메뉴로 리다이렉트. settings RBAC 카드 → RbacManager(계정×영역 체크박스 편집, 전체해제=슈퍼).
+   · 검증(로컬): admin=슈퍼(전체 8메뉴+시스템설정). 테스트계정에 [A,C] 지정 → 사이드바 대시보드+파트너+상품+교육+
+     수당정산만, /settings·/organization 직접진입 → /master 리다이렉트. me.adminScopes=[A,C]. 제한계정 RBAC관리 403,
+     본인 영역지정 400. 재기동 후 지정 영속. (테스트계정/전표/알람 정리 완료)
+
+■ DB: admin_scope 신규 테이블 → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+   AlarmDefs·app_setting 은 코드 시드(기동 시 자동). 신규 테이블 외 스키마 변경 없음.
+   ★ 서버(원격 DB): admin_scope CREATE TABLE 1회 적용(또는 BE ddl-auto=update 로 자동 생성).
+
+  [보완 2026-08-07b] 버즈 [매니저신청현황] — 신청지역별 상태 표시 + 3개 미만 시 지역 추가 신청 (요청)
+   · 화면(ManagerApplyForm.tsx): "매니저 신청 현황" 카드에 신청 지역별 상태(승인/심사중·신청/승인일자) 나열 +
+     신청 개수 < 3 이면 "활동 지역 추가 신청" 폼 노출("현재 N개 신청됨 · M개 더 신청 가능"). 3개 완료 시 폼 숨김.
+     센터 드롭다운은 이미 신청한 센터 제외, 이번 선택 개수는 남은 슬롯(3-기신청)까지. 제출 후 status 재조회.
+   · BE(BuzzManagerController.apply): 기존 I/Y 있으면 무조건 차단 → "총 3개 미만이면 추가 신청 허용"으로 변경.
+     기존 I·Y 센터 제외·중복 거부, 남은 개수(3-기존) 초과 거부, 이미 3개면 "이미 최대 3개" 거부. role BUZZ·MANAGER 허용.
+   · BE(AlarmService): fireManagerApply(applicant, centerIds) 오버로드 추가 → 추가 신청 시 이번 센터에만 [매니저신청]
+     알람 발송(기존 신청센터 중복 알람 방지). 무인자 버전은 I 상태 전체로 위임(기존 호출부 호환).
+   · 검증(로컬 E2E): 신규버즈 apply[21]→1개, 중복[21]→400, +[22,259]→3개, [46]→400(최대3). 브라우저:
+     현황 1개→추가폼(2개 가능)→강서구 추가·약관동의·제출→2개(1개 가능)→3번째 후 폼 숨김+"모두 신청되었습니다". (테스트계정 정리)
+
+  [보완 2026-08-07c] [담당자지정]에 [담당자 등록] 버튼 + MASTER_ADMIN 회원가입 (요청)
+   · BE(AdminScopeController): POST /api/rbac/admin-scopes/register (슈퍼 전용) — {userId,password,name,email,phone,areas?}
+     로 role=MASTER_ADMIN 계정 생성(BCrypt). AccountValidation(아이디 영숫자4~20·비번10자+) + user/partner 아이디 중복검사.
+     areas 지정 시 admin_scope 동시 저장. PasswordEncoder·PartnerRepository 주입, parseAreas/str 헬퍼로 정리.
+   · FE(RbacManager.tsx): 섹션 우측 상단 [+ 담당자 등록] 버튼 → 모달(아이디/비번/이름/휴대폰/이메일 + 담당영역 A~D 토글).
+     클라 검증(정규식·10자·이름) 후 register 호출, 성공 시 모달 닫고 목록 재조회. 등록된 담당자는 리스트에 표시되고
+     기존 체크박스로 영역 변경/전체해제 가능.
+   · 검증: BE E2E(등록201·중복409·짧은비번400·잘못된아이디400·비슈퍼403·신규계정 /me adminScopes) + 브라우저(모달 등록→
+     리스트 즉시 반영, D영역 지정 확인). 테스트계정(opadmin1·csadmin1) 정리 완료.
+
+  [보완 2026-08-07d] [담당자 등록] 화면에 [아이디 중복체크] 버튼 (요청)
+   · BE(AdminScopeController): GET /api/rbac/admin-scopes/check-id?userId= (슈퍼 전용) → {available} (user+partner 양쪽 검사).
+   · FE(RbacManager.tsx): 아이디 입력칸 옆 [아이디 중복체크] 버튼 + 결과 문구(사용 가능/이미 사용 중). 아이디 변경 시
+     결과 무효화, 등록 제출은 중복확인 통과(available) 시에만 허용("아이디 중복확인을 해주세요" 가드).
+   · 검증(BE): admin/partner→available:false, freshid→true. 브라우저: 모달에서 admin→"이미 사용 중",
+     변경 후 newadmin7→결과 초기화→체크→"사용 가능" 확인.
+
+  [보완 2026-08-07e] [담당자지정] 리스트 상태(운영/중지) 표시 + 토글 버튼 (요청)
+   · BE(AdminScopeController): list()에 status 추가(user.status, null/기타→ACTIVE, STOP만 STOP).
+     PUT /api/rbac/admin-scopes/{userId}/status {status:ACTIVE|STOP} (슈퍼 전용, MASTER_ADMIN 대상, 본인 중지 불가).
+   · BE(AuthController): status=STOP 계정은 로그인 403("중지된 계정입니다") + /me 403 → 중지 시 접근 차단.
+     (user.status 는 기존 필드 재사용, NULL=ACTIVE 취급. STOP 문자열만 차단.)
+   · FE(RbacManager.tsx): 리스트 오른쪽 끝에 [상태] 컬럼 — 운영중(초록)/중지(빨강) 배지 + 토글 버튼
+     (ACTIVE→[중지], STOP→[운영]). [중지] 클릭 시 confirm 후 status=STOP, [운영] 클릭 시 status=ACTIVE. 즉시 반영.
+   · 검증: BE E2E(등록ACTIVE→로그인ok→STOP→로그인403→본인중지400→ACTIVE복구→로그인ok) + 브라우저([상태]컬럼 렌더,
+     [중지] 클릭→배지 '중지'/버튼 '운영'으로 토글). 테스트계정(stopadm1) 정리 완료.
+
+  [수정 2026-08-07f] 본사 [회원정보수정](OrgMemberForm) 역할 표시 오류 + 하위추천회원 전체변경 버튼 노출 제한 (요청)
+   · 버그: /api/org/members 는 전 역할(BUZZ/MANAGER/CENTER/DIVISION/MASTER)을 반환하나, 수정화면 역할표시가
+     "DIVISION_ADMIN ? 본부 : 센터" 로만 처리되어 버즈/매니저 등도 '센터(CENTER_ADMIN)'로 잘못 표시됨.
+   · 수정(OrgMemberForm.tsx): ROLE_LABEL 맵으로 initial.role 실제 라벨 표시(버즈회원/관리매니저/센터/본부/본사관리자/파트너사).
+     [하위추천회원 소속센터 전체변경] 버튼·안내문구는 CASCADE_ROLES=[BUZZ,MANAGER,CENTER_ADMIN] 인 회원(수정모드)만 노출.
+   · 검증(브라우저): id9 BUZZ→"버즈회원 (BUZZ)"+버튼O, 16 MANAGER→"관리매니저"+버튼O, 13 CENTER→"센터"+버튼O,
+     12 DIVISION→"본부"+버튼X, 10 MASTER→"본사관리자"+버튼X. FE 전용(BE 무변경).
+
+  [수정 2026-08-07g] chinbiz.kr/master 404 — home→admin 리다이렉트 도메인 오류 (요청)
+   · 배포구조(deploy/caddy·nginx): chinbiz.kr→home(8001), admin.chinbiz.kr→admin(3100). /master 는 admin 앱 라우트.
+     → chinbiz.kr/master 는 home 앱으로 가서 404 (정상). admin 은 https://admin.chinbiz.kr/master 에 있음(실서버 응답 확인).
+   · 버그: home 로그인 후 리다이렉트 ADMIN_URL 이 HTTPS 에서 same-origin(chinbiz.kr)으로 계산 → chinbiz.kr/master 로 보내 404.
+   · 수정:
+     - home/src/lib/api.ts resolveAdminUrl(): HTTPS 면 admin.<도메인> 서브도메인, HTTP 면 host:3100. login/page.tsx 적용.
+     - admin/src/lib/auth.ts resolveHomeUrl(): HTTPS 면 admin. 접두어 제거한 루트도메인(home), HTTP 면 host(:80).
+     - 토큰 쿠키는 이미 Domain=.chinbiz.kr 로 저장돼 서브도메인 공유 OK(변경 없음).
+   · ★ NEXT_PUBLIC 계열 런타임 해석이지만 클라이언트 코드 → home·admin 재빌드/재배포 필요.
+     (서버: home `npm run build && 재기동`, admin `npm run build && 재기동`. 로컬 http 동작은 기존과 동일 host:3100/:80.)
+   · 대안(단일도메인 원할 시): admin 에 basePath 도입 후 chinbiz.kr/<prefix>/* 프록시 — 미채택(서브도메인 구조 유지).

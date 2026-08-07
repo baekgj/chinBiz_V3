@@ -16,5 +16,8 @@
     // Maven이 사용할 JDK도 동일하게
     "maven.terminal.customEnv": [
         { "environmentVariable": "JAVA_HOME", "value": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot" }
-    ]
+    ],
+
+    // 확장 추천 알림 끄기 (Java 업그레이드/모더나이제이션 권유 팝업 방지)
+    "extensions.ignoreRecommendations": true
 }

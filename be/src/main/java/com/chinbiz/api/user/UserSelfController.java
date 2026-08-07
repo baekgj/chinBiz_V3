@@ -20,10 +20,21 @@ public class UserSelfController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.chinbiz.api.org.CenterCodeRepository centerCodeRepository;
+    private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepository;
 
-    public UserSelfController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserSelfController(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                             com.chinbiz.api.org.CenterCodeRepository centerCodeRepository,
+                             com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.centerCodeRepository = centerCodeRepository;
+        this.managerCenterRepository = managerCenterRepository;
+    }
+
+    private String centerName(Long idx) {
+        if (idx == null) return null;
+        return centerCodeRepository.findById(idx).map(com.chinbiz.api.org.CenterCode::displayName).orElse(null);
     }
 
     private Map<String, Object> dto(User u) {
@@ -41,6 +52,24 @@ public class UserSelfController {
         m.put("role", u.getRole().name());
         m.put("referralCode", u.getReferralCode());
         m.put("salesCenterId", u.getSalesCenterId());
+        m.put("salesCenterName", centerName(u.getSalesCenterId()));  // 소속센터명 (docs/20)
+        // 추천회원 : 홍O동(hongXXXX) — referral_code = 추천인 userId
+        String refLabel = null;
+        if (u.getReferralCode() != null && !u.getReferralCode().isBlank()) {
+            User ref = userRepository.findByUserId(u.getReferralCode().trim()).orElse(null);
+            if (ref != null) refLabel = com.chinbiz.api.common.Mask.name(ref.getName()) + "(" + com.chinbiz.api.common.Mask.userId(ref.getUserId()) + ")";
+            else refLabel = com.chinbiz.api.common.Mask.userId(u.getReferralCode());
+        }
+        m.put("referrerLabel", refLabel);
+        // 매니저 활동신청 지역 (manager_center, 다중)
+        java.util.List<Map<String, Object>> mcs = new java.util.ArrayList<>();
+        for (com.chinbiz.api.buzz.ManagerCenter mc : managerCenterRepository.findByBuzzId(u.getId())) {
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("centerName", centerName(mc.getCenterId()));
+            c.put("status", mc.getStatus());
+            mcs.add(c);
+        }
+        m.put("managerCenters", mcs);
         return m;
     }
 

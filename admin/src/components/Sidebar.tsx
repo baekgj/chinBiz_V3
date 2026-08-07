@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV, DASHBOARD_HREF } from "./nav";
+import { visibleNav, DASHBOARD_HREF } from "./nav";
+import { useAdminScopes } from "./MeContext";
 import Icon from "./Icon";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const scopes = useAdminScopes();
+  const nav = visibleNav(scopes);
   const isActive = (href: string) =>
     href === DASHBOARD_HREF ? pathname === DASHBOARD_HREF : pathname.startsWith(href);
 
@@ -27,7 +30,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV.map((n) => {
+        {nav.map((n) => {
           const active = isActive(n.href);
           const sectionOpen = n.children && pathname.startsWith(n.href);
           const childActive = (href: string) =>

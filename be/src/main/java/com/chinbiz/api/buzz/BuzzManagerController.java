@@ -112,31 +112,38 @@ public class BuzzManagerController {
 
     public record ApplyRequest(Long divisionIdx, List<Long> centerIds) {}
 
-    /** 매니저 신청 접수 — 최대 3개 센터를 manager_center 에 저장(status I) */
+    /** 매니저 신청 접수 — 활동센터를 manager_center 에 저장(status I). 총 3개 미만이면 추가 신청 허용(docs/20 후속). */
     @PostMapping("/apply")
     public ResponseEntity<?> apply(Authentication auth, @RequestBody ApplyRequest req) {
         User u = me(auth);
         if (u == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
-        if (u.getRole() != Role.BUZZ)
-            return ResponseEntity.badRequest().body(Map.of("message", "버즈회원만 매니저 신청이 가능합니다."));
-        if (managerCenterRepository.existsByBuzzIdAndStatus(u.getId(), "I"))
-            return ResponseEntity.badRequest().body(Map.of("message", "이미 매니저 신청이 접수되어 심사 중입니다."));
-        if (managerCenterRepository.existsByBuzzIdAndStatus(u.getId(), "Y"))
-            return ResponseEntity.badRequest().body(Map.of("message", "이미 매니저로 승인되었습니다."));
+        if (u.getRole() != Role.BUZZ && u.getRole() != Role.MANAGER)
+            return ResponseEntity.badRequest().body(Map.of("message", "버즈회원·관리매니저만 매니저 신청이 가능합니다."));
 
-        // 센터ID 검증 (1~3개, 중복 제거, 유효 센터)
+        // 기존 신청/승인 센터 (I·Y 모두) — 총 3개까지, 이미 신청한 센터는 재신청 불가
+        List<ManagerCenter> existing = managerCenterRepository.findByBuzzId(u.getId());
+        java.util.Set<Long> existingIds = new java.util.HashSet<>();
+        for (ManagerCenter mc : existing) existingIds.add(mc.getCenterId());
+        int remaining = MAX_CENTERS - existing.size();
+        if (remaining <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "이미 최대 " + MAX_CENTERS + "개 센터에 신청하셨습니다."));
+
+        // 센터ID 검증 (중복 제거, 기존센터 제외, 남은 개수 이내, 유효 센터)
         List<Long> ids = new ArrayList<>();
         if (req.centerIds() != null) for (Long id : req.centerIds()) if (id != null && !ids.contains(id)) ids.add(id);
         if (ids.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "활동 센터를 1개 이상 선택해 주세요."));
-        if (ids.size() > MAX_CENTERS) return ResponseEntity.badRequest().body(Map.of("message", "활동 센터는 최대 " + MAX_CENTERS + "개까지 선택할 수 있습니다."));
+        for (Long id : ids) if (existingIds.contains(id))
+            return ResponseEntity.badRequest().body(Map.of("message", "이미 신청했거나 승인된 센터가 포함되어 있습니다."));
+        if (ids.size() > remaining)
+            return ResponseEntity.badRequest().body(Map.of("message", "추가로 신청 가능한 센터는 " + remaining + "개입니다."));
         for (Long id : ids) if (centerCodeRepository.findById(id).isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "유효하지 않은 센터가 포함되어 있습니다."));
 
         LocalDate today = LocalDate.now();
         for (Long id : ids) managerCenterRepository.save(new ManagerCenter(u.getId(), id, today, "I"));
 
-        // [매니저신청] 알람 (신청한 각 센터) — docs/16·19
-        try { alarmService.fireManagerApply(u); } catch (Exception ignore) {}
+        // [매니저신청] 알람 — 이번에 신청한 센터에만 발송(기존 센터 중복 알람 방지) — docs/16·19·20
+        try { alarmService.fireManagerApply(u, ids); } catch (Exception ignore) {}
 
         List<Map<String, Object>> centers = ids.stream().map(id -> {
             Map<String, Object> m = new LinkedHashMap<>();

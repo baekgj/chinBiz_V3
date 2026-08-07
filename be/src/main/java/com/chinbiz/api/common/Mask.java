@@ -34,6 +34,14 @@ public final class Mask {
         return s;
     }
 
+    /** 아이디: 앞 4자 유지 + 나머지 X (예: hong1234 → hongXXXX) */
+    public static String userId(String v) {
+        if (v == null || v.isBlank()) return v;
+        String s = v.trim();
+        int keep = Math.min(4, s.length());
+        return s.length() <= keep ? s : s.substring(0, keep) + "X".repeat(s.length() - keep);
+    }
+
     public static String email(String v) {
         if (v == null || v.isBlank()) return v;
         String s = v.trim();

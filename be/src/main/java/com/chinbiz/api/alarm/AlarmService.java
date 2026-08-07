@@ -157,9 +157,15 @@ public class AlarmService {
 
     /** [매니저신청] 알람 — 신청한 각 센터(다중, docs/19)로 발송 */
     public int fireManagerApply(User applicant) {
+        List<Long> ids = managerCenterRepo.findByBuzzIdAndStatus(applicant.getId(), "I")
+                .stream().map(com.chinbiz.api.buzz.ManagerCenter::getCenterId).toList();
+        return fireManagerApply(applicant, ids);
+    }
+
+    /** [매니저신청] 알람 — 지정한 신청 센터에 대해서만 발송(추가 신청 시 기존 센터 중복 알람 방지). */
+    public int fireManagerApply(User applicant, java.util.Collection<Long> centerIds) {
         int created = 0;
-        for (com.chinbiz.api.buzz.ManagerCenter mc : managerCenterRepo.findByBuzzIdAndStatus(applicant.getId(), "I")) {
-            Long centerIdx = mc.getCenterId();
+        for (Long centerIdx : centerIds) {
             Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
             map.put(AlarmTarget.CENTER, centerAdmins(centerIdx));
             Map<String, String> tokens = Map.of("member", nz(applicant.getName()), "center", nz(centerName(centerIdx)));
@@ -168,12 +174,22 @@ public class AlarmService {
         return created;
     }
 
-    /** [매니저승인] 알람 — 승인된 매니저 본인 (승인 센터명 토큰) */
+    /** [매니저승인] 알람 — 승인된 매니저 + 승인 센터 관리자 */
     public int fireManagerApprove(User manager, Long centerIdx) {
         Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
         map.put(AlarmTarget.MANAGER, List.of(toRecipient(manager)));
-        Map<String, String> tokens = Map.of("member", nz(manager.getName()), "center", nz(centerName(centerIdx)));
+        map.put(AlarmTarget.CENTER, centerAdmins(centerIdx));
+        Map<String, String> tokens = Map.of("member", nz(manager.getName()), "customer", nz(manager.getUserId()), "center", nz(centerName(centerIdx)));
         return fire("MANAGER_APPROVE", map, tokens, "USER", manager.getId());
+    }
+
+    /** [매니저취소] 알람(승인취소) — 매니저 본인 + 해당 센터 관리자 (docs/20) */
+    public int fireManagerApproveCancel(User manager, Long centerIdx) {
+        Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
+        map.put(AlarmTarget.MANAGER, List.of(toRecipient(manager)));
+        map.put(AlarmTarget.CENTER, centerAdmins(centerIdx));
+        Map<String, String> tokens = Map.of("member", nz(manager.getName()), "customer", nz(manager.getUserId()), "center", nz(centerName(centerIdx)));
+        return fire("MANAGER_APPROVE_CANCEL", map, tokens, "USER", manager.getId());
     }
 
     // ───────────────────────── 상품 등록 ─────────────────────────

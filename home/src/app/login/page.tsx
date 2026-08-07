@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Field from "@/components/auth/Field";
-import { apiPost, TOKEN_KEY, resolveServiceUrl } from "@/lib/api";
+import { apiPost, TOKEN_KEY, resolveAdminUrl } from "@/lib/api";
 
 type LoginResponse = { token: string; name: string; role: string };
 
 // 로그인 후 role별 admin 워크스페이스 경로 (CLAUDE.md §2)
-// env 미지정 시 접속 host + 포트 3100으로 런타임 자동 구성(로컬/서버 자동 대응).
-const ADMIN_URL = resolveServiceUrl(process.env.NEXT_PUBLIC_ADMIN_URL, 3100, "http://175.125.94.198:3100");
+// admin 은 별개 앱(HTTPS=admin.<도메인> 서브도메인 / HTTP=host:3100) → resolveAdminUrl 로 해석.
+const ADMIN_URL = resolveAdminUrl();
 const ROLE_PATH: Record<string, string> = {
   MASTER_ADMIN: "/master",
   PARTNER: "/partner",

@@ -59,6 +59,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\CenterMatcher.
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\DivisionDashboardController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\DivisionSettlementController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\MasterDashboardController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\MasterManagerController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\MasterSettlementController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\OrgController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\dto\PartnerRequest.java
@@ -81,6 +82,9 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\push\PushControlle
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\push\PushSubscription.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\push\PushSubscriptionRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\push\WebPushService.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\rbac\AdminScope.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\rbac\AdminScopeController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\rbac\AdminScopeRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\setting\AppSetting.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\setting\AppSettingController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\setting\AppSettingRepository.java

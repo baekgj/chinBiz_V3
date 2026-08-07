@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { fetchMe, getToken, goToLogin, persistToken, ROLE_PATH, type Me } from "@/lib/auth";
+import { MeContext } from "./MeContext";
+import { pathAllowed, visibleNav } from "./nav";
 import Icon from "./Icon";
 
 type Status = "checking" | "ok" | "denied";
@@ -15,6 +18,7 @@ export default function AuthGuard({
 }) {
   const [status, setStatus] = useState<Status>("checking");
   const [me, setMe] = useState<Me | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     let alive = true;
@@ -32,6 +36,13 @@ export default function AuthGuard({
       }
       persistToken(token);
       if (allow.includes(info.role)) {
+        // RBAC 담당영역(docs/20 Task4): MASTER_ADMIN 이 담당영역 지정된 경우 허용 메뉴만 접근.
+        const scopes = info.adminScopes ?? [];
+        if (info.role === "MASTER_ADMIN" && scopes.length > 0 && !pathAllowed(pathname, scopes)) {
+          const home = visibleNav(scopes)[0]?.href ?? "/master";
+          window.location.href = home;
+          return;
+        }
         setMe(info);
         setStatus("ok");
       } else {
@@ -80,5 +91,5 @@ export default function AuthGuard({
     );
   }
 
-  return <>{children}</>;
+  return <MeContext.Provider value={me}>{children}</MeContext.Provider>;
 }

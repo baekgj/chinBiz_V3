@@ -7,6 +7,18 @@ import { apiGet, apiPost, apiPut } from "@/lib/api";
 const ID_RE = /^[a-zA-Z0-9]{4,20}$/;
 const inputCls = "w-full rounded-lg border border-line bg-navy-950 px-3 py-2 text-sm text-white outline-none focus:border-brand-500 placeholder:text-slate-600";
 
+// 실제 역할 표시 라벨 (회원 리스트는 전 역할을 포함)
+const ROLE_LABEL: Record<string, string> = {
+  BUZZ: "버즈회원 (BUZZ)",
+  MANAGER: "관리매니저 (MANAGER)",
+  CENTER_ADMIN: "센터 (CENTER_ADMIN)",
+  DIVISION_ADMIN: "본부 (DIVISION_ADMIN)",
+  MASTER_ADMIN: "본사관리자 (MASTER_ADMIN)",
+  PARTNER: "파트너사 (PARTNER)",
+};
+// 하위추천회원 소속센터 일괄변경 버튼 노출 역할 (버즈/매니저/센터)
+const CASCADE_ROLES = ["BUZZ", "MANAGER", "CENTER_ADMIN"];
+
 type Code = { idx: number; name: string; headName?: string; centerName?: string };
 type Division = { id: number; name: string; salesCenterId: number | null; centerName: string | null };
 export type OrgMember = {
@@ -46,6 +58,9 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
   const [centerCodes, setCenterCodes] = useState<Code[]>([]);      // 센터 후보
 
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+
+  // 하위추천회원 소속센터 전체변경 버튼 노출 여부 (수정 모드 · 버즈/매니저/센터)
+  const canCascade = isEdit && CASCADE_ROLES.includes(initial?.role ?? "");
 
   // 하위추천회원 소속센터 일괄변경 모달
   const [cascadeOpen, setCascadeOpen] = useState(false);
@@ -147,7 +162,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
           <Field label="역할" required>
             {isEdit ? (
               <div className="rounded-lg border border-line bg-navy-800 px-3 py-2 text-sm text-slate-300">
-                {role === "DIVISION_ADMIN" ? "본부 (DIVISION_ADMIN)" : "센터 (CENTER_ADMIN)"}
+                {ROLE_LABEL[initial?.role ?? ""] ?? (initial?.role ?? "-")}
               </div>
             ) : (
               <div className="flex gap-2">
@@ -160,13 +175,15 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
           </Field>
 
           {isEdit ? (
-            <Field label="소속" hint="하위 추천회원까지 일괄 변경하려면 아래 버튼 사용">
+            <Field label="소속" hint={canCascade ? "하위 추천회원까지 일괄 변경하려면 아래 버튼 사용" : undefined}>
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-lg border border-line bg-navy-800 px-3 py-2 text-sm text-slate-300">{initial?.centerName ?? "-"}</div>
-                <button type="button" onClick={() => { setCascadeOpen(true); setCMsg(null); }}
-                  className="shrink-0 rounded-lg border border-brand-500 px-3 py-2 text-xs font-bold text-brand-400 hover:bg-brand-600/15">
-                  하위추천회원 소속센터 전체변경
-                </button>
+                {canCascade && (
+                  <button type="button" onClick={() => { setCascadeOpen(true); setCMsg(null); }}
+                    className="shrink-0 rounded-lg border border-brand-500 px-3 py-2 text-xs font-bold text-brand-400 hover:bg-brand-600/15">
+                    하위추천회원 소속센터 전체변경
+                  </button>
+                )}
               </div>
             </Field>
           ) : role === "DIVISION_ADMIN" ? (

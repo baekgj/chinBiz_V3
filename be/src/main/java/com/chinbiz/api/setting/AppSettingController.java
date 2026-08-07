@@ -21,6 +21,8 @@ public class AppSettingController {
 
     public static final String JOIN_CP_BUZZ = "join_cp_buzz";
     public static final String JOIN_CP_REFERRER = "join_cp_referrer";
+    public static final String JOIN_FALLBACK_REF = "join_fallback_ref";  // 추천인 미입력/미존재 시 CP 받을 대상 id
+    public static final String JOIN_FALLBACK_DEFAULT = "dukebaek";
 
     private final AppSettingRepository repo;
 
@@ -33,6 +35,7 @@ public class AppSettingController {
         // 누락 키 기본값 채움
         m.putIfAbsent(JOIN_CP_BUZZ, "500");
         m.putIfAbsent(JOIN_CP_REFERRER, "500");
+        m.putIfAbsent(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
         return m;
     }
 
@@ -51,6 +54,7 @@ public class AppSettingController {
         @Override public void run(String... args) {
             if (repo.findById(JOIN_CP_BUZZ).isEmpty()) repo.put(JOIN_CP_BUZZ, "500");
             if (repo.findById(JOIN_CP_REFERRER).isEmpty()) repo.put(JOIN_CP_REFERRER, "500");
+            if (repo.findById(JOIN_FALLBACK_REF).isEmpty()) repo.put(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
         }
     }
 }

@@ -34,13 +34,15 @@ public class AuthController {
     private final com.chinbiz.api.alarm.AlarmService alarmService;
     private final com.chinbiz.api.allowance.AllowanceRepository allowanceRepository;
     private final com.chinbiz.api.setting.AppSettingRepository appSettingRepository;
+    private final com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepository;
 
     public AuthController(UserRepository userRepository, PartnerRepository partnerRepository,
                           JwtUtil jwtUtil, PasswordEncoder passwordEncoder,
                           com.chinbiz.api.org.CenterMatcher centerMatcher,
                           com.chinbiz.api.alarm.AlarmService alarmService,
                           com.chinbiz.api.allowance.AllowanceRepository allowanceRepository,
-                          com.chinbiz.api.setting.AppSettingRepository appSettingRepository) {
+                          com.chinbiz.api.setting.AppSettingRepository appSettingRepository,
+                          com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepository) {
         this.userRepository = userRepository;
         this.partnerRepository = partnerRepository;
         this.jwtUtil = jwtUtil;
@@ -49,6 +51,14 @@ public class AuthController {
         this.alarmService = alarmService;
         this.allowanceRepository = allowanceRepository;
         this.appSettingRepository = appSettingRepository;
+        this.adminScopeRepository = adminScopeRepository;
+    }
+
+    /** MASTER_ADMIN 담당영역(A~D). 미지정=빈 리스트=슈퍼(전체 접근). */
+    private java.util.List<String> adminScopesOf(String loginId) {
+        return adminScopeRepository.findById(loginId)
+                .map(s -> com.chinbiz.api.rbac.AdminScopeController.parse(s.getAreas()))
+                .orElse(java.util.List.of());
     }
 
     /** 현재 로그인 사용자 정보 (JWT 검증됨). 토큰 없거나 무효면 401. */
@@ -60,11 +70,14 @@ public class AuthController {
         String loginId = authentication.getName();
         User u = userRepository.findByUserId(loginId).orElse(null);
         if (u != null) {
+            if ("STOP".equalsIgnoreCase(u.getStatus()))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "중지된 계정입니다."));
             return ResponseEntity.ok(Map.of(
                     "userId", u.getUserId(),
                     "name", u.getName(),
                     "role", u.getRole().name(),
-                    "salesCenterId", u.getSalesCenterId() == null ? "" : u.getSalesCenterId()
+                    "salesCenterId", u.getSalesCenterId() == null ? "" : u.getSalesCenterId(),
+                    "adminScopes", u.getRole() == Role.MASTER_ADMIN ? adminScopesOf(u.getUserId()) : java.util.List.of()
             ));
         }
         // partner 테이블 계정
@@ -124,7 +137,10 @@ public class AuthController {
         String refInput = req.referralCode();
         User referrer = (refInput != null && !refInput.isBlank())
                 ? userRepository.findByUserId(refInput.trim()).orElse(null) : null;
-        String effectiveRefId = referrer != null ? referrer.getUserId() : "dukebaek";
+        String fallbackRef = appSettingRepository.getStr(
+                com.chinbiz.api.setting.AppSettingController.JOIN_FALLBACK_REF,
+                com.chinbiz.api.setting.AppSettingController.JOIN_FALLBACK_DEFAULT);
+        String effectiveRefId = referrer != null ? referrer.getUserId() : fallbackRef;
         u.setReferralCode(effectiveRefId); // 강제 지정 반영
 
         userRepository.save(u);
@@ -218,6 +234,9 @@ public class AuthController {
         // 1) user 테이블
         User u = userRepository.findByUserId(req.userId()).orElse(null);
         if (u != null && passwordEncoder.matches(req.password(), u.getPassword())) {
+            if ("STOP".equalsIgnoreCase(u.getStatus()))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "중지된 계정입니다. 관리자에게 문의해 주세요."));
             return ResponseEntity.ok(tokenBody(u.getUserId(), u.getName(), u.getRole().name()));
         }
         // 2) partner 테이블

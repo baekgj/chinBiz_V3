@@ -247,3 +247,15 @@ CREATE TABLE IF NOT EXISTS `push_subscription` (
   KEY `idx_push_account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- 완료.
+
+
+-- ── [신규 테이블] 본사 RBAC 담당자 지정 admin_scope (2026-08-07 docs/20 Task4) ─────
+--   MASTER_ADMIN 계정별 담당영역(A~D) 저장. 행 없음 = 슈퍼(전체 메뉴 접근).
+--   A=파트너·상품·교육, B=조직망/영업, C=수당/정산, D=공지·민원. areas = CSV(예 "A,C").
+--   ddl-auto=update 로 자동 생성되나, 신규 배포/원격 DB 수동 적용용으로 기재.
+CREATE TABLE IF NOT EXISTS `admin_scope` (
+  `login_id` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `areas` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`login_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 완료.

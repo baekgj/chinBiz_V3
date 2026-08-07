@@ -22,7 +22,23 @@ export function resolveServiceUrl(envValue: string | undefined, port: number, fa
 }
 
 export const API_BASE = resolveServiceUrl(process.env.NEXT_PUBLIC_API_URL, 9001, "http://175.125.94.198:9001");
-export const HOME_URL = resolveServiceUrl(process.env.NEXT_PUBLIC_HOME_URL, 80, "http://chinbiz.kr");
+
+/**
+ * home 앱 주소 해석 (admin → home 이동용). home 은 별개 앱이라 same-origin 이 아니다.
+ *   - env(NEXT_PUBLIC_HOME_URL) 우선.
+ *   - HTTPS 배포: admin.<도메인> 에서 admin. 접두어를 제거한 루트 도메인(home).
+ *   - HTTP(로컬/서버IP): 같은 host(포트 80, 생략).
+ */
+export function resolveHomeUrl(): string {
+  if (process.env.NEXT_PUBLIC_HOME_URL) return process.env.NEXT_PUBLIC_HOME_URL;
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (protocol === "https:") return `https://${hostname.replace(/^admin\./, "")}`;
+    return `${protocol}//${hostname}`;
+  }
+  return "http://chinbiz.kr";
+}
+export const HOME_URL = resolveHomeUrl();
 export const TOKEN_KEY = "chinbiz_token";
 
 // role → admin 경로 (home과 동일)
@@ -72,7 +88,7 @@ export function goToLogin() {
   if (typeof window !== "undefined") window.location.href = LOGIN_URL;
 }
 
-export type Me = { userId: string; name: string; role: string; salesCenterId?: string | number };
+export type Me = { userId: string; name: string; role: string; salesCenterId?: string | number; adminScopes?: string[] };
 
 /** /api/auth/me 로 토큰 검증 + 사용자 정보 조회 */
 export async function fetchMe(token: string): Promise<Me | null> {

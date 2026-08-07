@@ -10,6 +10,8 @@ type Me = {
   zipcode?: string; address?: string; addressDetail?: string;
   bankName?: string; accountNumber?: string; accountHolder?: string;
   role?: string; referralCode?: string;
+  salesCenterName?: string | null; referrerLabel?: string | null;
+  managerCenters?: { centerName: string; status: string }[];
 };
 
 // ★ 모듈 스코프 컴포넌트: 렌더마다 재생성되지 않아 입력 포커스가 유지된다.
@@ -71,8 +73,25 @@ export default function ProfileForm() {
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>계정 <span className={`text-xs font-medium ${theme.note}`}>(변경 불가)</span></h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="아이디" labelCls={lc} noteCls={nc}><div className={`rounded-lg border px-3 py-2 text-sm ${theme.roBox}`}>{me?.userId}</div></Field>
-          <Field label="역할" labelCls={lc} noteCls={nc}><div className={`rounded-lg border px-3 py-2 text-sm ${theme.roBox}`}>{me?.role === "MANAGER" ? "관리매니저" : "버즈회원"}{me?.referralCode ? ` · 추천코드 ${me.referralCode}` : ""}</div></Field>
+          <Field label="역할" labelCls={lc} noteCls={nc}><div className={`rounded-lg border px-3 py-2 text-sm ${theme.roBox}`}>{me?.role === "MANAGER" ? "관리매니저" : "버즈회원"}</div></Field>
+          <Field label="소속센터" labelCls={lc} noteCls={nc}><div className={`rounded-lg border px-3 py-2 text-sm ${theme.roBox}`}>{me?.salesCenterName ?? "-"}</div></Field>
+          <Field label="추천회원" labelCls={lc} noteCls={nc}><div className={`rounded-lg border px-3 py-2 text-sm ${theme.roBox}`}>{me?.referrerLabel ?? "-"}</div></Field>
         </div>
+        {me?.managerCenters && me.managerCenters.length > 0 && (
+          <div className="mt-4">
+            <span className={`text-xs font-semibold ${lc}`}>매니저 활동신청 지역</span>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {me.managerCenters.map((c, i) => (
+                <span key={i} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm ${theme.roBox}`}>
+                  {c.centerName}
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${c.status === "Y" ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500/20 text-amber-500"}`}>
+                    {c.status === "Y" ? "승인" : "심사중"}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className={theme.card}>

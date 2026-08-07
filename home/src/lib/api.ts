@@ -22,6 +22,27 @@ export function resolveServiceUrl(envValue: string | undefined, port: number, fa
 
 export const API_BASE = resolveServiceUrl(process.env.NEXT_PUBLIC_API_URL, 9001, "http://175.125.94.198:9001");
 
+/**
+ * admin 앱 주소 해석 (home → admin 리다이렉트용).
+ * admin 은 home 과 별개 Next 앱이므로 same-origin 이 아니다.
+ *   - env(NEXT_PUBLIC_ADMIN_URL) 우선.
+ *   - HTTPS 배포: 리버스 프록시 규칙과 동일하게 admin.<도메인> 서브도메인으로 라우팅.
+ *   - HTTP(로컬/서버IP): 같은 host + :3100.
+ */
+export function resolveAdminUrl(): string {
+  if (process.env.NEXT_PUBLIC_ADMIN_URL) return process.env.NEXT_PUBLIC_ADMIN_URL;
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (protocol === "https:") {
+      const base = hostname.replace(/^www\./, "");
+      const adminHost = base.startsWith("admin.") ? base : `admin.${base}`;
+      return `https://${adminHost}`;
+    }
+    return `${protocol}//${hostname}:3100`;
+  }
+  return "http://175.125.94.198:3100";
+}
+
 export type ApiResult<T> = {
   ok: boolean;
   status: number;

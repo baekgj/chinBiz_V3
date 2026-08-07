@@ -39,8 +39,13 @@ public final class AlarmDefs {
         new Def("MANAGER_APPLY", "매니저신청", "버즈ADMIN - 버즈네트워크 - 매니저신청",
             msg("OOO 버즈회원이 ㅁㅁㅁㅁ센터 소속 매니저 활동을 신청하였습니다.", CENTER)),
 
-        new Def("MANAGER_APPROVE", "매니저승인", "센터ADMIN - [소속매니저관리]/[매니저신청] 메뉴에서 [승인] 버튼 클릭시",
-            msg("ㅁㅁㅁㅁ센터의 소속 매니저 활동 승인 되었습니다.", MANAGER)),
+        new Def("MANAGER_APPROVE", "매니저승인", "센터ADMIN/본사admin 매니저 [승인] 버튼 클릭시", merge(
+            msg("ㅁㅁㅁㅁ센터의 소속 매니저 활동 승인 되었습니다.", MANAGER),
+            msg("OOO회원(@@@)의 ㅁㅁㅁㅁ센터 소속 매니저 활동이 승인되었습니다.", CENTER))),
+
+        new Def("MANAGER_APPROVE_CANCEL", "매니저취소", "본사admin - [조직망 및 영업관리]/[매니저신청]-[매니저 승인완료] [취소] 버튼", merge(
+            msg("매니저 활동량이 미비하여, 매니저 승인이 취소되었습니다.", MANAGER),
+            msg("OOO회원(@@@)의 매니저 활동량이 미비하여, 매니저 승인이 취소되었습니다.", CENTER))),
 
         new Def("PRODUCT_REGISTER", "상품등록", "본사admin - [상품관리]/[상품등록] 메뉴에서 상품 등록시",
             msg("********* 신규상품이 등록되었습니다.", BUZZ, MANAGER, CENTER)),

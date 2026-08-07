@@ -11,6 +11,12 @@ public interface AppSettingRepository extends JpaRepository<AppSetting, String> 
         }).orElse(def);
     }
 
+    /** 문자열 값 조회 (없거나 공백이면 기본값) */
+    default String getStr(String code, String def) {
+        return findById(code).map(AppSetting::getValue)
+                .filter(v -> v != null && !v.isBlank()).map(String::trim).orElse(def);
+    }
+
     /** 값 저장(upsert) */
     default void put(String code, String value) {
         AppSetting s = findById(code).orElseGet(() -> new AppSetting(code, value));

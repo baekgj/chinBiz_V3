@@ -14,6 +14,7 @@ export default function Icon({ name, className = "h-5 w-5" }: { name: string; cl
     logout: (<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h10" {...p} />),
     shield: (<path d="M12 3 5 6v5c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z" {...p} />),
     trend: (<path d="M4 17l6-6 4 4 6-8M14 7h6v6" {...p} />),
+    check: (<path d="M5 12.5 10 17.5 19 6.5" {...p} />),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
