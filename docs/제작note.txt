@@ -890,3 +890,10 @@ CREATE TABLE IF NOT EXISTS `terms` (
    · ★ NEXT_PUBLIC 계열 런타임 해석이지만 클라이언트 코드 → home·admin 재빌드/재배포 필요.
      (서버: home `npm run build && 재기동`, admin `npm run build && 재기동`. 로컬 http 동작은 기존과 동일 host:3100/:80.)
    · 대안(단일도메인 원할 시): admin 에 basePath 도입 후 chinbiz.kr/<prefix>/* 프록시 — 미채택(서브도메인 구조 유지).
+
+  [수정 2026-08-07h] 모바일/PWA 진입점(start_url "/") 세션 기반 자동 라우팅 (요청)
+   · 기존: admin/src/app/page.tsx = "친비즈 어드민 런처" 카드 목록(docs/mobile.jpg) 노출.
+   · 변경: 런처 미노출. 마운트 시 세션 판별 → 토큰 유효(fetchMe): ROLE_PATH[role] 대시보드로 이동 /
+     토큰 없음·무효: 로그인(/login)으로 이동. (이동 전 짧은 "이동 중…" 로딩만 표시)
+   · PWA manifest start_url="/" 이므로 모바일앱 실행 시 세션 있으면 바로 역할 대시보드, 없으면 로그인 화면.
+   · 검증(localhost:3100): 무세션 "/"→/login, MASTER_ADMIN 세션 "/"→/master. 런처 화면 미노출 확인.

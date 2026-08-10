@@ -1,45 +1,37 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { getToken, fetchMe, goToLogin, ROLE_PATH } from "@/lib/auth";
 import Icon from "@/components/Icon";
 
-const ROLES = [
-  { href: "/master", role: "MASTER_ADMIN", title: "본사 어드민 (HQ Master)", note: "우선순위 2 · 구축 완료", ready: true },
-  { href: "/partner", role: "PARTNER", title: "파트너 마스터 오피스", note: "우선순위 3", ready: false },
-  { href: "/buzz", role: "BUZZ / MANAGER", title: "버즈 · 관리매니저", note: "우선순위 4", ready: false },
-  { href: "/division", role: "DIVISION_ADMIN", title: "총괄본부 오피스", note: "우선순위 5", ready: false },
-  { href: "/center", role: "CENTER_ADMIN", title: "센추럴 마스터 오피스", note: "우선순위 6", ready: false },
-];
+/**
+ * PWA/모바일 진입점(start_url "/"). 런처 화면을 노출하지 않고 세션에 따라 자동 이동:
+ *  - 세션(토큰) 유효 → 해당 회원 역할(role) 대시보드로 이동
+ *  - 세션 없음/무효 → 로그인 화면(/login)
+ */
+export default function AdminEntry() {
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const token = getToken();
+      if (!token) { goToLogin(); return; }
+      const me = await fetchMe(token);
+      if (!alive) return;
+      if (!me) { goToLogin(); return; }        // 토큰 만료·무효 → 로그인
+      window.location.href = ROLE_PATH[me.role] ?? "/login";
+    })();
+    return () => { alive = false; };
+  }, []);
 
-export default function AdminLauncher() {
+  // 이동 전 짧은 로딩 표시 (런처/스플래시 미노출)
   return (
-    <div className="mx-auto max-w-3xl px-6 py-14">
-      <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-cyan-500 text-white">
-          <Icon name="shield" className="h-5 w-5" />
+    <div className="grid min-h-screen place-items-center">
+      <div className="flex flex-col items-center gap-3 text-slate-400">
+        <span className="grid h-12 w-12 animate-pulse place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-cyan-500 text-white">
+          <Icon name="shield" className="h-6 w-6" />
         </span>
-        <div>
-          <h1 className="text-xl font-black text-white">친비즈 어드민 런처</h1>
-          <p className="text-sm text-slate-500">로그인한 회원의 역할(role)에 따라 자동 이동됩니다. (직접 접근용 런처)</p>
-        </div>
+        <p className="text-sm">이동 중…</p>
       </div>
-
-      <ul className="mt-8 space-y-3">
-        {ROLES.map((r) => (
-          <li key={r.href}>
-            <Link
-              href={r.href}
-              className="flex items-center justify-between rounded-xl border border-line bg-navy-900 px-5 py-4 transition-colors hover:border-brand-500/40 hover:bg-navy-800"
-            >
-              <span>
-                <span className="block text-sm font-bold text-white">{r.title}</span>
-                <span className="block text-xs text-slate-500">{r.role} · {r.href}</span>
-              </span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${r.ready ? "bg-pos/10 text-pos ring-1 ring-pos/30" : "bg-slate-500/10 text-slate-400 ring-1 ring-slate-500/30"}`}>
-                {r.note}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
