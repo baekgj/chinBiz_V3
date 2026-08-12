@@ -121,7 +121,7 @@ export default function DashboardSection() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {products.slice(0, 6).map((p) => (
-              <Link key={p.id} href={`/buzz/market/${p.id}`} className={`flex gap-3 rounded-xl border p-3 transition-transform hover:-translate-y-0.5 ${theme.tableWrap}`}>
+              <Link key={p.id} href={`/buzz/market/${p.id}`} className={`flex min-w-0 gap-3 rounded-xl border p-3 transition-transform hover:-translate-y-0.5 ${theme.tableWrap}`}>
                 <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-black/5">
                   {p.image1 ? <img src={mediaUrl(p.image1)} alt={p.name} className="h-full w-full object-cover" /> : null}
                 </span>
