@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { krw } from "@/components/ui";
 import { Card, GoldBadge } from "@/components/buzz/BuzzUI";
 import { useBuzz } from "@/components/buzz/theme";
-import { apiGet } from "@/lib/api";
+import { apiGet, mediaUrl } from "@/lib/api";
 import { rewardAmount } from "@/lib/reward";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { computeDday, canApplySale } from "@/lib/dday";
@@ -70,7 +70,7 @@ export default function ProductDetail({ id }: { id: string }) {
           <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-5">
             {images.map((u, i) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={u} alt={`상품 이미지 ${i + 1}`} className={`h-24 w-full rounded-lg border object-cover ${theme.tableWrap}`} />
+              <img key={i} src={mediaUrl(u)} alt={`상품 이미지 ${i + 1}`} className={`h-24 w-full rounded-lg border object-cover ${theme.tableWrap}`} />
             ))}
           </div>
         )}

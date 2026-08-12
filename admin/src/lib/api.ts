@@ -3,6 +3,18 @@ import { getToken, API_BASE } from "./auth";
 
 export { API_BASE };
 
+/**
+ * 업로드 이미지 URL 정규화. 상대(/uploads/..) · 레거시 절대(http://host:9001/uploads/..) 모두
+ * 현재 API_BASE 기준으로 재구성 → 리버스 프록시(HTTPS same-origin)/localhost 자동 대응 + mixed-content 방지.
+ */
+export function mediaUrl(p?: string | null): string {
+  if (!p) return "";
+  const i = p.indexOf("/uploads/");
+  if (i >= 0) return `${API_BASE}${p.slice(i)}`;
+  if (/^https?:\/\//i.test(p)) return p;
+  return p.startsWith("/") ? `${API_BASE}${p}` : p;
+}
+
 export type ApiResult<T> = { ok: boolean; status: number; data: T | null; message?: string };
 
 function authHeaders(): Record<string, string> {

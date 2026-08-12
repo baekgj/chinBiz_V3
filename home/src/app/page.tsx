@@ -129,12 +129,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Stats band ── */}
-        <section className="border-y border-forest-800 bg-forest-800">
-          <div className="mx-auto max-w-6xl px-5 py-14">
-            <Stats />
-          </div>
-        </section>
+        {/* ── Stats band (누적 매칭 100건 이상일 때만 노출, docs/21) ── */}
+        <Stats />
 
         {/* ── Service Matrix ── */}
         <section id="service" className="mx-auto max-w-6xl px-5 py-20 sm:py-24">

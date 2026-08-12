@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { krw } from "@/components/ui";
 import { Card, GoldBadge } from "@/components/buzz/BuzzUI";
 import { useBuzz } from "@/components/buzz/theme";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, mediaUrl } from "@/lib/api";
 import { myReward } from "@/lib/reward";
 import { computeDday, canApplySale } from "@/lib/dday";
 
@@ -63,8 +63,8 @@ export default function MarketSection() {
 
   return (
     <Card title={isManager ? undefined : "상품 마켓"} sub={isManager ? undefined : `총 ${total}개 · 1차 영업 대상 상품`}>
-      {/* 검색 */}
-      <div className="mb-4 flex flex-wrap items-end gap-2">
+      {/* 검색 — 리스트와 간격 + 경계선 (docs/21) */}
+      <div className={`mb-6 flex flex-wrap items-end gap-2 border-b pb-5 ${theme.tableWrap}`}>
         <div>
           <p className={`mb-1 text-xs font-semibold ${theme.fieldLabel}`}>상품명</p>
           <input className={inputCls} value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && setQ({ kw, cat, ptn })} placeholder="상품명" />
@@ -100,7 +100,7 @@ export default function MarketSection() {
               <div className="relative">
                 {it.image1
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={it.image1} alt={it.name} className="h-32 w-full object-cover" />
+                  ? <img src={mediaUrl(it.image1)} alt={it.name} className="h-32 w-full object-cover" />
                   : <div className={`grid h-32 w-full place-items-center text-xs ${theme.note} ${isManager ? "bg-neutral-800" : "bg-emerald-50"}`}>이미지 없음</div>}
                 {/* 계약종료일 등록 상품: 이미지 우상단 D-day 배지 */}
                 {dd && (

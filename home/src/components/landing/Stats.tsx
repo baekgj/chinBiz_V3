@@ -43,9 +43,13 @@ function StatItem({ stat, run }: { stat: Stat; run: boolean }) {
   );
 }
 
+// 카운트업 밴드 노출 최소 누적매칭 건수 (docs/21)
+const MIN_TOTAL_MATCHES = 100;
+
 export default function Stats() {
   const ref = useRef<HTMLDivElement>(null);
   const [run, setRun] = useState(false);
+  const [total, setTotal] = useState<number | null>(null); // 누적 매칭(로드 전 null → 미노출)
   const [stats, setStats] = useState<Stat[]>([
     { label: "누적 영업 매칭 건수", value: 0, suffix: "건" },
     { label: "활성화된 버즈 회원 수", value: 0, suffix: "명" },
@@ -56,11 +60,14 @@ export default function Stats() {
   useEffect(() => {
     apiGet<StatsResp>("/api/public/stats").then((r) => {
       if (r.ok && r.data) {
+        setTotal(r.data.totalMatches ?? 0);
         setStats([
           { label: "누적 영업 매칭 건수", value: r.data.totalMatches ?? 0, suffix: "건" },
           { label: "활성화된 버즈 회원 수", value: r.data.activeBuzz ?? 0, suffix: "명" },
           { label: "이번 달 신규 매칭", value: r.data.monthMatches ?? 0, suffix: "건" },
         ]);
+      } else {
+        setTotal(0);
       }
       setRun(true);
     });
@@ -78,16 +85,23 @@ export default function Stats() {
     return () => io.disconnect();
   }, []);
 
+  // 누적 매칭 100건 미만(또는 로드 전)이면 카운트업 밴드 전체 미노출 (docs/21)
+  if (total === null || total < MIN_TOTAL_MATCHES) return null;
+
   return (
-    <div
-      ref={ref}
-      className="grid grid-cols-1 gap-8 divide-y divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
-    >
-      {stats.map((s) => (
-        <div key={s.label} className="pt-8 first:pt-0 sm:pt-0">
-          <StatItem stat={s} run={run} />
+    <section className="border-y border-forest-800 bg-forest-800">
+      <div className="mx-auto max-w-6xl px-5 py-14">
+        <div
+          ref={ref}
+          className="grid grid-cols-1 gap-8 divide-y divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+        >
+          {stats.map((s) => (
+            <div key={s.label} className="pt-8 first:pt-0 sm:pt-0">
+              <StatItem stat={s} run={run} />
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }

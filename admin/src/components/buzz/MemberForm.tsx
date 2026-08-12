@@ -13,11 +13,23 @@ function Field({ label, labelCls, children }: { label: string; labelCls: string;
   return <label className="block"><span className={`text-xs font-semibold ${labelCls}`}>{label}</span><div className="mt-1">{children}</div></label>;
 }
 
-/** 버즈 네트워크 회원 등록/수정 (역할 BUZZ 고정, 추천인 자동 저장) */
+/** 주소를 시·도 / 구·군 단위까지만 노출 (docs/21: 동·상세 이하 비공개) */
+function addressGuGun(addr: string): string {
+  if (!addr) return "";
+  const parts = addr.trim().split(/\s+/);
+  const gu = parts.findIndex((t) => /(구|군)$/.test(t));
+  if (gu >= 0) return parts.slice(0, gu + 1).join(" ");
+  const si = parts.findIndex((t) => /(시|도)$/.test(t));
+  if (si >= 0) return parts.slice(0, si + 1).join(" ");
+  return parts.slice(0, 2).join(" ");
+}
+
+/** 버즈 네트워크 회원 등록(new) / 보기(edit=읽기전용). 역할 BUZZ 고정, 추천인 자동 저장 */
 export default function MemberForm({ mode, initial }: { mode: "new" | "edit"; initial?: Member }) {
   const router = useRouter();
   const { theme } = useBuzz();
   const g = (k: string) => (initial?.[k] != null ? String(initial[k]) : "");
+  const isView = mode === "edit"; // 수정 → 보기(읽기전용)
 
   const [f, setF] = useState({
     userId: g("userId"), password: "", name: g("name"), phone: g("phone"), email: g("email"),
@@ -74,56 +86,69 @@ export default function MemberForm({ mode, initial }: { mode: "new" | "edit"; in
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>계정</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className={`text-xs font-semibold ${theme.fieldLabel}`}>아이디 *</span>
+            <span className={`text-xs font-semibold ${theme.fieldLabel}`}>아이디{isView ? "" : " *"}</span>
             <div className="mt-1 flex gap-2">
-              <input className={inputCls} value={f.userId} readOnly={mode === "edit"} autoComplete="off" onChange={(e) => set("userId")(e.target.value)} placeholder="아이디" />
-              {mode === "new" && (
+              <input className={inputCls} value={f.userId} readOnly={isView} autoComplete="off" onChange={(e) => set("userId")(e.target.value)} placeholder="아이디" />
+              {!isView && (
                 <button type="button" onClick={checkId} className={`shrink-0 rounded-lg px-3 text-xs font-bold ${theme.outlineBtn}`}>중복확인</button>
               )}
             </div>
-            {idChecked === true && mode === "new" && <p className="mt-1 text-xs text-emerald-500">사용 가능한 아이디입니다.</p>}
+            {idChecked === true && !isView && <p className="mt-1 text-xs text-emerald-500">사용 가능한 아이디입니다.</p>}
           </label>
-          <Field label={mode === "new" ? "비밀번호 *" : "비밀번호 (변경 시에만)"} labelCls={lc}>
-            <input type="password" name="new-password" autoComplete="new-password" className={inputCls} value={f.password} onChange={(e) => set("password")(e.target.value)} placeholder="비밀번호" />
-          </Field>
+          {!isView && (
+            <Field label="비밀번호 *" labelCls={lc}>
+              <input type="password" name="new-password" autoComplete="new-password" className={inputCls} value={f.password} onChange={(e) => set("password")(e.target.value)} placeholder="비밀번호" />
+            </Field>
+          )}
         </div>
-        <p className={`mt-2 text-xs ${theme.note}`}>※ 역할은 <b>버즈회원</b>으로 고정되며, 추천인은 현재 로그인 계정으로 자동 저장됩니다.</p>
+        {!isView && <p className={`mt-2 text-xs ${theme.note}`}>※ 역할은 <b>버즈회원</b>으로 고정되며, 추천인은 현재 로그인 계정으로 자동 저장됩니다.</p>}
       </section>
 
       <section className={card}>
-        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>기본 정보 · 연락처</h3>
+        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>기본 정보 · 연락처{isView && <span className={`ml-2 text-xs font-normal ${theme.note}`}>(수정 불가)</span>}</h3>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="이름 *" labelCls={lc}><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>
-          <Field label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></Field>
-          <Field label="이메일" labelCls={lc}><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></Field>
+          <Field label={isView ? "이름" : "이름 *"} labelCls={lc}><input className={inputCls} value={f.name} readOnly={isView} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>
+          <Field label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} readOnly={isView} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></Field>
+          <Field label="이메일" labelCls={lc}><input className={inputCls} value={f.email} readOnly={isView} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></Field>
         </div>
         <div className="mt-4">
-          <span className={`text-xs font-semibold ${theme.fieldLabel}`}>주소</span>
-          <div className="mt-1 flex gap-2">
-            <input className={`${inputCls} w-32`} value={f.zipcode} readOnly placeholder="우편번호" />
-            <button type="button" onClick={() => openDaumPostcode((r) => setF((p) => ({ ...p, zipcode: r.zipcode, address: r.address })))}
-              className={`shrink-0 rounded-lg px-3 text-xs font-bold ${theme.outlineBtn}`}>우편번호 검색</button>
-          </div>
-          <input className={`${inputCls} mt-2`} value={f.address} readOnly placeholder="기본주소" />
-          <input className={`${inputCls} mt-2`} value={f.addressDetail} onChange={(e) => set("addressDetail")(e.target.value)} placeholder="상세주소" />
+          <span className={`text-xs font-semibold ${theme.fieldLabel}`}>주소{isView && " (구·군까지만 표시)"}</span>
+          {isView ? (
+            <input className={`${inputCls} mt-1`} value={addressGuGun(f.address)} readOnly placeholder="주소 정보 없음" />
+          ) : (
+            <>
+              <div className="mt-1 flex gap-2">
+                <input className={`${inputCls} w-32`} value={f.zipcode} readOnly placeholder="우편번호" />
+                <button type="button" onClick={() => openDaumPostcode((r) => setF((p) => ({ ...p, zipcode: r.zipcode, address: r.address })))}
+                  className={`shrink-0 rounded-lg px-3 text-xs font-bold ${theme.outlineBtn}`}>우편번호 검색</button>
+              </div>
+              <input className={`${inputCls} mt-2`} value={f.address} readOnly placeholder="기본주소" />
+              <input className={`${inputCls} mt-2`} value={f.addressDetail} onChange={(e) => set("addressDetail")(e.target.value)} placeholder="상세주소" />
+            </>
+          )}
         </div>
       </section>
 
-      <section className={card}>
-        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>정산 계좌</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="은행명" labelCls={lc}><input className={inputCls} value={f.bankName} onChange={(e) => set("bankName")(e.target.value)} placeholder="은행" /></Field>
-          <Field label="계좌번호" labelCls={lc}><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></Field>
-          <Field label="예금주명" labelCls={lc}><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></Field>
-        </div>
-      </section>
+      {/* 정산 계좌 — 등록 시에만 (보기 화면에서는 비공개, docs/21) */}
+      {!isView && (
+        <section className={card}>
+          <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>정산 계좌</h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="은행명" labelCls={lc}><input className={inputCls} value={f.bankName} onChange={(e) => set("bankName")(e.target.value)} placeholder="은행" /></Field>
+            <Field label="계좌번호" labelCls={lc}><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></Field>
+            <Field label="예금주명" labelCls={lc}><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></Field>
+          </div>
+        </section>
+      )}
 
       {notice && <div className="rounded-lg bg-red-500/15 px-4 py-3 text-sm text-red-500 ring-1 ring-red-500/30">{notice}</div>}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => router.push("/buzz/network")} className={`rounded-xl px-5 py-2.5 text-sm font-semibold ${theme.cancelBtn}`}>취소</button>
-        <button type="submit" disabled={saving} className={`rounded-xl px-6 py-2.5 text-sm font-bold disabled:opacity-60 ${theme.primaryBtn}`}>
-          {saving ? "저장 중…" : mode === "new" ? "회원 등록" : "변경 저장"}
-        </button>
+        <button type="button" onClick={() => router.push("/buzz/network")} className={`rounded-xl px-5 py-2.5 text-sm font-semibold ${isView ? theme.primaryBtn : theme.cancelBtn}`}>{isView ? "목록으로" : "취소"}</button>
+        {!isView && (
+          <button type="submit" disabled={saving} className={`rounded-xl px-6 py-2.5 text-sm font-bold disabled:opacity-60 ${theme.primaryBtn}`}>
+            {saving ? "저장 중…" : "회원 등록"}
+          </button>
+        )}
       </div>
     </form>
   );

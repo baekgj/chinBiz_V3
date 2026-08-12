@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, mediaUrl } from "@/lib/api";
 
 type Product = {
   id: number; name: string; partnerName?: string | null; categoryName?: string | null;
@@ -38,7 +38,7 @@ export default function ProductShowcase() {
               <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-forest-50 text-forest-600">
                 {p.image1
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={p.image1} alt={p.name} className="h-full w-full object-cover" />
+                  ? <img src={mediaUrl(p.image1)} alt={p.name} className="h-full w-full object-cover" />
                   : <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M8 20h8M12 18v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>}
               </span>
               <div>

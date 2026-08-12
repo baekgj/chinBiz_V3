@@ -22,7 +22,7 @@ export default function BuzzMemberEditPage() {
 
   return (
     <div>
-      <PageHead title="회원 정보 수정" sub="내 네트워크 회원 정보 수정" />
+      <PageHead title="회원 정보 보기" sub="내 네트워크 회원 정보 (읽기 전용)" />
       {err ? <p className="text-sm text-red-500">{err}</p>
         : data ? <MemberForm mode="edit" initial={data} />
         : <p className={`text-sm ${theme.cardSub}`}>불러오는 중…</p>}

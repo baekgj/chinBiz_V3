@@ -15,11 +15,14 @@ const SETTLEMENT_NAV = { href: "/buzz/allowances", label: "수당/정산현황",
   { href: "/buzz/payments", label: "정산현황" },
 ] };
 
+// 버즈 메뉴 순서 (docs/21): 대시보드 | 영업파이프라인 | 상품마켓 | 수당현황 | 정산현황 | 버즈네트워크 | 공지사항
 const NAV: NavItem[] = [
-  SETTLEMENT_NAV,
-  { href: "/buzz/pipeline", label: "영업 파이프라인" },
-  { href: "/buzz/market", label: "상품 마켓" },
-  { href: "/buzz/network", label: "버즈 네트워크" },
+  { href: "/buzz", label: "대시보드" },
+  { href: "/buzz/pipeline", label: "영업파이프라인" },
+  { href: "/buzz/market", label: "상품마켓" },
+  { href: "/buzz/allowances", label: "수당현황" },
+  { href: "/buzz/payments", label: "정산현황" },
+  { href: "/buzz/network", label: "버즈네트워크" },
   { href: "/buzz/notices", label: "공지사항" },
 ];
 const NAV_MANAGER: NavItem[] = [

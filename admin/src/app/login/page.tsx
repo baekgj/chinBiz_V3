@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { apiPost } from "@/lib/api";
-import { TOKEN_KEY, ROLE_PATH } from "@/lib/auth";
+import { TOKEN_KEY, ROLE_PATH, HOME_URL } from "@/lib/auth";
 
 type LoginResponse = { token: string; name: string; role: string };
 
@@ -122,6 +122,14 @@ export default function AdminLoginPage() {
             {submitting ? "로그인 중…" : "로그인"}
           </button>
         </form>
+
+        {/* 친비즈 홈으로 가기 (docs/21) */}
+        <a
+          href={HOME_URL}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-navy-900 px-6 py-3 text-sm font-semibold text-slate-300 transition-colors hover:border-cyan-400/40 hover:text-white"
+        >
+          ← 친비즈 홈으로 가기
+        </a>
 
         <p className="mt-6 text-center text-xs text-slate-500">
           친비즈 ChinBiz · 모바일 워크스페이스

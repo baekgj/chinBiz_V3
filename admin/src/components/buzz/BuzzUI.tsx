@@ -36,12 +36,18 @@ export function Card({ title, sub, right, children }: { title?: string; sub?: st
   );
 }
 
-export function PageHead({ title, sub }: { title: string; sub?: string }) {
+export function PageHead({ title, sub, note }: { title: string; sub?: string; note?: string }) {
   const { theme } = useBuzz();
   return (
     <div className="mb-5">
       <h1 className={`text-xl font-black ${theme.h1}`}>{title}</h1>
       {sub && <p className={`mt-0.5 text-sm ${theme.h1Sub}`}>{sub}</p>}
+      {note && (
+        <p className={`mt-3 flex items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium leading-relaxed ${theme.chipBox}`}>
+          <span aria-hidden>💡</span>
+          <span>{note}</span>
+        </p>
+      )}
     </div>
   );
 }

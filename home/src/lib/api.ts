@@ -23,6 +23,18 @@ export function resolveServiceUrl(envValue: string | undefined, port: number, fa
 export const API_BASE = resolveServiceUrl(process.env.NEXT_PUBLIC_API_URL, 9001, "http://175.125.94.198:9001");
 
 /**
+ * 업로드 이미지 URL 정규화. 상대(/uploads/..) · 레거시 절대(http://host:9001/uploads/..) 모두
+ * 현재 API_BASE 기준으로 재구성 → 리버스 프록시(HTTPS same-origin)/localhost 자동 대응 + mixed-content 방지.
+ */
+export function mediaUrl(p?: string | null): string {
+  if (!p) return "";
+  const i = p.indexOf("/uploads/");
+  if (i >= 0) return `${API_BASE}${p.slice(i)}`;      // /uploads 이후만 취해 현재 호스트로 재구성
+  if (/^https?:\/\//i.test(p)) return p;               // uploads 외 외부 절대 URL 은 그대로
+  return p.startsWith("/") ? `${API_BASE}${p}` : p;
+}
+
+/**
  * admin 앱 주소 해석 (home → admin 리다이렉트용).
  * admin 은 home 과 별개 Next 앱이므로 same-origin 이 아니다.
  *   - env(NEXT_PUBLIC_ADMIN_URL) 우선.

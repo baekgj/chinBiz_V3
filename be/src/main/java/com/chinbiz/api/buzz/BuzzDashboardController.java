@@ -29,9 +29,66 @@ public class BuzzDashboardController {
     private final AllowanceRepository allowanceRepo;
     private final AllowancePaymentRepository paymentRepo;
     private final UserRepository userRepo;
+    private final SaleRepository saleRepo;
 
-    public BuzzDashboardController(AllowanceRepository allowanceRepo, AllowancePaymentRepository paymentRepo, UserRepository userRepo) {
+    public BuzzDashboardController(AllowanceRepository allowanceRepo, AllowancePaymentRepository paymentRepo,
+                                   UserRepository userRepo, SaleRepository saleRepo) {
         this.allowanceRepo = allowanceRepo; this.paymentRepo = paymentRepo; this.userRepo = userRepo;
+        this.saleRepo = saleRepo;
+    }
+
+    /**
+     * 버즈 대시보드 요약 (docs/21): 영업 파이프라인 5단계 카운트 + 최근 상태 + 네트워크 지표.
+     * 파이프라인 범위 = 내가 등록한 1차영업 + 나를 추천인으로 등록한 버즈의 1차영업.
+     */
+    @GetMapping("/summary")
+    public ResponseEntity<?> summary(Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
+        User me = userRepo.findByUserId(auth.getName()).orElse(null);
+        if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
+
+        // 파이프라인 범위(버즈): 본인 + 추천 하위 버즈
+        java.util.List<Long> buzzIds = new java.util.ArrayList<>();
+        buzzIds.add(me.getId());
+        userRepo.findByReferralCode(me.getUserId()).forEach(u -> { if (!u.getId().equals(me.getId())) buzzIds.add(u.getId()); });
+        List<Sale> sales = saleRepo.findAll((r, q, cb) -> r.get("buzzId").in(buzzIds));
+
+        // 5단계 매핑 (실제 status → 표시 단계)
+        long lead = 0, survey = 0, contract = 0, success = 0, settled = 0;
+        Sale recent = null;
+        for (Sale s : sales) {
+            String st = s.getStatus() == null ? "" : s.getStatus();
+            switch (st) {
+                case "접수" -> lead++;
+                case "상담/방문" -> survey++;
+                case "계약체결" -> contract++;
+                case "배송/설치" -> success++;
+                case "구매확정" -> settled++;
+                default -> {}
+            }
+            if (recent == null || (s.getId() != null && recent.getId() != null && s.getId() > recent.getId())) recent = s;
+        }
+        Map<String, Object> stages = new LinkedHashMap<>();
+        stages.put("리드접수", lead);
+        stages.put("매니저실사", survey);
+        stages.put("계약대기", contract);
+        stages.put("최종성공", success);
+        stages.put("정산완료", settled);
+
+        String recentMessage = recent == null ? null
+                : "'" + (recent.getCompanyName() == null ? "고객" : recent.getCompanyName()) + "' 건이 ["
+                  + (recent.getStatus() == null ? "접수" : recent.getStatus()) + "] 단계로 진행 중입니다.";
+
+        long referredCount = userRepo.findByReferralCode(me.getUserId()).size();
+        long networkIncome = paymentRepo.sumCumulative(me.getUserId(), List.of(Allowance.MemberType.TOPBUZZ));
+
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("stages", stages);
+        m.put("recentMessage", recentMessage);
+        m.put("referredCount", referredCount);
+        m.put("networkIncome", networkIncome);
+        m.put("referralCode", me.getUserId());
+        return ResponseEntity.ok(m);
     }
 
     @GetMapping

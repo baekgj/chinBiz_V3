@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { apiGet, apiPost, apiPut, apiUpload } from "@/lib/api";
+import { apiGet, apiPost, apiPut, apiUpload, mediaUrl } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
 import DatePicker from "@/components/DatePicker";
 
@@ -282,7 +282,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
             {images.map((url, i) => (
               <div key={i} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`상품 이미지 ${i + 1}`} className="h-24 w-full object-cover" />
+                <img src={mediaUrl(url)} alt={`상품 이미지 ${i + 1}`} className="h-24 w-full object-cover" />
                 <button type="button" onClick={() => setImages((p) => p.filter((_, idx) => idx !== i))}
                   className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-black/50 text-sm text-white hover:bg-red-600">×</button>
               </div>

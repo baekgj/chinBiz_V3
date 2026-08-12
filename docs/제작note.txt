@@ -897,3 +897,44 @@ CREATE TABLE IF NOT EXISTS `terms` (
      토큰 없음·무효: 로그인(/login)으로 이동. (이동 전 짧은 "이동 중…" 로딩만 표시)
    · PWA manifest start_url="/" 이므로 모바일앱 실행 시 세션 있으면 바로 역할 대시보드, 없으면 로그인 화면.
    · 검증(localhost:3100): 무세션 "/"→/login, MASTER_ADMIN 세션 "/"→/master. 런처 화면 미노출 확인.
+
+  [수정 2026-08-07i] 실서버 상품 이미지 미표시 (home 메인·buzz 마켓·master 상품) — 업로드 URL 절대경로 문제 (요청)
+   · 원인: UploadController 가 ServletUriComponentsBuilder.fromCurrentContextPath() 로 절대 URL 저장 →
+     리버스 프록시 뒤에서 http://내부호스트(또는 http://chinbiz.kr) 로 굳어져, HTTPS 페이지에서 mixed-content 차단·호스트 불일치로 이미지 안 보임.
+   · 수정:
+     - BE UploadController: 반환 URL 을 상대경로 "/uploads/<name>" 로 변경(호스트/프로토콜 비의존).
+     - FE mediaUrl(p) 헬퍼(home/src/lib/api.ts, admin/src/lib/api.ts): 상대(/uploads/..)·레거시 절대(http://host:9001/uploads/..)
+       모두 현재 API_BASE 기준 재구성(https=same-origin, localhost=:9001) → mixed-content/호스트불일치 해소. DB 마이그레이션 없이 기존 데이터도 표시됨.
+       적용: MarketSection, ProductDetail(buzz), master/partner ProductForm 미리보기, home ProductShowcase·ProductBrowse.
+     - home·admin next.config.ts: 개발용 rewrite /uploads/:path* → BE(9001). (운영은 프록시가 /uploads 를 BE 로 먼저 라우팅 → 무해)
+       → 상품설명 HTML 내 <img src="/uploads/..">(RichTextEditor 신규 업로드=상대경로) 도 로컬/운영 모두 표시.
+   · 검증(localhost): 이미지 파일 BE 직결/8001·3100 rewrite 모두 200. home 랜딩 상품 img naturalWidth>0 로드 확인.
+   · ★ 서버 반영: BE 재기동(업로드 상대경로) + home·admin 재빌드·재배포(mediaUrl·rewrite). 기존 상품 썸네일은 mediaUrl 로 즉시 정상.
+   · (선택) 레거시 상품설명 HTML 내 절대 이미지경로 정규화 SQL(서버 chin4, 1회):
+       UPDATE product SET desc1=REPLACE(REPLACE(desc1,'https://chinbiz.kr/uploads/','/uploads/'),'http://chinbiz.kr/uploads/','/uploads/') WHERE desc1 LIKE '%/uploads/%';
+       (desc2~desc5, image1~image5 도 동일 패턴으로 필요 시 정규화. 썸네일은 mediaUrl 로 이미 동작하므로 필수 아님.)
+
+====================================================================
+[추가] docs/21.docx 작업 — 홈 카운트업 게이트·admin로그인·버즈대시보드 개편 등 8건 (2026-08-12)
+====================================================================
+■ 1. 홈 [카운트업] 밴드: 누적 영업 매칭 ≥100건일 때만 노출(<100 감춤).
+   home Stats.tsx: total 상태(로드전 null=미노출) + MIN_TOTAL_MATCHES=100, section 래퍼를 Stats 내부로 이동
+   (total===null||<100 → return null). page.tsx 는 <Stats/> 만 렌더. (로컬 total=28 → 미노출)
+■ 2. admin 로그인 화면에 [← 친비즈 홈으로 가기] 링크 추가 → HOME_URL(운영 https://chinbiz.kr).
+■ 3. 버즈 메뉴 순서 변경(BuzzTopbar NAV): 대시보드|영업파이프라인|상품마켓|수당현황|정산현황|버즈네트워크|공지사항
+   (기존 수당/정산 드롭다운 → 수당현황·정산현황 개별 항목). 매니저 NAV 는 유지.
+■ 4. 버즈 대시보드 전면 개편(DashboardSection.tsx, /buzz): ①환영+주요용어 버튼+수당요약(출금가능MP/예정CP, 클릭이동)
+   ②영업 파이프라인 5단계 카운트(리드접수/매니저실사/계약대기/최종성공/정산완료)+실시간 최근메시지+[상세보기>]
+   ③상품마켓 2×3 그리드+[전체보기>] ④버즈네트워크(추천코드·링크·복사토스트·추천수·네트워크수익)+[자세히>]
+   ⑤공지 최근2건+[더보기>]. page.tsx: 버즈=DashboardSection / 매니저=WalletSection 분기.
+   BE: BuzzDashboardController.GET /api/buzz/dashboard/summary(파이프라인 5단계 카운트[본인+추천버즈 범위]·최근메시지·
+   추천버즈수·네트워크누적MP·추천코드). status 매핑: 접수→리드접수/상담·방문→매니저실사/계약체결→계약대기/배송·설치→최종성공/구매확정→정산완료.
+■ 5. [친비즈 주요 용어 보기] → 레이어 팝업(용어 7종: 영업파이프라인/상품마켓/CP/MP/마감·정산/OTA/MRA). DashboardSection 내 모달.
+■ 6. [영업파이프라인] 타이틀 아래 안내문구 추가 — PageHead 에 note prop 신설(💡 강조 박스, chipBox 테마).
+   "영업 파이프라인은 가망고객이 계약까지 가면서 거치는 거래의 상태와 진행 단계를 보여 줍니다."
+■ 7. [상품마켓] 검색블록과 리스트 사이 간격+경계선(MarketSection: mb-6 border-b pb-5).
+■ 8. [버즈네트워크] 회원명 클릭 → [회원정보 보기](읽기전용): 타이틀 '수정→보기', 기본정보·연락처 readOnly,
+   주소 시·도/구·군까지만(addressGuGun), 정산계좌 섹션 제거, 저장버튼 제거(목록으로만). MemberForm 은 new(등록)만 편집.
+■ 검증: BE 컴파일·양 FE 타입체크 통과. summary 엔드포인트 응답 확인(신규 버즈: 5단계 0·추천 0). 전 라우트 200
+   (home/ · /buzz · /login · /buzz/pipeline · /buzz/network/9). 브라우저 시각검증은 확장 미연결로 생략(로직·라우트 검증 대체).
+■ BE 무DB변경(신규 테이블 없음). 서버 반영: BE 재기동 + home·admin 재빌드·재배포.

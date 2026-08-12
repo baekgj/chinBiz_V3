@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,8 +38,9 @@ public class UploadController {
         Files.createDirectories(root);
         Files.copy(file.getInputStream(), root.resolve(name), StandardCopyOption.REPLACE_EXISTING);
 
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/").path(name).toUriString();
+        // ★ 상대경로로 반환(호스트/프로토콜 비의존). 리버스 프록시(HTTPS)·localhost 모두 동작.
+        //   절대 URL(fromCurrentContextPath)은 프록시 뒤에서 http://내부호스트 로 잡혀 https 페이지에서 mixed-content 차단됨.
+        String url = "/uploads/" + name;
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("url", url, "name", name));
     }
 }

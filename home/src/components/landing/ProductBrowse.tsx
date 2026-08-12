@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, mediaUrl } from "@/lib/api";
 
 type Product = {
   id: number; name: string; partnerName?: string | null; categoryName?: string | null;
@@ -91,7 +91,7 @@ export default function ProductBrowse() {
               <div className="relative h-40 w-full bg-forest-50">
                 {p.image1
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={p.image1} alt={p.name} className="h-full w-full object-cover" />
+                  ? <img src={mediaUrl(p.image1)} alt={p.name} className="h-full w-full object-cover" />
                   : <div className="grid h-full w-full place-items-center text-forest-300"><svg viewBox="0 0 24 24" className="h-10 w-10" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" /><path d="M8 20h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></div>}
                 {p.categoryName && <span className="absolute left-3 top-3 rounded-lg bg-white/90 px-2.5 py-1 text-xs font-bold text-ink-soft shadow-sm">{p.categoryName}</span>}
                 <div className="absolute right-3 top-3 flex gap-1">
