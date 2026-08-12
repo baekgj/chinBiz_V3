@@ -16,6 +16,16 @@ spring:
     username: ${DB_USER:chin4}
     password: "${DB_PASSWORD:1234}"
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP 커넥션 풀 — 유휴 커넥션을 MySQL(wait_timeout)이 먼저 끊어 "No operations allowed after
+    # connection closed" WARN 이 뜨는 것을 방지. max-lifetime 을 MySQL wait_timeout 보다 짧게 유지.
+    hikari:
+      max-lifetime: ${DB_MAX_LIFETIME:570000}   # ~9.5분 (MySQL 기본 wait_timeout 28800s 보다 충분히 짧음)
+      keepalive-time: 150000                     # 유휴 커넥션 주기적 검증(max-lifetime 보다 작아야 함)
+      connection-timeout: 30000
+      idle-timeout: 300000
+      minimum-idle: 2
+      maximum-pool-size: 10
+      pool-name: chinbiz-hikari
   jpa:
     hibernate:
       ddl-auto: update

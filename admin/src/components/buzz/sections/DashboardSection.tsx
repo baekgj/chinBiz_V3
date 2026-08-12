@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { krw } from "@/components/ui";
 import { Card } from "@/components/buzz/BuzzUI";
 import { useBuzz } from "@/components/buzz/theme";
@@ -61,17 +62,17 @@ export default function DashboardSection() {
 
   return (
     <div className="space-y-5">
-      {/* 1. 환영 / 수당 요약 헤더 */}
-      <div className={`rounded-2xl p-5 ${theme.mpCard}`}>
+      {/* 1. 환영 / 수당 요약 헤더 (흰색 배경, docs) */}
+      <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-lg font-black">🙋 {name ? `${name}님` : "버즈님"}, 반갑습니다!</p>
-            <p className="mt-1 text-sm font-semibold opacity-90">
-              이번 달 예정 수당 <b>{krw(dash.cp)}</b> · 확정 수당 <b>{krw(dash.confirmedMp)}</b> 을 적립 중입니다!
+            <p className="text-lg font-black text-slate-900">🙋 {name ? `${name}님` : "버즈님"}, 반갑습니다!</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600">
+              이번 달 예정 수당 <b className="text-emerald-700">{krw(dash.cp)}</b> · 확정 수당 <b className="text-emerald-700">{krw(dash.confirmedMp)}</b> 을 적립 중입니다!
             </p>
           </div>
           <button onClick={() => setTermsOpen(true)}
-            className="shrink-0 rounded-xl bg-black/15 px-4 py-2 text-sm font-bold hover:bg-black/25">
+            className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>
             친비즈 주요 용어 보기 &gt;
           </button>
         </div>
@@ -185,9 +186,10 @@ export default function DashboardSection() {
         </div>
       )}
 
-      {/* 주요 용어 팝업 (docs/21 Task5) */}
-      {termsOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setTermsOpen(false)}>
+      {/* 주요 용어 팝업 (docs/21 Task5) — document.body 로 portal 하여 뷰포트 정중앙 고정
+          (대시보드 래퍼의 animate-float-up transform 이 containing block 이 되어 화면 중앙을 벗어나는 문제 방지) */}
+      {termsOpen && createPortal(
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4" onClick={() => setTermsOpen(false)}>
           <div className={`max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl p-6 shadow-2xl ${theme.card}`} onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className={`text-lg font-black ${theme.cardHead}`}>친비즈 주요 용어</h3>
@@ -204,7 +206,8 @@ export default function DashboardSection() {
             </ul>
             <button onClick={() => setTermsOpen(false)} className={`mt-5 w-full rounded-xl px-4 py-2.5 text-sm font-bold ${theme.primaryBtn}`}>확인</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
