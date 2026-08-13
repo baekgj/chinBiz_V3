@@ -98,13 +98,14 @@ export default function BuzzTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* MANAGER 전용: 버즈↔매니저 admin 뷰 전환 */}
+          {/* MANAGER 전용: 버즈↔매니저 admin 뷰 전환 (모바일=아이콘 [M]/[B], docs/22) */}
           {canToggle && (
             <button
               onClick={toggleView}
-              className={`hidden shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold sm:block ${theme.outlineBtn}`}
+              className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold ${theme.outlineBtn}`}
               title={isManager ? "버즈회원 화면으로 전환" : "관리매니저 화면으로 전환"}>
-              {isManager ? "버즈admin 보기" : "매니저admin 보기"}
+              <span className="sm:hidden">[{isManager ? "B" : "M"}]</span>
+              <span className="hidden sm:inline">{isManager ? "버즈admin 보기" : "매니저admin 보기"}</span>
             </button>
           )}
           <AlarmBell tone={isManager ? "dark" : "light"} />

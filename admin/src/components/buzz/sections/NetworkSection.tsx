@@ -65,7 +65,7 @@ export default function NetworkSection() {
 
   return (
     <div className="space-y-5">
-      <Card title="내 추천 링크 (친쿠)" sub="이 링크로 가입한 하위 버즈 수익의 약 10%를 MP로 평생 적립">
+      <Card title="내 추천 링크" sub="이 링크로 가입한 하위 버즈 수익의 약 10%를 MP로 평생 적립">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <code className={`flex-1 truncate rounded-lg border px-3 py-2 text-sm ${theme.codeBox}`}>{refUrl}</code>
           <button onClick={copy} className={`rounded-lg px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>{copied ? "복사됨 ✓" : "링크 복사"}</button>

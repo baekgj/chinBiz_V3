@@ -24,6 +24,7 @@ export default function SaleForm() {
   // 마켓 [1차영업신청]에서 넘어온 자동선택 값
   const initCat = sp.get("categoryId") ?? "";
   const initProd = sp.get("productId") ?? "";
+  const locked = Boolean(initProd); // 마켓에서 진입 시 카테고리·상품 고정 (docs/22)
   const { theme } = useBuzz();
   const [cats, setCats] = useState<Cat[]>([]);
   const [prods, setProds] = useState<Prod[]>([]);
@@ -71,16 +72,16 @@ export default function SaleForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <section className={theme.card}>
-        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>상품 선택</h3>
+        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>상품 선택{locked && <span className={`ml-2 text-xs font-normal ${theme.note}`}>(마켓에서 선택한 상품 · 변경 불가)</span>}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <F label="카테고리" labelCls={lc}>
-            <select className={inputCls} value={catId} onChange={(e) => setCatId(e.target.value)}>
+            <select className={`${inputCls} disabled:opacity-70 disabled:cursor-not-allowed`} value={catId} disabled={locked} onChange={(e) => setCatId(e.target.value)}>
               <option value="">전체</option>
               {cats.map((c) => <option key={c.id} value={c.id}>{"·".repeat(["LARGE", "MEDIUM", "SMALL"].indexOf(c.level))}{c.name}</option>)}
             </select>
           </F>
           <F label="상품 *" labelCls={lc}>
-            <select className={inputCls} value={f.productId} onChange={(e) => set("productId")(e.target.value)}>
+            <select className={`${inputCls} disabled:opacity-70 disabled:cursor-not-allowed`} value={f.productId} disabled={locked} onChange={(e) => set("productId")(e.target.value)}>
               <option value="">상품 선택</option>
               {prods.map((p) => <option key={p.id} value={p.id}>{p.name}{p.partnerName ? ` (${p.partnerName})` : ""}</option>)}
             </select>
@@ -89,7 +90,7 @@ export default function SaleForm() {
       </section>
 
       <section className={theme.card}>
-        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>고객 기본정보</h3>
+        <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>가망고객 기본정보</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <F label="상호명 *" labelCls={lc}><input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="상호명" /></F>
           <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} onChange={(e) => set("businessNumber")(e.target.value)} placeholder="000-00-00000" /></F>
@@ -115,7 +116,8 @@ export default function SaleForm() {
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>영업 진행</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <F label="영업진행상태" labelCls={lc}>
-            <select className={inputCls} value={f.status} onChange={(e) => set("status")(e.target.value)}>
+            {/* 신규 등록은 '접수'로 고정 (docs/22) */}
+            <select className={`${inputCls} disabled:opacity-70 disabled:cursor-not-allowed`} value={f.status} disabled onChange={(e) => set("status")(e.target.value)}>
               {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </F>

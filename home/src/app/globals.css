@@ -5,7 +5,7 @@
    딥 포레스트 그린 + 골드/앰버 (PDF 시안 기준)
    ───────────────────────────────────────────── */
 @theme {
-  --font-sans: var(--font-sans-kr), ui-sans-serif, system-ui, "Apple SD Gothic Neo",
+  --font-sans: "Noto Sans KR", ui-sans-serif, system-ui, "Apple SD Gothic Neo",
     "Malgun Gothic", sans-serif;
 
   /* Brand — Forest Green */

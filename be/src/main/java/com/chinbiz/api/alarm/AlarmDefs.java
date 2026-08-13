@@ -85,7 +85,11 @@ public final class AlarmDefs {
             msg("정산 대상금액이 1만원 미만으로 당월 정산이 미처리 되었습니다. 좀더 노력해 주세요~", BUZZ, MANAGER, CENTER, DIVISION)),
 
         new Def("PAY", "지급완료", "본사admin - [수당및정산관리]/[정산내역] 메뉴에서 [지급완료] 버튼 클릭시",
-            msg("0000년 00월 영업 활동에 대한 수당이 지급되었습니다.", BUZZ, MANAGER, CENTER, DIVISION))
+            msg("0000년 00월 영업 활동에 대한 수당이 지급되었습니다.", BUZZ, MANAGER, CENTER, DIVISION)),
+
+        new Def("RESIDENT_NUMBER_REQUEST", "주민번호요청", "본사admin - [정산내역] 주민번호 미등록 회원 [알람발송] 버튼",
+            msg("활동수당 지급에 대한 세금신고용으로 주민등록번호가 입력되어야 합니다. ADMIN의 내정보관리에서 주민등록번호를 등록해 주세요.",
+                BUZZ, MANAGER, CENTER, DIVISION))
     );
 
     /** 전체 대상 표시 순서 */

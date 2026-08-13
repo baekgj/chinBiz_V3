@@ -78,18 +78,18 @@ export default function DashboardSection() {
         </div>
       </div>
 
-      {/* 수당 요약 카드 (출금 가능 MP / 이번 달 예정 CP) */}
+      {/* 수당 요약 카드 (이번 달 예정 CP 좌 / 출금 가능 MP 우 — docs/22) */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/buzz/allowances" className={`block rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 ${theme.mpCard}`}>
-          <p className="text-xs font-bold">출금 가능 수당 (MP)</p>
-          <p className="mt-2 text-3xl font-black">{krw(dash.cumulativeMp)}</p>
-          <p className="mt-2 text-xs font-semibold opacity-90">확정 금액 · [수당현황 / 정산현황]에서 확인 &gt;</p>
-        </Link>
         <div className={`rounded-2xl p-5 shadow-sm ${theme.cpCard}`}>
           <p className={`text-xs font-semibold ${theme.cpLabel}`}>이번 달 예정 수당 (CP)</p>
           <p className="mt-2 text-3xl font-black">{krw(dash.cp)}</p>
           <p className={`mt-1 text-xs ${theme.cpLabel}`}>실사/계약 진행 중 · 곧 정산될 예상 금액</p>
         </div>
+        <Link href="/buzz/allowances" className={`block rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 ${theme.mpCard}`}>
+          <p className="text-xs font-bold">출금 가능 수당 (MP)</p>
+          <p className="mt-2 text-3xl font-black">{krw(dash.cumulativeMp)}</p>
+          <p className="mt-2 text-xs font-semibold opacity-90">확정 금액 · [수당현황 / 정산현황]에서 확인 &gt;</p>
+        </Link>
       </div>
 
       {/* 2. 영업 파이프라인 현황 */}

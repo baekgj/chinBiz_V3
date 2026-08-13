@@ -122,26 +122,22 @@ public class AuthController {
         u.setReferralCode(req.referralCode());
         u.setAgreeMarketing(req.agreeMarketing());
         u.setRole(Role.BUZZ);
-        // 소속센터 결정 우선순위(docs/07):
-        //  ① 입력값(salesCenterId) → ② 추천인이 있으면 추천인의 sales_center_id 승계
-        //  → ③ 그래도 없으면 입력 주소(시/구/군)로 center_code 매칭
-        Long scid = req.salesCenterId();
-        if (scid == null && req.referralCode() != null && !req.referralCode().isBlank()) {
-            User referrer = userRepository.findByUserId(req.referralCode().trim()).orElse(null);
-            if (referrer != null) scid = referrer.getSalesCenterId();
-        }
-        if (scid == null) scid = centerMatcher.matchCenterIdx(req.address());
-        u.setSalesCenterId(scid);
 
-        // 추천마일리지(docs/18): 추천인 없거나 미존재 → dukebaek 강제. 추천인/가입버즈 모두 CP 지급.
+        // 추천인 확정(docs/18): 추천인 미입력·미존재 → 본사 지정 기본회원(join_fallback_ref).
         String refInput = req.referralCode();
         User referrer = (refInput != null && !refInput.isBlank())
                 ? userRepository.findByUserId(refInput.trim()).orElse(null) : null;
         String fallbackRef = appSettingRepository.getStr(
                 com.chinbiz.api.setting.AppSettingController.JOIN_FALLBACK_REF,
                 com.chinbiz.api.setting.AppSettingController.JOIN_FALLBACK_DEFAULT);
+        User fallbackUser = (fallbackRef != null && !fallbackRef.isBlank())
+                ? userRepository.findByUserId(fallbackRef.trim()).orElse(null) : null;
         String effectiveRefId = referrer != null ? referrer.getUserId() : fallbackRef;
         u.setReferralCode(effectiveRefId); // 강제 지정 반영
+
+        // 소속센터(docs/22): 추천인 있으면 추천인의 sales_center_id, 없으면 기본회원의 sales_center_id 저장.
+        User centerSource = referrer != null ? referrer : fallbackUser;
+        u.setSalesCenterId(centerSource != null ? centerSource.getSalesCenterId() : null);
 
         userRepository.save(u);
 

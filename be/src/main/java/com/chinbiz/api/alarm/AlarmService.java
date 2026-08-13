@@ -192,6 +192,21 @@ public class AlarmService {
         return fire("MANAGER_APPROVE_CANCEL", map, tokens, "USER", manager.getId());
     }
 
+    /** [주민번호요청] 알람 — 정산 대상 회원 중 주민번호 미등록자에게 등록 요청 (docs/22) */
+    public int fireResidentNumberRequest(User member) {
+        AlarmTarget t = switch (member.getRole()) {
+            case BUZZ -> AlarmTarget.BUZZ;
+            case MANAGER -> AlarmTarget.MANAGER;
+            case CENTER_ADMIN -> AlarmTarget.CENTER;
+            case DIVISION_ADMIN -> AlarmTarget.DIVISION;
+            default -> null;
+        };
+        if (t == null) return 0;
+        Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
+        map.put(t, List.of(toRecipient(member)));
+        return fire("RESIDENT_NUMBER_REQUEST", map, Map.of(), "USER", member.getId());
+    }
+
     // ───────────────────────── 상품 등록 ─────────────────────────
 
     /** [상품등록] 알람 — 전체 버즈/매니저/센터 브로드캐스트 */

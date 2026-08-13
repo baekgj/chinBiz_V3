@@ -49,6 +49,7 @@ public class UserSelfController {
         m.put("bankName", u.getBankName());
         m.put("accountNumber", u.getAccountNumber());
         m.put("accountHolder", u.getAccountHolder());
+        m.put("residentNumber", u.getResidentNumber());   // 주민등록번호(세금신고용, docs/22)
         m.put("role", u.getRole().name());
         m.put("referralCode", u.getReferralCode());
         m.put("salesCenterId", u.getSalesCenterId());
@@ -84,13 +85,24 @@ public class UserSelfController {
     public record SelfUpdate(
             String name, String phone, String email,
             String zipcode, String address, String addressDetail,
-            String bankName, String accountNumber, String accountHolder, String password) {}
+            String bankName, String accountNumber, String accountHolder, String residentNumber, String password) {}
 
     @PutMapping("/me")
     public ResponseEntity<?> update(Authentication auth, @RequestBody SelfUpdate req) {
         if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         User u = userRepository.findByUserId(auth.getName()).orElse(null);
         if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "사용자를 찾을 수 없습니다."));
+        // 주민등록번호(세금신고용): 입력 시 유효성 검증 후 숫자만 저장. 빈값이면 해제.
+        if (req.residentNumber() != null) {
+            String rrn = req.residentNumber().trim();
+            if (rrn.isEmpty()) {
+                u.setResidentNumber(null);
+            } else if (com.chinbiz.api.common.ResidentNumber.isValid(rrn)) {
+                u.setResidentNumber(com.chinbiz.api.common.ResidentNumber.normalize(rrn));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "유효하지 않은 주민등록번호입니다."));
+            }
+        }
         if (req.name() != null) u.setName(req.name());
         if (req.phone() != null) u.setPhone(req.phone());
         if (req.email() != null) u.setEmail(req.email());

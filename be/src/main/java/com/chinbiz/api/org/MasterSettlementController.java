@@ -193,6 +193,10 @@ public class MasterSettlementController {
             m.put("accountNumber", p.getAccountNumber() != null ? p.getAccountNumber() : (u == null ? null : u.getAccountNumber()));
             m.put("accountHolder", p.getAccountHolder() != null ? p.getAccountHolder() : (u == null ? null : u.getAccountHolder()));
             m.put("amount", p.getPaymentAmount());
+            // 주민번호 등록여부(세금신고용) — user 계정 회원만 판단, 비회원(본사 등)은 해당없음(등록으로 간주) — docs/22
+            boolean regd = (u == null) || (u.getResidentNumber() != null && !u.getResidentNumber().isBlank());
+            m.put("residentRegistered", regd);
+            m.put("residentApplicable", u != null);
             if (withPaidDate) m.put("paymentDate", p.getPaymentDate() == null ? null : p.getPaymentDate().toLocalDate().toString());
             list.add(m);
         }
@@ -202,6 +206,17 @@ public class MasterSettlementController {
     @GetMapping("/payments")
     public ResponseEntity<?> payments(@RequestParam String month) {
         return ResponseEntity.ok(Map.of("content", paymentRows(month, "N", false)));
+    }
+
+    /** 정산 대상 회원에게 주민등록번호 등록 요청 알람 발송 (docs/22) */
+    @PostMapping("/notify-resident")
+    public ResponseEntity<?> notifyResident(@RequestBody Map<String, String> body) {
+        User u = byUserId(body.get("memberId"));
+        if (u == null) return ResponseEntity.badRequest().body(Map.of("message", "회원을 찾을 수 없습니다."));
+        if (u.getResidentNumber() != null && !u.getResidentNumber().isBlank())
+            return ResponseEntity.badRequest().body(Map.of("message", "이미 주민등록번호가 등록된 회원입니다."));
+        int n = alarmService.fireResidentNumberRequest(u);
+        return ResponseEntity.ok(Map.of("message", n > 0 ? u.getName() + " 회원에게 알람을 발송했습니다." : "알람 발송 대상이 아닙니다."));
     }
 
     @PostMapping("/payments/pay")

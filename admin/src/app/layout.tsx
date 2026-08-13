@@ -1,14 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import PushManager from "@/components/pwa/PushManager";
-
-const notoSansKr = Noto_Sans_KR({
-  variable: "--font-sans-kr",
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
-  display: "swap",
-});
+import InstallAppButton from "@/components/pwa/InstallAppButton";
 
 export const metadata: Metadata = {
   title: "친비즈 · ChinBiz 워크스페이스",
@@ -35,10 +28,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" data-scroll-behavior="smooth" className={`${notoSansKr.variable} h-full antialiased`}>
+    <html lang="ko" data-scroll-behavior="smooth" className="h-full antialiased">
       <body className="min-h-full bg-navy-950 text-slate-100">
+        {/* Noto Sans KR — 런타임 로드(빌드시 Google Fonts 미접속). 미접속 시 시스템 폰트로 graceful fallback */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" />
         {children}
         <PushManager />
+        <InstallAppButton />
       </body>
     </html>
   );

@@ -5,7 +5,7 @@
    다크 네이비 + 블루·청록 그라디언트 (PDF 시안)
    ───────────────────────────────────────────── */
 @theme {
-  --font-sans: var(--font-sans-kr), ui-sans-serif, system-ui, "Apple SD Gothic Neo",
+  --font-sans: "Noto Sans KR", ui-sans-serif, system-ui, "Apple SD Gothic Neo",
     "Malgun Gothic", sans-serif;
 
   /* Navy scale */

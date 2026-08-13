@@ -8,7 +8,7 @@ import { useBuzz } from "@/components/buzz/theme";
 type Me = {
   userId: string; name?: string; email?: string; phone?: string;
   zipcode?: string; address?: string; addressDetail?: string;
-  bankName?: string; accountNumber?: string; accountHolder?: string;
+  bankName?: string; accountNumber?: string; accountHolder?: string; residentNumber?: string;
   role?: string; referralCode?: string;
   salesCenterName?: string | null; referrerLabel?: string | null;
   managerCenters?: { centerName: string; status: string }[];
@@ -30,7 +30,7 @@ export default function ProfileForm() {
   const { theme } = useBuzz();
   const [me, setMe] = useState<Me | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [f, setF] = useState({ name: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "", bankName: "", accountNumber: "", accountHolder: "", password: "" });
+  const [f, setF] = useState({ name: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "", bankName: "", accountNumber: "", accountHolder: "", residentNumber: "", password: "" });
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
 
@@ -44,7 +44,7 @@ export default function ProfileForm() {
         setF({
           name: r.data.name ?? "", phone: r.data.phone ?? "", email: r.data.email ?? "",
           zipcode: r.data.zipcode ?? "", address: r.data.address ?? "", addressDetail: r.data.addressDetail ?? "",
-          bankName: r.data.bankName ?? "", accountNumber: r.data.accountNumber ?? "", accountHolder: r.data.accountHolder ?? "", password: "",
+          bankName: r.data.bankName ?? "", accountNumber: r.data.accountNumber ?? "", accountHolder: r.data.accountHolder ?? "", residentNumber: r.data.residentNumber ?? "", password: "",
         });
         setStatus("ok");
       } else setStatus("error");
@@ -57,6 +57,7 @@ export default function ProfileForm() {
     ev.preventDefault();
     setNotice(null);
     if (f.password && f.password.length < 8) { setNotice({ type: "err", msg: "비밀번호는 8자 이상이어야 합니다." }); return; }
+    if (f.residentNumber && f.residentNumber.replace(/\D/g, "").length !== 13) { setNotice({ type: "err", msg: "주민등록번호 13자리를 정확히 입력해 주세요." }); return; }
     setSaving(true);
     const res = await apiPut<Me>("/api/user/me", f);
     setSaving(false);
@@ -119,6 +120,9 @@ export default function ProfileForm() {
           <Field label="은행명" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.bankName} onChange={(e) => set("bankName")(e.target.value)} placeholder="은행" /></Field>
           <Field label="계좌번호" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></Field>
           <Field label="예금주" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></Field>
+          <Field label="주민등록번호 (세금신고용)" hint="활동수당 지급 세금신고에 사용됩니다." labelCls={lc} noteCls={nc}>
+            <input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(e.target.value)} placeholder="000000-0000000" inputMode="numeric" />
+          </Field>
         </div>
       </section>
 

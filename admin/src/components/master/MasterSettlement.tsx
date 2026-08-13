@@ -11,6 +11,7 @@ type Resp = { content: Row[]; total?: number; count?: number };
 const CFG: Record<Tab, {
   title: string; sub: string; get: string; action?: { path: string; label: string; confirm: string };
   cols: { key: string; label: string; align?: "right" | "center"; money?: boolean }[];
+  residentCol?: boolean; // 정산내역: 주민번호 등록여부 + 알람발송
 }> = {
   sales: {
     title: "매출현황", sub: "구매확정(MP)·미지급·미마감 수당 (확정월 기준)", get: "/api/org/settlement/sales",
@@ -33,6 +34,7 @@ const CFG: Record<Tab, {
   payments: {
     title: "정산내역", sub: "정산전표 · 지급 대기", get: "/api/org/settlement/payments",
     action: { path: "/api/org/settlement/payments/pay", label: "지급완료", confirm: "조회된 정산내역을 지급완료 처리하시겠습니까?" },
+    residentCol: true,
     cols: [
       { key: "memberType", label: "회원유형" }, { key: "memberId", label: "회원ID" },
       { key: "bankName", label: "은행명" }, { key: "accountNumber", label: "계좌번호" }, { key: "accountHolder", label: "예금주" },
@@ -59,6 +61,18 @@ export default function MasterSettlement({ tab }: { tab: Tab }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // 주민번호 알람발송 (docs/22)
+  const [notifyBusy, setNotifyBusy] = useState<string | null>(null);
+  const [sent, setSent] = useState<Set<string>>(new Set());
+
+  async function notifyResident(memberId: string) {
+    if (!memberId) return;
+    setNotifyBusy(memberId); setMsg(null);
+    const r = await apiPost<{ message: string }>("/api/org/settlement/notify-resident", { memberId });
+    setNotifyBusy(null);
+    setMsg(r.data?.message ?? (r.ok ? "알람을 발송했습니다." : r.message ?? "발송 실패"));
+    if (r.ok) setSent((s) => new Set(s).add(memberId));
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,14 +126,19 @@ export default function MasterSettlement({ tab }: { tab: Tab }) {
             <thead className="sticky top-0 z-10 bg-navy-900">
               <tr className="border-b border-line text-xs text-slate-400">
                 {cfg.cols.map((c) => <th key={c.key} className={`px-3 py-3 font-semibold ${c.align === "right" ? "text-right" : "text-left"}`}>{c.label}</th>)}
+                {cfg.residentCol && <th className="px-3 py-3 text-center font-semibold">주민번호 (세금신고용)</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {loading ? (
-                <tr><td colSpan={cfg.cols.length} className="px-3 py-10 text-center text-slate-500">불러오는 중…</td></tr>
+                <tr><td colSpan={cfg.cols.length + (cfg.residentCol ? 1 : 0)} className="px-3 py-10 text-center text-slate-500">불러오는 중…</td></tr>
               ) : data.content.length === 0 ? (
-                <tr><td colSpan={cfg.cols.length} className="px-3 py-10 text-center text-slate-500">내역이 없습니다.</td></tr>
-              ) : data.content.map((row, i) => (
+                <tr><td colSpan={cfg.cols.length + (cfg.residentCol ? 1 : 0)} className="px-3 py-10 text-center text-slate-500">내역이 없습니다.</td></tr>
+              ) : data.content.map((row, i) => {
+                const memberId = String(row.memberId ?? "");
+                const applicable = row.residentApplicable !== false;
+                const regd = Boolean(row.residentRegistered);
+                return (
                 <tr key={i} className="hover:bg-navy-800/50">
                   {cfg.cols.map((c) => {
                     const v = row[c.key];
@@ -127,8 +146,24 @@ export default function MasterSettlement({ tab }: { tab: Tab }) {
                       {c.money ? krw(Number(v ?? 0)) : (v == null || v === "" ? "-" : String(v))}
                     </td>;
                   })}
+                  {cfg.residentCol && (
+                    <td className="px-3 py-2.5 text-center">
+                      {!applicable ? <span className="text-slate-500">-</span>
+                        : regd ? <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-400">등록</span>
+                        : (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="rounded-md bg-red-500/15 px-2 py-0.5 text-xs font-bold text-red-400">미등록</span>
+                            <button onClick={() => notifyResident(memberId)} disabled={notifyBusy === memberId || sent.has(memberId)}
+                              className="rounded-lg border border-brand-500/50 px-2.5 py-1 text-xs font-bold text-brand-300 hover:bg-brand-600/20 disabled:opacity-50">
+                              {sent.has(memberId) ? "발송됨" : notifyBusy === memberId ? "…" : "알람발송"}
+                            </button>
+                          </span>
+                        )}
+                    </td>
+                  )}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

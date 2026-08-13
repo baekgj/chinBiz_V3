@@ -38,6 +38,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\center\CenterSettl
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ChinbizApiApplication.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\common\AccountValidation.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\common\Mask.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\common\ResidentNumber.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\config\DataSeeder.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\config\GlobalExceptionHandler.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\config\SecurityConfig.java

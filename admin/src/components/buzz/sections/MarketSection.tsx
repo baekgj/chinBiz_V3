@@ -11,9 +11,6 @@ import { computeDday, canApplySale } from "@/lib/dday";
 
 type Item = { id: number; name: string; salePrice: number; totalAllowance: number; rewardType?: string; buzzReward?: number; managerReward?: number; image1?: string; partnerName?: string; categoryName?: string; categoryId?: number | null; contractEndDate?: string | null; popular?: boolean; recommended?: boolean; autoAssign?: boolean };
 type PageResp = { content: Item[]; page: number; totalPages: number; totalElements: number };
-type Cat = { id: number; name: string; level: string };
-type Ptn = { id: number; companyName: string };
-
 const SIZE = 9; // 3 x 3
 
 /** 상품 마켓 — 3x3 그리드, 검색(상품명/파트너/카테고리), 페이징, 상품명 클릭→상세 */
@@ -24,16 +21,9 @@ export default function MarketSection() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [cats, setCats] = useState<Cat[]>([]);
-  const [ptns, setPtns] = useState<Ptn[]>([]);
-  // 검색 입력 + 적용
-  const [kw, setKw] = useState(""); const [cat, setCat] = useState(""); const [ptn, setPtn] = useState("");
-  const [q, setQ] = useState({ kw: "", cat: "", ptn: "" });
-
-  useEffect(() => {
-    apiGet<Cat[]>("/api/buzz/categories").then((r) => { if (r.data) setCats(r.data); });
-    apiGet<Ptn[]>("/api/buzz/partners").then((r) => { if (r.data) setPtns(r.data); });
-  }, []);
+  // 검색 입력 + 적용 (상품명만 — docs/22: 카테고리·파트너사 필터 제거)
+  const [kw, setKw] = useState("");
+  const [q, setQ] = useState({ kw: "" });
 
   const reqRef = useRef(0);
   const load = useCallback(async (p: number) => {
@@ -41,8 +31,6 @@ export default function MarketSection() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), size: String(SIZE) });
     if (q.kw) params.set("keyword", q.kw);
-    if (q.cat) params.set("categoryId", q.cat);
-    if (q.ptn) params.set("partnerId", q.ptn);
     if (isManager) params.set("as", "manager"); // 관리마켓: 교육이수 완료 상품만 + autoAssign
     const r = await apiGet<PageResp>(`/api/buzz/products?${params}`);
     if (myReq !== reqRef.current) return; // 뒤늦게 도착한 이전 요청 응답 무시
@@ -63,28 +51,14 @@ export default function MarketSection() {
 
   return (
     <Card title={isManager ? undefined : "상품 마켓"} sub={isManager ? undefined : `총 ${total}개 · 1차 영업 대상 상품`}>
-      {/* 검색 — 리스트와 간격 + 경계선 (docs/21) */}
+      {/* 검색 (상품명만) — 리스트와 간격 + 경계선 (docs/21·22) */}
       <div className={`mb-6 flex flex-wrap items-end gap-2 border-b pb-5 ${theme.tableWrap}`}>
         <div>
           <p className={`mb-1 text-xs font-semibold ${theme.fieldLabel}`}>상품명</p>
-          <input className={inputCls} value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && setQ({ kw, cat, ptn })} placeholder="상품명" />
+          <input className={inputCls} value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && setQ({ kw })} placeholder="상품명" />
         </div>
-        <div>
-          <p className={`mb-1 text-xs font-semibold ${theme.fieldLabel}`}>카테고리</p>
-          <select className={inputCls} value={cat} onChange={(e) => setCat(e.target.value)}>
-            <option value="">전체</option>
-            {cats.map((c) => <option key={c.id} value={c.id}>{"·".repeat(["LARGE", "MEDIUM", "SMALL"].indexOf(c.level))}{c.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <p className={`mb-1 text-xs font-semibold ${theme.fieldLabel}`}>파트너사</p>
-          <select className={inputCls} value={ptn} onChange={(e) => setPtn(e.target.value)}>
-            <option value="">전체</option>
-            {ptns.map((p) => <option key={p.id} value={p.id}>{p.companyName}</option>)}
-          </select>
-        </div>
-        <button onClick={() => setQ({ kw, cat, ptn })} className={`rounded-lg px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>검색</button>
-        <button onClick={() => { setKw(""); setCat(""); setPtn(""); setQ({ kw: "", cat: "", ptn: "" }); }} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${theme.tableWrap} ${theme.cellSub}`}>초기화</button>
+        <button onClick={() => setQ({ kw })} className={`rounded-lg px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>검색</button>
+        <button onClick={() => { setKw(""); setQ({ kw: "" }); }} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${theme.tableWrap} ${theme.cellSub}`}>초기화</button>
       </div>
 
       {loading ? (

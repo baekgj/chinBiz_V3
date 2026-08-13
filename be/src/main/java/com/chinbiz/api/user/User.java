@@ -68,6 +68,10 @@ public class User {
     @Column(name = "account_holder", length = 50)
     private String accountHolder;
 
+    // 주민등록번호(세금신고용) — 요구사항상 평문 저장. 유효성 검증 후 저장. (docs/22)
+    @Column(name = "resident_number", length = 20)
+    private String residentNumber;
+
     @Column(name = "agree_marketing", nullable = false)
     private boolean agreeMarketing = false;
 
@@ -115,6 +119,8 @@ public class User {
     public void setAccountNumber(String v) { this.accountNumber = v; }
     public String getAccountHolder() { return accountHolder; }
     public void setAccountHolder(String v) { this.accountHolder = v; }
+    public String getResidentNumber() { return residentNumber; }
+    public void setResidentNumber(String v) { this.residentNumber = v; }
     public boolean isAgreeMarketing() { return agreeMarketing; }
     public void setAgreeMarketing(boolean agreeMarketing) { this.agreeMarketing = agreeMarketing; }
     public LocalDateTime getCreatedAt() { return createdAt; }

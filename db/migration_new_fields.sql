@@ -259,3 +259,9 @@ CREATE TABLE IF NOT EXISTS `admin_scope` (
   PRIMARY KEY (`login_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- 완료.
+
+
+-- ── [컬럼 추가] user.resident_number 주민등록번호(세금신고용) (2026-08-12 docs/22) ─────
+--   활동수당 지급 세금신고용. 유효성 검증 후 숫자만 저장(평문·요구사항). ddl-auto=update 자동 반영되나 배포용 기재.
+ALTER TABLE `user` ADD COLUMN `resident_number` varchar(20) DEFAULT NULL;
+-- 완료.

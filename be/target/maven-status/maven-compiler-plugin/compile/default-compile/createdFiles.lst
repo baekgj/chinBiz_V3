@@ -91,6 +91,7 @@ com\chinbiz\api\partner\PartnerInquiryController$StatusRequest.class
 com\chinbiz\api\alarm\AlarmDefs$TargetMsg.class
 com\chinbiz\api\partner\dto\PartnerRequest.class
 com\chinbiz\api\common\Mask.class
+com\chinbiz\api\common\ResidentNumber.class
 com\chinbiz\api\partner\Partner.class
 com\chinbiz\api\alarm\AlarmSettingController$TargetReq.class
 com\chinbiz\api\buzz\Sale.class

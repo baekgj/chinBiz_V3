@@ -5,7 +5,7 @@ import { apiGet, apiPut } from "@/lib/api";
 import { openDaumPostcode } from "@/lib/postcode";
 import { ct } from "@/components/center/CenterUI";
 
-type Me = { userId: string; name?: string; email?: string; phone?: string; zipcode?: string; address?: string; addressDetail?: string; bankName?: string; accountNumber?: string; accountHolder?: string };
+type Me = { userId: string; name?: string; email?: string; phone?: string; zipcode?: string; address?: string; addressDetail?: string; bankName?: string; accountNumber?: string; accountHolder?: string; residentNumber?: string };
 
 // ★ 모듈 스코프: 렌더마다 재생성되지 않아 입력 포커스 유지
 function F({ label, children }: { label: string; children: React.ReactNode }) {
@@ -16,7 +16,7 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 export default function ProfileForm() {
   const [me, setMe] = useState<Me | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [f, setF] = useState({ name: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "", bankName: "", accountNumber: "", accountHolder: "", password: "" });
+  const [f, setF] = useState({ name: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "", bankName: "", accountNumber: "", accountHolder: "", residentNumber: "", password: "" });
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
 
@@ -26,7 +26,7 @@ export default function ProfileForm() {
     apiGet<Me>("/api/user/me").then((r) => {
       if (r.ok && r.data) {
         setMe(r.data);
-        setF({ name: r.data.name ?? "", phone: r.data.phone ?? "", email: r.data.email ?? "", zipcode: r.data.zipcode ?? "", address: r.data.address ?? "", addressDetail: r.data.addressDetail ?? "", bankName: r.data.bankName ?? "", accountNumber: r.data.accountNumber ?? "", accountHolder: r.data.accountHolder ?? "", password: "" });
+        setF({ name: r.data.name ?? "", phone: r.data.phone ?? "", email: r.data.email ?? "", zipcode: r.data.zipcode ?? "", address: r.data.address ?? "", addressDetail: r.data.addressDetail ?? "", bankName: r.data.bankName ?? "", accountNumber: r.data.accountNumber ?? "", accountHolder: r.data.accountHolder ?? "", residentNumber: r.data.residentNumber ?? "", password: "" });
         setStatus("ok");
       } else setStatus("error");
     });
@@ -38,6 +38,7 @@ export default function ProfileForm() {
     ev.preventDefault();
     setNotice(null);
     if (f.password && f.password.length < 8) { setNotice({ type: "err", msg: "비밀번호는 8자 이상이어야 합니다." }); return; }
+    if (f.residentNumber && f.residentNumber.replace(/\D/g, "").length !== 13) { setNotice({ type: "err", msg: "주민등록번호 13자리를 정확히 입력해 주세요." }); return; }
     setSaving(true);
     const res = await apiPut("/api/user/me", f);
     setSaving(false);
@@ -82,6 +83,7 @@ export default function ProfileForm() {
           <F label="은행명"><input className={inputCls} value={f.bankName} onChange={(e) => set("bankName")(e.target.value)} placeholder="은행" /></F>
           <F label="계좌번호"><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></F>
           <F label="예금주명"><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></F>
+          <F label="주민등록번호 (세금신고용)"><input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(e.target.value)} placeholder="000000-0000000" inputMode="numeric" /></F>
         </div>
       </section>
 

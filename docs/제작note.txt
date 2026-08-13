@@ -938,3 +938,33 @@ CREATE TABLE IF NOT EXISTS `terms` (
 ■ 검증: BE 컴파일·양 FE 타입체크 통과. summary 엔드포인트 응답 확인(신규 버즈: 5단계 0·추천 0). 전 라우트 200
    (home/ · /buzz · /login · /buzz/pipeline · /buzz/network/9). 브라우저 시각검증은 확장 미연결로 생략(로직·라우트 검증 대체).
 ■ BE 무DB변경(신규 테이블 없음). 서버 반영: BE 재기동 + home·admin 재빌드·재배포.
+
+====================================================================
+[추가] docs/22.txt 작업 — 마켓필터·수당카드·1차영업고정·주민번호·정산알람 등 9건 (2026-08-12)
+====================================================================
+■ 1. 버즈[상품마켓]·매니저[관리마켓] 검색에서 [카테고리]·[파트너사] 필터 제거(상품명만). MarketSection.tsx(cats/ptns state·fetch 제거).
+■ 2. home 푸터: [통신판매업신고번호…] 삭제, 이메일 help@chinbiz.com → mocanet@naver.com. Footer.tsx.
+■ 3. 버즈 대시보드 수당카드 좌우 교체: CP(예정,좌)·MP(출금가능,우). DashboardSection.tsx.
+■ 4. 버즈 [1차영업 등록](SaleForm): 마켓 진입(productId) 시 카테고리·상품 select 고정(disabled),
+   [고객 기본정보]→[가망고객 기본정보], 영업진행상태 select 고정(신규=접수).
+■ 5. 버즈 [버즈네트워크] "내 추천 링크 (친쿠)" → "내 추천 링크"(친쿠 제거). NetworkSection.tsx.
+■ 6. 모바일 버즈admin 상단 [매니저admin 보기] 버튼 노출: 모바일=[M]/[B] 아이콘, 데스크톱=전체문구. BuzzTopbar.tsx.
+■ 7. 본부/센터/버즈 내정보에 [주민등록번호 (세금신고용)] 필드 추가 + 유효성검사 + user.resident_number 저장.
+   BE: User.residentNumber(컬럼 resident_number), common/ResidentNumber(13자리+검증부호), UserSelfController(dto+SelfUpdate+검증저장, 빈값=해제).
+   FE: buzz/division/center ProfileForm 3종에 필드+클라 13자리 검증. (평문 저장·요구사항, 잘못된 번호 400)
+■ 8. 본사 [정산내역](MasterSettlement payments)에 주민번호 등록여부 컬럼 + 미등록 회원 [알람발송] 버튼.
+   BE: MasterSettlementController.paymentRows(residentRegistered/residentApplicable), POST /api/org/settlement/notify-resident,
+   AlarmDefs "RESIDENT_NUMBER_REQUEST"(BUZZ/MANAGER/CENTER/DIVISION), AlarmService.fireResidentNumberRequest(role→target 1인 발송).
+   FE: residentCol=true, 등록/미등록 배지 + [알람발송](발송 후 '발송됨' 비활성).
+■ 9. HOME 회원가입 sales_center_id: 추천인 있으면 추천인의 sales_center_id, 없으면 기본회원(join_fallback_ref)의 sales_center_id.
+   AuthController.signup (주소매칭·입력값 우선순위 제거, 추천인/기본회원 승계로 단순화).
+■ DB: user.resident_number VARCHAR(20) 추가 → migration_new_fields.sql / [DB 마이그레이션] 반영. AlarmDefs 코드시드(기동 자동).
+   서버 적용: ALTER TABLE `user` ADD COLUMN `resident_number` varchar(20) DEFAULT NULL; (또는 ddl-auto=update 자동)
+■ 검증(로컬): BE 컴파일·양 FE 타입체크 통과. E2E — 추천인 가입 scid 승계(101), RRN 무효 400·유효 저장,
+   정산 notify-resident 미등록회원 알람발송 200(alram 생성). 전 라우트 200. 서버 반영: BE 재기동 + home·admin 재빌드.
+
+  [수정 2026-08-12b] npm run build 실패(next/font/google Noto Sans KR 빌드시 다운로드 불가) 해결
+   · 원인: layout.tsx 가 next/font/google 로 Noto Sans KR 를 빌드타임에 다운로드→서버가 Google Fonts 미접속 시 build 실패(module-not-found).
+   · 조치(home·admin 동일): next/font/google 제거 → <link>(preconnect+stylesheet, fonts.googleapis.com Noto Sans KR)로 런타임 로드.
+     globals.css --font-sans: var(--font-sans-kr) → "Noto Sans KR"(+기존 시스템 폰트 fallback). Google 미접속 시 시스템 폰트로 graceful fallback.
+   · 검증: home·admin `npm run build` 모두 성공(exit 0). 빌드타임 외부 폰트 다운로드 의존 제거.
