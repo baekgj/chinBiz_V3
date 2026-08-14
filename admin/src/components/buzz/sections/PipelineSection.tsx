@@ -55,13 +55,12 @@ export default function PipelineSection() {
           <thead>
             <tr className={`text-xs ${theme.thead}`}>
               <th className="px-4 py-3 text-left font-semibold">등록일</th>
-              <th className="px-4 py-3 text-center font-semibold">구분</th>
-              <th className="px-4 py-3 text-left font-semibold">주문번호</th>
               <th className="px-4 py-3 text-left font-semibold">상품명</th>
-              <th className="px-4 py-3 text-left font-semibold">파트너사</th>
               <th className="px-4 py-3 text-left font-semibold">고객명</th>
               <th className="px-4 py-3 text-right font-semibold">수당금액</th>
               <th className="px-4 py-3 text-center font-semibold">영업단계</th>
+              <th className="px-4 py-3 text-center font-semibold">구분</th>
+              <th className="px-4 py-3 text-left font-semibold">주문번호</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${theme.divide}`}>
@@ -72,16 +71,11 @@ export default function PipelineSection() {
             ) : rows.map((s) => (
               <tr key={s.id} className={theme.rowHover}>
                 <td className={`px-4 py-3 ${theme.cellSub}`}>{s.createdAt}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${s.kind === "영업" ? theme.stageOn : theme.goldBadge}`}>{s.kind}</span>
-                </td>
-                <td className={`px-4 py-3 font-mono text-xs ${theme.cellSub}`}>{s.orderNo ?? "-"}</td>
                 <td className="px-4 py-3">
                   {s.productId
                     ? <Link href={`/buzz/market/${s.productId}`} className={`font-semibold hover:underline ${theme.cellMain}`}>{s.productName ?? "-"}</Link>
                     : <span className={`font-semibold ${theme.cellMain}`}>{s.productName ?? "-"}</span>}
                 </td>
-                <td className={`px-4 py-3 ${theme.cellSub}`}>{s.partnerName ?? "-"}</td>
                 <td className="px-4 py-3">
                   <Link href={`/buzz/pipeline/${s.id}`} className={`font-bold hover:underline ${theme.cellMain}`}>{s.customerName ?? "-"}</Link>
                 </td>
@@ -89,6 +83,10 @@ export default function PipelineSection() {
                 <td className="px-4 py-3 text-center">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${DONE.has(s.status) ? theme.stageDone : theme.stageOn}`}>{s.status}</span>
                 </td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${s.kind === "영업" ? theme.stageOn : theme.goldBadge}`}>{s.kind}</span>
+                </td>
+                <td className={`px-4 py-3 font-mono text-xs ${theme.cellSub}`}>{s.orderNo ?? "-"}</td>
               </tr>
             ))}
           </tbody>

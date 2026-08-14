@@ -95,7 +95,7 @@ export default function DashboardSection() {
       {/* 2. 영업 파이프라인 현황 */}
       <Card title="영업 파이프라인 현황" sub="가망고객이 계약까지 가면서 거치는 거래의 상태와 진행 단계"
         right={<Link href="/buzz/pipeline" className={`text-sm font-bold ${theme.accent}`}>상세보기 &gt;</Link>}>
-        <div className="flex flex-wrap items-stretch gap-2">
+        <div className="flex flex-wrap items-stretch justify-center gap-2">
           {STAGE_ORDER.map((label, i) => (
             <div key={label} className="flex items-stretch gap-2">
               <Link href="/buzz/pipeline" className={`flex min-w-[92px] flex-col items-center justify-center rounded-xl border px-3 py-3 transition-transform hover:-translate-y-0.5 ${theme.tableWrap}`}>

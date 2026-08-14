@@ -10,11 +10,6 @@ import { useBuzz } from "@/components/buzz/theme";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
-const SETTLEMENT_NAV = { href: "/buzz/allowances", label: "수당/정산현황", children: [
-  { href: "/buzz/allowances", label: "수당현황" },
-  { href: "/buzz/payments", label: "정산현황" },
-] };
-
 // 버즈 메뉴 순서 (docs/21): 대시보드 | 영업파이프라인 | 상품마켓 | 수당현황 | 정산현황 | 버즈네트워크 | 공지사항
 const NAV: NavItem[] = [
   { href: "/buzz", label: "대시보드" },
@@ -25,14 +20,17 @@ const NAV: NavItem[] = [
   { href: "/buzz/network", label: "버즈네트워크" },
   { href: "/buzz/notices", label: "공지사항" },
 ];
+// 매니저 메뉴 순서 (docs/23): 대시보드 | 교육관리 | 관리마켓 | 영업관리 | 수당현황 | 정산현황 | 공지사항
 const NAV_MANAGER: NavItem[] = [
-  SETTLEMENT_NAV,
+  { href: "/buzz", label: "대시보드" },
+  { href: "/buzz/education", label: "교육관리" },
+  { href: "/buzz/market", label: "관리마켓" },
   { href: "/buzz/intake", label: "영업관리", children: [
     { href: "/buzz/intake", label: "버즈1차접수현황" },
     { href: "/buzz/managed", label: "2차영업관리" },
   ] },
-  { href: "/buzz/market", label: "관리마켓" },
-  { href: "/buzz/education", label: "교육 관리" },
+  { href: "/buzz/allowances", label: "수당현황" },
+  { href: "/buzz/payments", label: "정산현황" },
   { href: "/buzz/notices", label: "공지사항" },
 ];
 

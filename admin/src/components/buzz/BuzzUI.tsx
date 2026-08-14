@@ -17,7 +17,7 @@ export function Stat({ label, value, unit, tone = "green" }: { label: string; va
   );
 }
 
-export function Card({ title, sub, right, children }: { title?: string; sub?: string; right?: ReactNode; children: ReactNode }) {
+export function Card({ title, sub, right, children }: { title?: ReactNode; sub?: string; right?: ReactNode; children: ReactNode }) {
   const { theme } = useBuzz();
   const hasHeader = !!(title || sub || right);
   return (

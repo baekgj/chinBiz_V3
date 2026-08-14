@@ -968,3 +968,26 @@ CREATE TABLE IF NOT EXISTS `terms` (
    · 조치(home·admin 동일): next/font/google 제거 → <link>(preconnect+stylesheet, fonts.googleapis.com Noto Sans KR)로 런타임 로드.
      globals.css --font-sans: var(--font-sans-kr) → "Noto Sans KR"(+기존 시스템 폰트 fallback). Google 미접속 시 시스템 폰트로 graceful fallback.
    · 검증: home·admin `npm run build` 모두 성공(exit 0). 빌드타임 외부 폰트 다운로드 의존 제거.
+
+====================================================================
+[추가] docs/23.docx 작업 — 파이프라인 컬럼순서·매니저 메뉴·매니저 대시보드·활동가이드 4건 (2026-08-14)
+====================================================================
+■ 1. 버즈 [영업파이프라인] 컬럼 순서 변경: 등록일|상품명|고객명|수당금액|영업단계|구분|주문번호 (파트너사 컬럼 제거). PipelineSection.tsx.
+■ 2. 매니저 메뉴 순서: 대시보드|교육관리|관리마켓|영업관리(버즈1차접수현황/2차영업관리)|수당현황|정산현황|공지사항. BuzzTopbar.tsx(NAV_MANAGER, SETTLEMENT_NAV 제거).
+■ 3. 매니저 대시보드 신설(ManagerDashboardSection.tsx, /buzz 매니저뷰): ①환영+관할구역(manager_center Y 센터명)+CP(예정)/MP(출금가능,→수당현황)
+   ②관리매니저 활동가이드(Step1교육이수→Step2자동배정→Step3 1차배정→Step4 2차현장이행)+[접기/열기]→가이드팝업
+   ③관할지역 신규 1차접수 리드(/sales/intake, [⚡즉시 배정받기]=assign→2차영업관리, 교육미승인시 [교육이수 후]) 
+   ④진행중 2차영업(상담대기/방문·실사/계약보조/최종성공/정산완료 5단계, /sales/managed status 집계)+[실사리포트·사진작성]
+   ⑤이수필요/추천 관리상품(교육완료=products?as=manager 자동배정토글 / 미이수=/education [10분 교육수강]) ⑥공지 최근2건.
+   page.tsx: 매니저=ManagerDashboardSection / 버즈=DashboardSection 분기(기존 WalletSection 매니저뷰 대체).
+■ 4. [관리매니저 핵심 활동 가이드] [접기/열기] → 4-Step 레이어 팝업(createPortal 뷰포트 중앙). ManagerDashboardSection 내.
+■ BE 무변경(기존 엔드포인트 재사용: dashboard?as=manager, sales/intake·managed, products?as=manager, education, my/notices).
+■ 검증: admin 타입체크 + `npm run build` 성공(exit 0). /buzz·/buzz/pipeline 200. 서버 반영: admin 재빌드·재배포.
+
+  [보완 2026-08-14 docs/23_1] 매니저 대시보드 가이드/정렬/카메라 3건
+   · 1. 활동가이드 카드: 제목 옆 ⓘ(?) 원형 버튼=핵심 가이드 4-Step 팝업 열기, [접기/열기] 버튼=카드 본문 토글
+     (guideCollapsed 상태, 접기 시 Step 목록 숨김). 기존엔 접기/열기가 팝업을 열던 것을 분리.
+   · 2. 5단계 스텝 가운데 정렬(justify-center): 매니저 [진행중 2차영업]·버즈 [영업 파이프라인 현황] 둘 다.
+   · 3. [실사 리포트 및 사진 작성하기]: <label>+<input type=file accept=image/* capture=environment>로
+     모바일 클릭 시 폰 카메라 실행(촬영 후 /buzz/managed 이동), PC(≥sm)는 sm:hidden 으로 미노출.
+   · 검증: admin 타입체크 통과, /buzz 200. FE 전용.
