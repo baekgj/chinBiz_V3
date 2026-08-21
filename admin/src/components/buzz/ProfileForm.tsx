@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPut } from "@/lib/api";
 import { openDaumPostcode } from "@/lib/postcode";
+import { formatPhone, formatRRN } from "@/lib/format";
 import { useBuzz } from "@/components/buzz/theme";
 
 type Me = {
@@ -99,7 +100,7 @@ export default function ProfileForm() {
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>기본 정보 · 연락처</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="이름" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>
-          <Field label="전화번호" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></Field>
+          <Field label="전화번호" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></Field>
           <Field label="이메일" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></Field>
         </div>
         <div className="mt-4">
@@ -121,7 +122,7 @@ export default function ProfileForm() {
           <Field label="계좌번호" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></Field>
           <Field label="예금주" labelCls={lc} noteCls={nc}><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></Field>
           <Field label="주민등록번호 (세금신고용)" hint="활동수당 지급 세금신고에 사용됩니다." labelCls={lc} noteCls={nc}>
-            <input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(e.target.value)} placeholder="000000-0000000" inputMode="numeric" />
+            <input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(formatRRN(e.target.value))} placeholder="000000-0000000" inputMode="numeric" />
           </Field>
         </div>
       </section>

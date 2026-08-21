@@ -65,8 +65,7 @@ export default function Footer() {
             대표 최경호 &nbsp;|&nbsp; 사업자등록번호 822-81-00277
           </p>
           <p className="mt-1">
-            서울특별시 강남구 테헤란로 &nbsp;|&nbsp; 고객센터 02-6412-0505 &nbsp;|&nbsp;
-            mocanet@naver.com
+            고객센터 02-6412-0505 &nbsp;|&nbsp; mocanet@naver.com
           </p>
           <p className="mt-4">Copyright © 2026 ChinBiz. All Rights Reserved.</p>
         </div>

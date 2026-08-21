@@ -1,11 +1,11 @@
 import { PageHead } from "@/components/division/DivisionUI";
-import WalletSection from "@/components/division/sections/WalletSection";
+import DivisionDashboard from "@/components/division/sections/DivisionDashboard";
 
 export default function DivisionAssetPage() {
   return (
     <div>
-      <PageHead title="본부 실시간 정산 및 광역 자산 현황판" sub="산하 모든 센터·버즈·매니저 트래픽에서 본부 배정 요율(4%)로 누적되는 광역 수익 지표" />
-      <WalletSection />
+      <PageHead title="본부 상품 통합 관제 대시보드" sub="광역 오버라이딩 수수료 · 산하 센터별 실적 비교 · 광역 프로모션" />
+      <DivisionDashboard />
     </div>
   );
 }

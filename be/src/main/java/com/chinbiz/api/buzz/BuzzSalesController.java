@@ -291,9 +291,9 @@ public class BuzzSalesController {
         return ResponseEntity.ok(detail(s, me));
     }
 
-    public record AssignRequest(String status, String memo) {}
+    public record AssignRequest(String status, String memo, Long categoryId, Long productId) {}
 
-    /** [우선할당] — 매니저가 영업권 확보(manager_id 저장) + 진행현황/내용 기록. 교육 승인 필수. */
+    /** [우선할당] — 매니저가 영업권 확보(manager_id 저장) + 카테고리/상품·진행현황/내용 기록. 교육 승인 필수. */
     @PostMapping("/{id}/assign")
     public ResponseEntity<?> assign(Authentication auth, @PathVariable Long id, @RequestBody AssignRequest req) {
         User me = me(auth);
@@ -303,6 +303,9 @@ public class BuzzSalesController {
         if (s == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
         if (s.getManagerId() != null && !me.getId().equals(s.getManagerId()))
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 다른 매니저에게 배정된 영업입니다."));
+        // 매니저가 배정 시 카테고리/상품 선택 저장 (docs/24) — 교육 승인 판정 전에 반영
+        if (req.categoryId() != null) s.setCategoryId(req.categoryId());
+        if (req.productId() != null) s.setProductId(req.productId());
         boolean eduApproved = s.getProductId() != null && eduRepo.findByProductIdAndManagerId(s.getProductId(), me.getId())
                 .map(e -> e.isCompleted() && e.isApproved()).orElse(false);
         if (!eduApproved) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "해당 상품 교육 이수·승인 후 배정할 수 있습니다."));

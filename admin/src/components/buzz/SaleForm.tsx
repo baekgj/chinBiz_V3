@@ -12,6 +12,28 @@ type Prod = { id: number; name: string; categoryId: number | null; partnerName?:
 
 const STAGES = ["접수", "상담/방문", "계약체결", "배송/설치", "구매확정", "취소/반품"];
 
+// 입력 자동 하이픈 포맷 (docs/24) — 숫자만 남기고 길이에 따라 - 삽입
+const digits = (v: string) => v.replace(/\D/g, "");
+function fmtBiz(v: string) { // 사업자등록번호 000-00-00000
+  const d = digits(v).slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+}
+function fmtPhone(v: string) { // 전화/휴대폰 (02 서울 2자리 / 그 외 3자리 지역번호)
+  const d = digits(v).slice(0, 11);
+  if (d.startsWith("02")) {
+    if (d.length < 3) return d;
+    if (d.length < 6) return `${d.slice(0, 2)}-${d.slice(2)}`;
+    if (d.length < 10) return `${d.slice(0, 2)}-${d.slice(2, 5)}-${d.slice(5)}`;
+    return `${d.slice(0, 2)}-${d.slice(2, 6)}-${d.slice(6)}`;
+  }
+  if (d.length < 4) return d;
+  if (d.length < 8) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  if (d.length < 11) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+}
+
 // ★ 모듈 스코프 (렌더마다 재생성 X → 입력 포커스 유지)
 function F({ label, labelCls, children }: { label: string; labelCls: string; children: React.ReactNode }) {
   return <label className="block"><span className={`text-xs font-semibold ${labelCls}`}>{label}</span><div className="mt-1">{children}</div></label>;
@@ -93,11 +115,11 @@ export default function SaleForm() {
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>가망고객 기본정보</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <F label="상호명 *" labelCls={lc}><input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="상호명" /></F>
-          <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} onChange={(e) => set("businessNumber")(e.target.value)} placeholder="000-00-00000" /></F>
+          <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} inputMode="numeric" onChange={(e) => set("businessNumber")(fmtBiz(e.target.value))} placeholder="000-00-00000" /></F>
           <F label="대표자명" labelCls={lc}><input className={inputCls} value={f.ceoName} onChange={(e) => set("ceoName")(e.target.value)} placeholder="대표자명" /></F>
-          <F label="회사 전화번호" labelCls={lc}><input className={inputCls} value={f.companyPhone} onChange={(e) => set("companyPhone")(e.target.value)} placeholder="02-000-0000" /></F>
+          <F label="회사 전화번호" labelCls={lc}><input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(fmtPhone(e.target.value))} placeholder="02-000-0000" /></F>
           <F label="담당자명" labelCls={lc}><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자명" /></F>
-          <F label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-0000-0000" /></F>
+          <F label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
           <F label="이메일" labelCls={lc}><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></F>
         </div>
         <div className="mt-4">

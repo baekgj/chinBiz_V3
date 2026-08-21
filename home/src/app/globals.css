@@ -57,6 +57,9 @@ body {
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
+  /* 세로 스크롤바 유무에 따라 콘텐츠 폭이 바뀌지 않도록 스크롤바 폭을 항상 예약
+     → 상품 리스트 페이지 이동(내용 길이 변화) 시 카드 폭이 달라지는 문제 방지 (docs) */
+  scrollbar-gutter: stable;
 }
 
 /* ─────────────────────────────────────────────

@@ -27,7 +27,7 @@ export default function AboutPage() {
     <>
       <Header />
       {/* 히어로 */}
-      <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
+      <section className="mx-auto w-full max-w-6xl px-5 py-16 sm:py-20">
         <p className="text-xs font-bold tracking-widest text-gold-500">ABOUT CHIN-BIZ</p>
         <h1 className="mt-3 text-3xl font-black leading-tight text-ink sm:text-4xl">
           연결하는 플랫폼,<br /> 함께 성장하는 비즈니스
@@ -66,7 +66,7 @@ export default function AboutPage() {
       </section>
 
       {/* 2차 관리 매니저 시스템 */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
+      <section className="mx-auto w-full max-w-6xl px-5 py-16">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div className="rounded-3xl bg-forest-950 p-8">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6">

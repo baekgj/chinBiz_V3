@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
+import AdminHomeLink from "@/components/AdminHomeLink";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
@@ -76,6 +77,7 @@ export default function PartnerTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <AdminHomeLink tone="light" />
           <AlarmBell tone="light" />
           {/* 업체명 클릭 → 내정보 수정 */}
           <Link href="/partner/profile"

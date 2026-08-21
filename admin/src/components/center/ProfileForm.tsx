@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPut } from "@/lib/api";
 import { openDaumPostcode } from "@/lib/postcode";
+import { formatPhone, formatRRN } from "@/lib/format";
 import { ct } from "@/components/center/CenterUI";
 
 type Me = { userId: string; name?: string; email?: string; phone?: string; zipcode?: string; address?: string; addressDetail?: string; bankName?: string; accountNumber?: string; accountHolder?: string; residentNumber?: string };
@@ -63,7 +64,7 @@ export default function ProfileForm() {
         <h3 className={`mb-3 text-sm font-black ${ct.cardHead}`}>기본 정보 · 연락처</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <F label="이름/담당자명"><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></F>
-          <F label="전화번호"><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></F>
+          <F label="전화번호"><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></F>
           <F label="이메일"><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></F>
         </div>
         <div className="mt-4">
@@ -83,7 +84,7 @@ export default function ProfileForm() {
           <F label="은행명"><input className={inputCls} value={f.bankName} onChange={(e) => set("bankName")(e.target.value)} placeholder="은행" /></F>
           <F label="계좌번호"><input className={inputCls} value={f.accountNumber} onChange={(e) => set("accountNumber")(e.target.value)} placeholder="계좌번호" /></F>
           <F label="예금주명"><input className={inputCls} value={f.accountHolder} onChange={(e) => set("accountHolder")(e.target.value)} placeholder="예금주" /></F>
-          <F label="주민등록번호 (세금신고용)"><input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(e.target.value)} placeholder="000000-0000000" inputMode="numeric" /></F>
+          <F label="주민등록번호 (세금신고용)"><input className={inputCls} value={f.residentNumber} onChange={(e) => set("residentNumber")(formatRRN(e.target.value))} placeholder="000000-0000000" inputMode="numeric" /></F>
         </div>
       </section>
 

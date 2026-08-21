@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { formatBiz, formatPhone } from "@/lib/format";
 
 const ID_RE = /^[a-zA-Z0-9]{4,20}$/;
 
@@ -181,13 +182,13 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
             <input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="(주)삼화정공사" />
           </Field>
           <Field label="사업자등록번호">
-            <input className={inputCls} value={f.businessNumber} onChange={(e) => set("businessNumber")(e.target.value)} placeholder="123-45-67890" />
+            <input className={inputCls} value={f.businessNumber} inputMode="numeric" onChange={(e) => set("businessNumber")(formatBiz(e.target.value))} placeholder="123-45-67890" />
           </Field>
           <Field label="대표자명">
             <input className={inputCls} value={f.ceoName} onChange={(e) => set("ceoName")(e.target.value)} placeholder="대표자" />
           </Field>
           <Field label="회사 전화번호">
-            <input className={inputCls} value={f.companyPhone} onChange={(e) => set("companyPhone")(e.target.value)} placeholder="02-1234-5678" />
+            <input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(formatPhone(e.target.value))} placeholder="02-1234-5678" />
           </Field>
           <div className="sm:col-span-2">
             <Field label="사업자 주소">
@@ -208,7 +209,7 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
         <h3 className="mb-3 text-sm font-black text-white">담당자 정보</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="담당자명"><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자" /></Field>
-          <Field label="담당자 연락처"><input className={inputCls} value={f.managerPhone} onChange={(e) => set("managerPhone")(e.target.value)} placeholder="010-1234-5678" /></Field>
+          <Field label="담당자 연락처"><input className={inputCls} value={f.managerPhone} inputMode="numeric" onChange={(e) => set("managerPhone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></Field>
           <Field label="이메일"><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="contact@corp.com" /></Field>
         </div>
       </section>

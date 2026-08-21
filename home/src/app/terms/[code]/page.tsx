@@ -7,7 +7,7 @@ export default async function TermPage({ params }: { params: Promise<{ code: str
   return (
     <>
       <Header />
-      <section className="mx-auto max-w-4xl px-5 py-14 sm:py-16">
+      <section className="mx-auto w-full max-w-4xl px-5 py-14 sm:py-16">
         <TermView code={code.toUpperCase()} variant="page" />
       </section>
       <Footer />

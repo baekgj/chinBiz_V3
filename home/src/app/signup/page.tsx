@@ -7,6 +7,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import Field from "@/components/auth/Field";
 import TermModal from "@/components/site/TermModal";
 import { apiGet, apiPost } from "@/lib/api";
+import { formatPhone } from "@/lib/format";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^01[0-9]-?\d{3,4}-?\d{4}$/;
@@ -291,7 +292,7 @@ export default function SignupPage() {
           label="휴대폰 번호"
           name="phone"
           value={f.phone}
-          onChange={set("phone")}
+          onChange={(v) => set("phone")(formatPhone(v))}
           placeholder="010-1234-5678"
           autoComplete="tel"
           error={errors.phone}

@@ -6,24 +6,26 @@ import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
+import AdminHomeLink from "@/components/AdminHomeLink";
 import { apiGet } from "@/lib/api";
 import { ct } from "@/components/center/CenterUI";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
+// 센터 메뉴 순서 (docs/24): 대시보드 | 센터관리마켓 | 관할리드관제 | 매니저/버즈관리 | 센터수당/정산 | 공지사항
 const NAV: NavItem[] = [
-  { href: "/center", label: "센터 요약" },
-  { href: "/center/buzz", label: "소속버즈", children: [
-    { href: "/center/buzz", label: "소속버즈회원" },
+  { href: "/center", label: "대시보드" },
+  { href: "/center/market", label: "센터관리마켓" },
+  { href: "/center/leads", label: "관할리드관제", children: [
     { href: "/center/buzz/sales", label: "1차영업관리" },
-  ] },
-  { href: "/center/managers", label: "소속매니저", children: [
-    { href: "/center/managers/applications", label: "매니저신청" },
-    { href: "/center/managers", label: "매니저관리" },
     { href: "/center/managers/sales", label: "2차영업관리" },
   ] },
-  { href: "/center/education", label: "교육 관리" },
-  { href: "/center/settlement", label: "정산 원장", children: [
+  { href: "/center/members", label: "매니저/버즈관리", children: [
+    { href: "/center/buzz", label: "소속버즈회원" },
+    { href: "/center/managers/applications", label: "매니저신청" },
+    { href: "/center/managers", label: "매니저관리" },
+  ] },
+  { href: "/center/settlement", label: "센터수당/정산", children: [
     { href: "/center/settlement", label: "버즈회원 영업 정산현황" },
     { href: "/center/settlement/manager", label: "관리매니저 영업 정산현황" },
     { href: "/center/settlement/payouts", label: "수당지급 현황" },
@@ -84,6 +86,7 @@ export default function CenterTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <AdminHomeLink tone="dark" />
           <AlarmBell tone="dark" />
           <Link href="/center/profile" className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/center/profile") ? ct.acctActive : ct.acctIdle}`}>
             {name ? `${name}님` : "내 정보"}

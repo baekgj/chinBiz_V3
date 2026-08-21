@@ -33,7 +33,7 @@ export default function ProcessPage() {
       </section>
 
       {/* E2E 종합 업무 절차 */}
-      <section className="mx-auto max-w-6xl px-5 py-14">
+      <section className="mx-auto w-full max-w-6xl px-5 py-14">
         <div className="text-center">
           <p className="text-xs font-bold tracking-widest text-gold-500">END-TO-END WORKFLOW</p>
           <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">종합 업무 절차 (E2E)</h2>

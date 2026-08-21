@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiGet, apiPost } from "@/lib/api";
 import { useBuzz } from "@/components/buzz/theme";
@@ -8,7 +8,10 @@ import { useBuzz } from "@/components/buzz/theme";
 type Detail = Record<string, unknown> & {
   id: number; productName?: string; customerName?: string; companyName?: string; ceoName?: string;
   phone?: string; address?: string; addressDetail?: string; status?: string; memo?: string; mine?: boolean;
+  categoryId?: number | null; productId?: number | null;
 };
+type Cat = { id: number; name: string; level: string };
+type Prod = { id: number; name: string; partnerName?: string };
 const STAGES = ["접수", "상담/방문", "계약체결", "배송/설치", "구매확정", "취소/반품"];
 
 /** 매니저 영업관리(우선할당/영업권확보) — 진행현황·영업내용 기록 후 sales.manager_id 저장 */
@@ -17,23 +20,44 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
   const [d, setD] = useState<Detail | null>(null);
   const [status, setStatus] = useState("상담/방문");
   const [memo, setMemo] = useState("");
+  const [cats, setCats] = useState<Cat[]>([]);
+  const [prods, setProds] = useState<Prod[]>([]);
+  const [catId, setCatId] = useState("");
+  const [prodId, setProdId] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const prevCat = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    apiGet<Cat[]>("/api/buzz/categories").then((r) => { if (r.data) setCats(r.data); });
     apiGet<Detail>(`/api/buzz/sales/${saleId}`).then((r) => {
-      if (r.ok && r.data) { setD(r.data); if (r.data.status) setStatus(r.data.status); setMemo(r.data.memo ?? ""); }
-      else setErr(r.message ?? "영업 건을 불러오지 못했습니다.");
+      if (r.ok && r.data) {
+        setD(r.data); if (r.data.status) setStatus(r.data.status); setMemo(r.data.memo ?? "");
+        if (r.data.categoryId != null) setCatId(String(r.data.categoryId));
+        if (r.data.productId != null) setProdId(String(r.data.productId));
+      } else setErr(r.message ?? "영업 건을 불러오지 못했습니다.");
     });
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, [saleId]);
 
+  // 카테고리 변경 → 상품 목록 로드 (초기 자동선택은 유지, 사용자가 바꾼 경우에만 상품 초기화)
+  useEffect(() => {
+    const p = new URLSearchParams({ size: "200" });
+    if (catId) p.set("categoryId", catId);
+    apiGet<{ content: Prod[] }>(`/api/buzz/products?${p}`).then((r) => { if (r.data?.content) setProds(r.data.content); });
+    if (prevCat.current !== null && prevCat.current !== catId) setProdId("");
+    prevCat.current = catId;
+  }, [catId]);
+
   async function save() {
+    if (!prodId) { setErr("상품을 선택해 주세요."); return; }
     setSaving(true); setErr(null);
-    const res = await apiPost(`/api/buzz/sales/${saleId}/assign`, { status, memo });
+    const res = await apiPost(`/api/buzz/sales/${saleId}/assign`, {
+      status, memo, categoryId: catId ? Number(catId) : null, productId: Number(prodId),
+    });
     setSaving(false);
     if (res.ok) { onSaved(); onClose(); }
     else setErr(res.message ?? "저장에 실패했습니다.");
@@ -63,6 +87,23 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
               <p className={`text-xs ${theme.cardSub}`}>고객</p>
               <p className={`font-bold ${theme.cellMain}`}>{d.companyName ?? d.customerName}{d.ceoName ? ` · ${d.ceoName}` : ""}</p>
               <p className={`mt-0.5 text-xs ${theme.cellSub}`}>{[d.phone, d.address, d.addressDetail].filter(Boolean).join(" · ")}</p>
+            </div>
+            {/* 카테고리·상품 선택 (docs/24) — 저장 시 sale 에 반영 */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className={`text-xs font-semibold ${theme.fieldLabel}`}>카테고리</span>
+                <select className={`mt-1 ${inp}`} value={catId} onChange={(e) => setCatId(e.target.value)}>
+                  <option value="">전체</option>
+                  {cats.map((c) => <option key={c.id} value={c.id}>{"·".repeat(["LARGE", "MEDIUM", "SMALL"].indexOf(c.level))}{c.name}</option>)}
+                </select>
+              </label>
+              <label className="block">
+                <span className={`text-xs font-semibold ${theme.fieldLabel}`}>상품 *</span>
+                <select className={`mt-1 ${inp}`} value={prodId} onChange={(e) => setProdId(e.target.value)}>
+                  <option value="">상품 선택</option>
+                  {prods.map((p) => <option key={p.id} value={p.id}>{p.name}{p.partnerName ? ` (${p.partnerName})` : ""}</option>)}
+                </select>
+              </label>
             </div>
             <label className="block">
               <span className={`text-xs font-semibold ${theme.fieldLabel}`}>영업 진행현황</span>

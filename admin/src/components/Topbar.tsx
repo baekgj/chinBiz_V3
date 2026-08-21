@@ -5,6 +5,7 @@ import { titleForPath } from "./nav";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "./Icon";
 import AlarmBell from "./AlarmBell";
+import AdminHomeLink from "./AdminHomeLink";
 
 export default function Topbar() {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function Topbar() {
         <span className="hidden items-center gap-1.5 rounded-full border border-pos/30 bg-pos/10 px-3 py-1.5 text-xs font-semibold text-pos sm:inline-flex">
           <span className="h-1.5 w-1.5 rounded-full bg-pos" /> 실시간 정산 연동
         </span>
+        <AdminHomeLink tone="dark" />
         <AlarmBell tone="dark" />
         <button
           onClick={() => { clearToken(); goToLogin(); }}

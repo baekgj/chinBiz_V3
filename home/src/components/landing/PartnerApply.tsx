@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { formatBiz, formatPhone } from "@/lib/format";
 import TermModal from "@/components/site/TermModal";
 
 type Cat = { id: number; name: string };
@@ -96,10 +97,10 @@ export default function PartnerApply({ initialStage }: { initialStage?: string }
         <h3 className="mb-4 flex items-center gap-2 text-base font-black text-ink"><span className="text-gold-500">🏢</span> 1. 기업 및 담당자 기본 정보</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="회사명 (상호)" req><input className={inputCls} value={f.companyName} onChange={set("companyName")} placeholder="회사명" /></Field>
-          <Field label="사업자등록번호" req><input className={inputCls} value={f.bizNo} onChange={set("bizNo")} placeholder="000-00-00000" /></Field>
+          <Field label="사업자등록번호" req><input className={inputCls} value={f.bizNo} inputMode="numeric" onChange={(e) => setF((p) => ({ ...p, bizNo: formatBiz(e.target.value) }))} placeholder="000-00-00000" /></Field>
           <Field label="대표자명" req><input className={inputCls} value={f.ceoName} onChange={set("ceoName")} placeholder="대표자명" /></Field>
           <Field label="담당자 성명/직급" req><input className={inputCls} value={f.contactName} onChange={set("contactName")} placeholder="예: 김철수 팀장" /></Field>
-          <Field label="담당자 연락처" req><input className={inputCls} value={f.phone} onChange={set("phone")} placeholder="010-0000-0000" /></Field>
+          <Field label="담당자 연락처" req><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => setF((p) => ({ ...p, phone: formatPhone(e.target.value) }))} placeholder="010-0000-0000" /></Field>
           <Field label="담당자 이메일" req><input className={inputCls} value={f.email} onChange={set("email")} placeholder="partner@company.com" /></Field>
           <div className="sm:col-span-2"><Field label="회사/상품 웹사이트"><input className={inputCls} value={f.website} onChange={set("website")} placeholder="https://" /></Field></div>
         </div>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { formatPhone } from "@/lib/format";
 
 const ID_RE = /^[a-zA-Z0-9]{4,20}$/;
 const inputCls = "w-full rounded-lg border border-line bg-navy-950 px-3 py-2 text-sm text-white outline-none focus:border-brand-500 placeholder:text-slate-600";
@@ -228,7 +229,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
             <input type="password" className={inputCls} value={f.password} onChange={(e) => set("password")(e.target.value)} placeholder={isEdit ? "변경 시 입력" : "비밀번호"} />
           </Field>
           <Field label="이름" required error={errors.name}><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>
-          <Field label="전화번호"><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></Field>
+          <Field label="전화번호"><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></Field>
           <Field label="이메일"><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@chinbiz.com" /></Field>
         </div>
       </section>

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
+import AdminHomeLink from "@/components/AdminHomeLink";
 import { useBuzz } from "@/components/buzz/theme";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
@@ -106,6 +107,7 @@ export default function BuzzTopbar() {
               <span className="hidden sm:inline">{isManager ? "버즈admin 보기" : "매니저admin 보기"}</span>
             </button>
           )}
+          <AdminHomeLink tone={isManager ? "dark" : "light"} />
           <AlarmBell tone={isManager ? "dark" : "light"} />
           {/* 계정명 클릭 → 내정보 수정 */}
           <Link href="/buzz/profile"

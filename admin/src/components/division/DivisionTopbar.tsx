@@ -6,16 +6,19 @@ import { useEffect, useRef, useState } from "react";
 import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
+import AdminHomeLink from "@/components/AdminHomeLink";
 import { apiGet } from "@/lib/api";
 import { dv } from "@/components/division/DivisionUI";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
+// 본부 메뉴 순서 (docs/24): 본부분석 | 광역상품마켓 | 센터별실적비교 | 광역프로모션 | 본부수당/정산 | 공지사항
 const NAV: NavItem[] = [
-  { href: "/division", label: "본부 자산" },
-  { href: "/division/centers", label: "산하 센터 모니터링" },
-  { href: "/division/pipeline", label: "센터 영업관리" },
-  { href: "/division/settlement", label: "정산현황", children: [
+  { href: "/division", label: "본부분석" },
+  { href: "/division/market", label: "광역상품마켓" },
+  { href: "/division/centers", label: "센터별 실적비교" },
+  { href: "/division/promotion", label: "광역프로모션" },
+  { href: "/division/settlement", label: "본부수당/정산", children: [
     { href: "/division/settlement/payouts", label: "수당지급현황" },
     { href: "/division/settlement", label: "정산원장" },
   ] },
@@ -74,6 +77,7 @@ export default function DivisionTopbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <AdminHomeLink tone="dark" />
           <AlarmBell tone="dark" />
           <Link href="/division/profile" className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/division/profile") ? dv.acctActive : dv.acctIdle}`}>
             {name ? `${name}님` : "내 정보"}

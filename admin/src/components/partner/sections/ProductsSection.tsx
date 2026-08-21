@@ -34,12 +34,6 @@ export default function ProductsSection() {
     <Card
       title="위탁 영업대행 상품 및 총수당 관리"
       sub="대행 맡긴 상품 라인업과 상품별 총수당(7주체 배정액) 룰"
-      right={
-        <Link href="/partner/products/new"
-          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-sky-500">
-          + 상품 등록
-        </Link>
-      }
     >
       <div className="mb-4 grid grid-cols-3 gap-3">
         <Stat label="등록 위탁 상품" value={String(rows.length)} unit="종" tone="sky" />
@@ -56,14 +50,13 @@ export default function ProductsSection() {
               <th className="px-4 py-3 text-right font-semibold">판매가</th>
               <th className="px-4 py-3 text-right font-semibold">총수당(위탁비)</th>
               <th className="px-4 py-3 text-center font-semibold">상태</th>
-              <th className="px-4 py-3 text-right font-semibold">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">불러오는 중…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">불러오는 중…</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">등록된 위탁 상품이 없습니다. [+ 상품 등록]으로 추가하세요.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">등록된 위탁 상품이 없습니다.</td></tr>
             ) : rows.map((p) => (
               <tr key={p.id} className="hover:bg-sky-50/50">
                 <td className="px-4 py-3 font-bold text-slate-900">
@@ -77,9 +70,6 @@ export default function ProductsSection() {
                   <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.onSale ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                     {p.onSale ? "판매중" : "중지"}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/partner/products/${p.id}`} className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50">수정</Link>
                 </td>
               </tr>
             ))}

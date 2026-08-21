@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, SectionTitle, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { apiGet, apiPut, apiPost } from "@/lib/api";
+import { formatPhone } from "@/lib/format";
 import { RBAC_AREAS, type NavArea } from "@/components/nav";
 
 type ScopeRow = { userId: string; name: string; areas: string[]; status: string };
@@ -253,7 +254,7 @@ export default function RbacManager() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-semibold text-slate-300">휴대폰</span>
-                  <input value={form.phone} onChange={(e) => setF("phone", e.target.value)} placeholder="010-0000-0000"
+                  <input value={form.phone} inputMode="numeric" onChange={(e) => setF("phone", formatPhone(e.target.value))} placeholder="010-0000-0000"
                     className="w-full rounded-lg border border-line bg-navy-950 px-3 py-2 text-sm text-white outline-none focus:border-brand-500" />
                 </label>
                 <label className="block sm:col-span-2">

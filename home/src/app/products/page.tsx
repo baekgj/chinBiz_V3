@@ -22,8 +22,8 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* 검색·필터·리스트 */}
-      <section className="mx-auto max-w-6xl px-5 py-10 sm:py-12">
+      {/* 검색·필터·리스트 — w-full: body(flex-col) 직계 + mx-auto 로 인한 내용맞춤 축소 방지(페이지별 폭 불일치 수정, docs) */}
+      <section className="mx-auto w-full max-w-6xl px-5 py-10 sm:py-12">
         <ProductBrowse />
       </section>
 

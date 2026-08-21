@@ -315,10 +315,17 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       {notice && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{notice}</div>}
 
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => router.push("/partner/products")} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">취소</button>
-        <button type="submit" disabled={saving} className="rounded-xl bg-sky-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-sky-500 disabled:opacity-60">
-          {saving ? "저장 중…" : mode === "new" ? "상품 등록" : "변경 저장"}
-        </button>
+        {mode === "edit" ? (
+          // 파트너 상품정보 = 보기 전용: 변경저장 제거, 이전 페이지로 돌아가기 (docs/24)
+          <button type="button" onClick={() => router.back()} className="rounded-xl border border-slate-300 px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">돌아가기</button>
+        ) : (
+          <>
+            <button type="button" onClick={() => router.push("/partner/products")} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">취소</button>
+            <button type="submit" disabled={saving} className="rounded-xl bg-sky-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-sky-500 disabled:opacity-60">
+              {saving ? "저장 중…" : "상품 등록"}
+            </button>
+          </>
+        )}
       </div>
     </form>
   );

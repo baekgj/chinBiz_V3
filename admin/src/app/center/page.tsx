@@ -1,11 +1,11 @@
 import { PageHead } from "@/components/center/CenterUI";
-import WalletSection from "@/components/center/sections/WalletSection";
+import CenterDashboard from "@/components/center/sections/CenterDashboard";
 
 export default function CenterSummaryPage() {
   return (
     <div>
-      <PageHead title="센터 실시간 정산 및 자산 현황판" sub="하부 조직(버즈 + 매니저) 전체 활동 결과로 센터 계정에 누적되는 정산 자산" />
-      <WalletSection />
+      <PageHead title="센터 상품 관제 & 리드 배정 대시보드" sub="관할 구역 상품 관제 · 매니저 가동 · 센터 오버라이딩 수수료" />
+      <CenterDashboard />
     </div>
   );
 }

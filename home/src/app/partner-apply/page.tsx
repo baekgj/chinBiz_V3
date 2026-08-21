@@ -44,7 +44,7 @@ export default async function PartnerApplyPage({ searchParams }: { searchParams:
       </section>
 
       {/* 4단계 입점 프로세스 */}
-      <section className="mx-auto max-w-6xl px-5 py-14">
+      <section className="mx-auto w-full max-w-6xl px-5 py-14">
         <div className="text-center">
           <p className="text-xs font-bold tracking-widest text-gold-500">4-STEP ONBOARDING</p>
           <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">입점 프로세스 안내 (4단계)</h2>

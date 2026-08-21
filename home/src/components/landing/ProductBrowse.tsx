@@ -87,7 +87,7 @@ export default function ProductBrowse() {
       ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((p) => (
-            <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition-all hover:border-forest-300 hover:shadow-md">
+            <div key={p.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-white transition-all hover:border-forest-300 hover:shadow-md">
               <div className="relative h-40 w-full bg-forest-50">
                 {p.image1
                   // eslint-disable-next-line @next/next/no-img-element
@@ -99,10 +99,10 @@ export default function ProductBrowse() {
                   {p.recommended && <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-black text-white shadow">추천</span>}
                 </div>
               </div>
-              <div className="flex flex-1 flex-col p-5">
-                <p className="text-xs font-medium text-muted">{p.partnerName ?? "파트너사"}</p>
-                <h3 className="mt-0.5 text-base font-bold text-ink">{p.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{p.description || "로그인 후 상세 정보를 확인하세요."}</p>
+              <div className="flex min-w-0 flex-1 flex-col p-5">
+                <p className="truncate text-xs font-medium text-muted">{p.partnerName ?? "파트너사"}</p>
+                <h3 className="mt-0.5 break-words text-base font-bold text-ink">{p.name}</h3>
+                <p className="mt-2 flex-1 break-words text-sm leading-relaxed text-muted">{p.description || "로그인 후 상세 정보를 확인하세요."}</p>
                 <Link href="/login" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-forest-700">상세정보 보기 <span aria-hidden>→</span></Link>
               </div>
             </div>

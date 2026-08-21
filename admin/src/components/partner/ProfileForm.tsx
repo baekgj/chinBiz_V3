@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, apiPut } from "@/lib/api";
+import { formatPhone } from "@/lib/format";
 
 type Me = {
   partnerId: string; companyName: string; businessNumber?: string; ceoName?: string;
@@ -74,7 +75,7 @@ export default function ProfileForm() {
         <h3 className="mb-3 text-sm font-black text-slate-900">담당자 · 연락처</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="담당자명"><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자명" /></Field>
-          <Field label="전화번호"><input className={inputCls} value={f.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="010-1234-5678" /></Field>
+          <Field label="전화번호"><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></Field>
           <Field label="이메일"><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@corp.com" /></Field>
         </div>
       </section>
