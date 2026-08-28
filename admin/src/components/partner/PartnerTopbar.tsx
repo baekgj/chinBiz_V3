@@ -11,6 +11,7 @@ import AdminHomeLink from "@/components/AdminHomeLink";
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
 const NAV: NavItem[] = [
+  { href: "/partner/dashboard", label: "대시보드" },
   { href: "/partner", label: "정산/수당 현황", children: [
     { href: "/partner", label: "정산 현황" },
     { href: "/partner/ledger", label: "정산 원장" },

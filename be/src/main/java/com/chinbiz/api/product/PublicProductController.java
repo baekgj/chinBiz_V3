@@ -30,9 +30,90 @@ public class PublicProductController {
     private final ProductRepository productRepo;
     private final PartnerRepository partnerRepo;
     private final CategoryRepository categoryRepo;
+    private final com.chinbiz.api.user.UserRepository userRepo;
 
-    public PublicProductController(ProductRepository productRepo, PartnerRepository partnerRepo, CategoryRepository categoryRepo) {
+    public PublicProductController(ProductRepository productRepo, PartnerRepository partnerRepo,
+                                   CategoryRepository categoryRepo, com.chinbiz.api.user.UserRepository userRepo) {
         this.productRepo = productRepo; this.partnerRepo = partnerRepo; this.categoryRepo = categoryRepo;
+        this.userRepo = userRepo;
+    }
+
+    /** 수당유형에 따른 실제 지급액(원). RATE=총수당×비율/100, FIXED=원 */
+    private long rewardWon(Product p, long roleReward) {
+        if (p.getRewardType() == Product.RewardType.RATE)
+            return Math.round((p.getTotalAllowance() == null ? 0 : p.getTotalAllowance()) * roleReward / 100.0);
+        return roleReward;
+    }
+
+    /**
+     * 상품 상세 (홈 [상세정보보기]). 로그인 토큰이 있으면 역할별 설명, 없으면 비로그인전용 설명.
+     * 수당(버즈/매니저)은 마케팅 목적 노출(docs/25).
+     */
+    @GetMapping("/products/{id}")
+    public org.springframework.http.ResponseEntity<?> detail(@PathVariable Long id,
+            org.springframework.security.core.Authentication auth) {
+        Product p = productRepo.findById(id).filter(Product::isOnSale).orElse(null);
+        if (p == null) return org.springframework.http.ResponseEntity.status(404).body(Map.of("message", "상품을 찾을 수 없습니다."));
+
+        // 로그인 역할 판정 (user 테이블 우선, 없으면 partner=PARTNER, 미로그인=null)
+        String role = null;
+        if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+            var u = userRepo.findByUserId(auth.getName()).orElse(null);
+            if (u != null) role = u.getRole().name();
+            else if (partnerRepo.findByPartnerId(auth.getName()).isPresent()) role = "PARTNER";
+        }
+        String desc = switch (role == null ? "" : role) {
+            case "BUZZ" -> p.getDescBuzz();
+            case "MANAGER" -> p.getDescManager();
+            case "PARTNER" -> p.getDescPartner();
+            case "MASTER_ADMIN" -> p.getDescAdmin();
+            default -> p.getDescGuest();
+        };
+        if (desc == null || desc.isBlank()) desc = p.getDescription(); // 폴백
+
+        String partnerName = p.getPartnerId() == null ? null
+                : partnerRepo.findById(p.getPartnerId()).map(Partner::getCompanyName).orElse(null);
+        String categoryName = p.getCategoryId() == null ? null
+                : categoryRepo.findById(p.getCategoryId()).map(Category::getName).orElse(null);
+
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", p.getId());
+        m.put("name", p.getName());
+        m.put("partnerId", p.getPartnerId());
+        m.put("partnerName", partnerName);
+        m.put("categoryName", categoryName);
+        m.put("images", java.util.Arrays.asList(p.getImage1(), p.getImage2(), p.getImage3(), p.getImage4(), p.getImage5())
+                .stream().filter(s -> s != null && !s.isBlank()).toList());
+        m.put("videoUrl", p.getVideoUrl());
+        m.put("monthlyCare", p.isMonthlyCare());
+        m.put("asSupport", p.isAsSupport());
+        m.put("popular", p.isPopular());
+        m.put("recommended", p.isRecommended());
+        m.put("role", role);                          // null=비로그인
+        m.put("description", desc);                    // 역할별 HTML
+        m.put("specEffect", p.getSpecEffect());
+        m.put("salesTarget", p.getSalesTarget());
+        m.put("productFeature", p.getProductFeature());
+        m.put("processFlow", p.getProcessFlow());
+        m.put("buzzRewardWon", rewardWon(p, p.getBuzzReward() == null ? 0 : p.getBuzzReward()));
+        m.put("managerRewardWon", rewardWon(p, p.getManagerReward() == null ? 0 : p.getManagerReward()));
+
+        // 파트너사 다른 상품 (최근 5, 판매중, 본인 제외)
+        List<Map<String, Object>> others = new ArrayList<>();
+        if (p.getPartnerId() != null) {
+            Specification<Product> os = (r, q, cb) -> cb.and(
+                    cb.equal(r.get("partnerId"), p.getPartnerId()),
+                    cb.isTrue(r.get("onSale")),
+                    cb.notEqual(r.get("id"), p.getId()));
+            for (Product o : productRepo.findAll(os, PageRequest.of(0, 5, Sort.by(Sort.Order.desc("id")))).getContent()) {
+                Map<String, Object> om = new LinkedHashMap<>();
+                om.put("id", o.getId()); om.put("name", o.getName()); om.put("image1", o.getImage1());
+                om.put("salePrice", o.getSalePrice());   // 판매가 노출(docs/25 후속 요청)
+                others.add(om);
+            }
+        }
+        m.put("partnerProducts", others);
+        return org.springframework.http.ResponseEntity.ok(m);
     }
 
     /** HTML 제거 + 공백 정리 후 요약 (설명 노출용) */

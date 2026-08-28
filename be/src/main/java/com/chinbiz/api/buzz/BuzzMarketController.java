@@ -187,6 +187,14 @@ public class BuzzMarketController {
         m.put("description", roleDesc);
         m.put("installPolicy", p.getInstallPolicy());
         m.put("returnPolicy", p.getReturnPolicy());
+        // 상품등록 확장필드(docs/25) — 상세 확인화면 노출
+        m.put("videoUrl", p.getVideoUrl());
+        m.put("monthlyCare", p.isMonthlyCare());
+        m.put("asSupport", p.isAsSupport());
+        m.put("specEffect", p.getSpecEffect());
+        m.put("salesTarget", p.getSalesTarget());
+        m.put("productFeature", p.getProductFeature());
+        m.put("processFlow", p.getProcessFlow());
         return ResponseEntity.ok(m);
     }
 }

@@ -42,9 +42,14 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     hqReward: String(g("hqReward", 0)),
     description: String(g("description")), installPolicy: String(g("installPolicy")), returnPolicy: String(g("returnPolicy")),
     contractEndDate: initial?.contractEndDate ? String(initial.contractEndDate) : "",
+    videoUrl: String(g("videoUrl")),
+    specEffect: String(g("specEffect")), salesTarget: String(g("salesTarget")),
+    productFeature: String(g("productFeature")), processFlow: String(g("processFlow")),
   });
   const [onSale, setOnSale] = useState<boolean>(initial?.onSale != null ? Boolean(initial.onSale) : true);
   const [installProduct, setInstallProduct] = useState<boolean>(Boolean(initial?.installProduct));
+  const [monthlyCare, setMonthlyCare] = useState<boolean>(Boolean(initial?.monthlyCare));
+  const [asSupport, setAsSupport] = useState<boolean>(Boolean(initial?.asSupport));
   const [popular, setPopular] = useState<boolean>(Boolean(initial?.popular));
   const [recommended, setRecommended] = useState<boolean>(Boolean(initial?.recommended));
   const [images, setImages] = useState<string[]>(() =>
@@ -136,6 +141,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       divisionReward: num(f.divisionReward), hqReward: num(f.hqReward),
       description: f.description, installPolicy: f.installPolicy, returnPolicy: f.returnPolicy, onSale,
       contractEndDate: f.contractEndDate || null, installProduct, popular, recommended,
+      videoUrl: f.videoUrl, monthlyCare, asSupport,
+      specEffect: f.specEffect, salesTarget: f.salesTarget, productFeature: f.productFeature, processFlow: f.processFlow,
     };
     const res = mode === "new" ? await apiPost("/api/partner/products", payload) : await apiPut(`/api/partner/products/${initial?.id}`, payload);
     setSaving(false);
@@ -197,6 +204,19 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
             </button>
           </label>
           <div className="sm:col-span-2">
+            <span className="text-xs font-semibold text-slate-500">상품 특성 <span className="font-normal text-slate-400">(중복 선택 가능)</span></span>
+            <div className="mt-1 flex gap-2">
+              <button type="button" onClick={() => setMonthlyCare((v) => !v)}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${monthlyCare ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+                {monthlyCare ? "✓ 월관리상품" : "월관리상품"}
+              </button>
+              <button type="button" onClick={() => setAsSupport((v) => !v)}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${asSupport ? "border-sky-500 bg-sky-50 text-sky-700" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+                {asSupport ? "✓ AS지원" : "AS지원"}
+              </button>
+            </div>
+          </div>
+          <div className="sm:col-span-2">
             <span className="text-xs font-semibold text-slate-500">키워드 태그 <span className="font-normal text-slate-400">(마켓 배지 · 중복 선택 가능)</span></span>
             <div className="mt-1 flex gap-2">
               <button type="button" onClick={() => setPopular((v) => !v)}
@@ -229,32 +249,34 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
         </div>
       </section>
 
-      {/* 역할별 수당 */}
-      <section className={card}>
-        <h3 className="mb-1 text-sm font-black text-slate-900">역할별 수당 <span className="text-xs font-medium text-slate-400">(단위: {unit})</span></h3>
-        <p className="mb-3 text-xs text-slate-500">7주체 배분 — {isRate ? "총수당 대비 비율(%)" : "고정 금액(원)"}</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {ROLE_FIELDS.map((r) => (
-            <label key={r.key} className="block">
-              <span className="text-xs font-semibold text-slate-500">{r.label}</span>
-              <div className="mt-1 flex items-center gap-1">
-                <input type="number" className={inputCls} value={f[r.key]} onChange={(e) => set(r.key)(e.target.value)} />
-                <span className="text-xs text-slate-400">{unit}</span>
-              </div>
-            </label>
-          ))}
-        </div>
-        {(() => {
-          const target = isRate ? 100 : (f.totalAllowance === "" ? 0 : Number(f.totalAllowance));
-          const okSum = roleSumLive === target;
-          const fmt = (n: number) => isRate ? `${n}%` : `₩${n.toLocaleString("ko-KR")}`;
-          return (
-            <p className={`mt-3 rounded-lg px-3 py-2 text-xs font-bold ${okSum ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-red-50 text-red-600 ring-1 ring-red-200"}`}>
-              {okSum ? "✓ 합계 일치" : "⚠ 합계 불일치"} — 역할별 수당 합계 {fmt(roleSumLive)} / {isRate ? "필요 100%" : `총수당 ${fmt(target)}`}
-            </p>
-          );
-        })()}
-      </section>
+      {/* 역할별 수당 — 상품상세보기(edit=보기전용)에서는 숨김, 신규등록 시에만 노출 */}
+      {mode !== "edit" && (
+        <section className={card}>
+          <h3 className="mb-1 text-sm font-black text-slate-900">역할별 수당 <span className="text-xs font-medium text-slate-400">(단위: {unit})</span></h3>
+          <p className="mb-3 text-xs text-slate-500">7주체 배분 — {isRate ? "총수당 대비 비율(%)" : "고정 금액(원)"}</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {ROLE_FIELDS.map((r) => (
+              <label key={r.key} className="block">
+                <span className="text-xs font-semibold text-slate-500">{r.label}</span>
+                <div className="mt-1 flex items-center gap-1">
+                  <input type="number" className={inputCls} value={f[r.key]} onChange={(e) => set(r.key)(e.target.value)} />
+                  <span className="text-xs text-slate-400">{unit}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          {(() => {
+            const target = isRate ? 100 : (f.totalAllowance === "" ? 0 : Number(f.totalAllowance));
+            const okSum = roleSumLive === target;
+            const fmt = (n: number) => isRate ? `${n}%` : `₩${n.toLocaleString("ko-KR")}`;
+            return (
+              <p className={`mt-3 rounded-lg px-3 py-2 text-xs font-bold ${okSum ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-red-50 text-red-600 ring-1 ring-red-200"}`}>
+                {okSum ? "✓ 합계 일치" : "⚠ 합계 불일치"} — 역할별 수당 합계 {fmt(roleSumLive)} / {isRate ? "필요 100%" : `총수당 ${fmt(target)}`}
+              </p>
+            );
+          })()}
+        </section>
+      )}
 
       {/* 이미지 (파일 업로드 / 드래그 앤 드롭, 최대 5개) */}
       <section className={card}>
@@ -295,10 +317,26 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       <section className={card}>
         <h3 className="mb-3 text-sm font-black text-slate-900">상품 설명 및 규정</h3>
         <div className="space-y-4">
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-500">상품영상 URL <span className="font-normal text-slate-400">(YouTube 등 · 상세화면 재생)</span></span>
+            <input className={`mt-1 ${inputCls}`} value={f.videoUrl} onChange={(e) => set("videoUrl")(e.target.value)} placeholder="https://youtu.be/..." />
+          </label>
           <div className="block">
             <span className="text-xs font-semibold text-slate-500">상품 설명 <span className="font-normal text-slate-400">(파트너 전용)</span></span>
             <div className="mt-1"><RichTextEditor theme="light" value={f.description} onChange={set("description")} placeholder="파트너 전용 상품 상세 설명 (서식·이미지 삽입·크기조절 지원)" /></div>
           </div>
+          {/* 확장 상세 4종 (docs/25) */}
+          {([
+            ["specEffect", "핵심스펙/효과"],
+            ["salesTarget", "영업대상"],
+            ["productFeature", "상품특성"],
+            ["processFlow", "처리프로세스"],
+          ] as const).map(([key, label]) => (
+            <div key={key} className="block">
+              <span className="text-xs font-semibold text-slate-500">{label}</span>
+              <div className="mt-1"><RichTextEditor key={key} theme="light" value={f[key] ?? ""} onChange={set(key)} placeholder={label} /></div>
+            </div>
+          ))}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-semibold text-slate-500">설치 규정</span>

@@ -48,6 +48,10 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     description: String(g("description")), installPolicy: String(g("installPolicy")), returnPolicy: String(g("returnPolicy")),
     descGuest: String(g("descGuest")), descBuzz: String(g("descBuzz")), descManager: String(g("descManager")),
     descPartner: String(g("descPartner")), descAdmin: String(g("descAdmin")),
+    // docs/25 확장
+    videoUrl: String(g("videoUrl")),
+    specEffect: String(g("specEffect")), salesTarget: String(g("salesTarget")),
+    productFeature: String(g("productFeature")), processFlow: String(g("processFlow")),
     contractEndDate: initial?.contractEndDate ? String(initial.contractEndDate) : "",
   });
   const [onSale, setOnSale] = useState<boolean>(initial?.onSale != null ? Boolean(initial.onSale) : true);
@@ -57,6 +61,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
   const [cancelAmount, setCancelAmount] = useState<string>(initial?.cancelAmount != null ? String(initial.cancelAmount) : "");
   const [popular, setPopular] = useState<boolean>(Boolean(initial?.popular));
   const [recommended, setRecommended] = useState<boolean>(Boolean(initial?.recommended));
+  const [monthlyCare, setMonthlyCare] = useState<boolean>(Boolean(initial?.monthlyCare)); // 월관리상품 (docs/25)
+  const [asSupport, setAsSupport] = useState<boolean>(Boolean(initial?.asSupport));       // AS지원상품 (docs/25)
   const [images, setImages] = useState<string[]>(() =>
     [initial?.image1, initial?.image2, initial?.image3, initial?.image4, initial?.image5]
       .map((v) => (v ? String(v) : "")).filter((v) => v !== ""),
@@ -155,6 +161,9 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       contractEndDate: f.contractEndDate || null, installProduct, simpleDelivery,
       cancelFeeFlag, cancelAmount: cancelFeeFlag ? Number(cancelAmount || 0) : 0,
       popular, recommended,
+      // docs/25 확장
+      monthlyCare, asSupport, videoUrl: f.videoUrl,
+      specEffect: f.specEffect, salesTarget: f.salesTarget, productFeature: f.productFeature, processFlow: f.processFlow,
     };
     const res = mode === "new" ? await apiPost("/api/products", payload) : await apiPut(`/api/products/${initial?.id}`, payload);
     setSaving(false);
@@ -237,6 +246,19 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
                 className="mt-1 w-full rounded-lg border border-line bg-navy-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500" />
             </label>
           )}
+          <div className="sm:col-span-2">
+            <span className="text-xs font-semibold text-slate-400">상품 특성 <span className="font-normal text-slate-500">(중복 선택 가능)</span></span>
+            <div className="mt-1 flex gap-2">
+              <button type="button" onClick={() => setMonthlyCare((v) => !v)}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${monthlyCare ? "border-brand-400 bg-brand-600/25 text-brand-200" : "border-line text-slate-400 hover:bg-navy-800"}`}>
+                {monthlyCare ? "✓ 월관리상품" : "월관리상품"}
+              </button>
+              <button type="button" onClick={() => setAsSupport((v) => !v)}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${asSupport ? "border-brand-400 bg-brand-600/25 text-brand-200" : "border-line text-slate-400 hover:bg-navy-800"}`}>
+                {asSupport ? "✓ AS지원상품" : "AS지원상품"}
+              </button>
+            </div>
+          </div>
           <div className="sm:col-span-2">
             <span className="text-xs font-semibold text-slate-400">키워드 태그 <span className="font-normal text-slate-500">(마켓 배지 · 중복 선택 가능)</span></span>
             <div className="mt-1 flex gap-2">
@@ -344,10 +366,29 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       <section className="card p-5">
         <h3 className="mb-3 text-sm font-black text-white">상품 설명 및 규정</h3>
         <div className="space-y-4">
+          {/* 상품영상 URL — 상품설명 위 (docs/25) */}
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-400">상품영상 URL <span className="font-normal text-slate-500">(YouTube 등 · 상세화면 자동재생)</span></span>
+            <input className={`mt-1 ${inputCls}`} value={f.videoUrl} onChange={(e) => set("videoUrl")(e.target.value)} placeholder="https://youtu.be/..." />
+          </label>
           <div className="block">
             <span className="text-xs font-semibold text-slate-400">상품 설명 (대상별 분리 등록)</span>
             <DescTabs f={f} set={set} />
           </div>
+          {/* 확장 상세 4종 — 상품설명 아래, 에디터 (docs/25) */}
+          {([
+            ["specEffect", "핵심스펙/효과"],
+            ["salesTarget", "영업대상"],
+            ["productFeature", "상품특성"],
+            ["processFlow", "처리프로세스"],
+          ] as const).map(([key, label]) => (
+            <div key={key} className="block">
+              <span className="text-xs font-semibold text-slate-400">{label}</span>
+              <div className="mt-1">
+                <RichTextEditor key={key} theme="dark" value={f[key] ?? ""} onChange={set(key)} placeholder={label} />
+              </div>
+            </div>
+          ))}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-semibold text-slate-400">설치 규정</span>

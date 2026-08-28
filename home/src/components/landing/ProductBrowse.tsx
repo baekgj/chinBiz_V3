@@ -103,7 +103,7 @@ export default function ProductBrowse() {
                 <p className="truncate text-xs font-medium text-muted">{p.partnerName ?? "파트너사"}</p>
                 <h3 className="mt-0.5 break-words text-base font-bold text-ink">{p.name}</h3>
                 <p className="mt-2 flex-1 break-words text-sm leading-relaxed text-muted">{p.description || "로그인 후 상세 정보를 확인하세요."}</p>
-                <Link href="/login" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-forest-700">상세정보 보기 <span aria-hidden>→</span></Link>
+                <Link href={`/products/${p.id}`} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-forest-700">상세정보 보기 <span aria-hidden>→</span></Link>
               </div>
             </div>
           ))}

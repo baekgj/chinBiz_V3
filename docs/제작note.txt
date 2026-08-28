@@ -1034,3 +1034,95 @@ CREATE TABLE IF NOT EXISTS `terms` (
      stretch 대신 내용맞춤 축소(shrink-to-fit) → 상품 수 적은 페이지(2p, 4개)에서 섹션이 804px 로 줄어 카드가 좁아짐.
    · 해결: 해당 섹션에 w-full 추가(항상 전체폭, 최대 max-w-6xl 유지). products + 동일패턴 페이지(about·partner-apply·process·terms)도 적용.
      (app/page.tsx 는 <main> 래핑이라 무관.) 검증: home clean build 성공(exit0). 앞서 scrollbar-gutter·min-w-0·break-words 도 유지.
+
+====================================================================
+[추가] docs/25.txt 작업 — 상품 확장필드 + HOME 상품상세 + 파트너 대시보드 (2026-08-21)
+====================================================================
+■ 1. 본사 상품등록 확장 (Product 필드 신규):
+   - 월관리상품/AS지원 여부(monthly_care/as_support) → 폼 '상품 특성' 토글(키워드 태그 위)
+   - 상품영상URL(video_url) → 상품설명 위 입력칸
+   - 핵심스펙/효과·영업대상·상품특성·처리프로세스(spec_effect/sales_target/product_feature/process_flow, LONGTEXT)
+     → 상품설명 아래 RichTextEditor 4종. ProductController Request/dto/apply + master ProductForm 반영.
+■ 2. HOME 상품 [상세정보보기] → /products/[id] 상세페이지 신설(goods_view.docx):
+   BE GET /api/public/products/{id}: 로그인 토큰 있으면 역할별 설명(descBuzz/Manager/Partner/Admin), 없으면 descGuest(→description 폴백).
+     이미지 배열·videoUrl·월관리/AS·확장 4종·버즈/매니저 수당(원 환산 buzzRewardWon/managerRewardWon)·파트너 다른상품(최근5) 반환.
+   FE: 메인+소이미지(hover 전환), 동영상 자동재생(YouTube/Vimeo 임베드), 역할별 상세설명, 확장 4종(내용 있을때만),
+     파트너 다른상품 1라인5개, 고정영역 수당, 고정 하단바 역할별 CTA(비회원=가입/매니저신청, 버즈=가망고객접수/URL복사).
+   ProductBrowse·ProductShowcase [상세정보보기] 링크 → /products/{id}.
+■ 3. 파트너 대시보드(partner.docx image1): BillingSection 을 실시간 Billing 연동 배지 + CP(진행중,라이트)·MP(정산대상,다크네이비)
+     카드 + 예치금계좌/가상계좌 + 충전·자동차감·명세서·세금계산서로 정비. PageHead '친비즈 본사 지급 수당 및 예치금 현황'.
+     (중간 검정 네모 placeholder 미구현 지시 준수)
+■ DB: product 7컬럼 추가 → migration_new_fields.sql 반영(ddl-auto 자동). 검증: BE 컴파일·양 FE 타입체크·전 라우트 200,
+     detail 엔드포인트 응답(buzzRewardWon 환산) 확인. 서버 반영: BE 재기동 + home·admin 재빌드.
+
+[추가] docs/25 후속 — 상품상세 4건 수정 (2026-08-28)
+====================================================================
+■ 1. 파트너 다른상품 리스트에 판매가 노출:
+   BE PublicProductController partnerProducts 맵에 salePrice 추가. FE 카드에 won(salePrice) 표시(그린 볼드).
+■ 2. 핵심스펙/효과·영업대상·상품특성·처리프로세스 '보이지 않음' 점검:
+   BE(Request/dto/apply·public detail m.put)·admin ProductForm(state·payload·RichTextEditor 4종)·HOME RichBlock
+   전 구간 연결 확인 완료. 등록된 내용이 있을 때만 노출(내용 없으면 섹션 자동 숨김) = 정상 동작.
+   → 각 상품 편집화면에서 해당 에디터에 내용 입력 후 저장하면 상세화면에 노출됨.
+■ 3. [이 상품으로 수익을 만드는 2가지 방법] 고정영역 신설(goods_view.docx image7 · 04/REVENUE):
+   OPTION A·CP(오렌지, 버즈회원 '주변 사장님께 추천만 하세요!' 추천성공시 건당 최대 buzzRewardWon)
+   + OPTION B·MP(블루, 관리매니저 '현장 방문 및 실사·계약 전담' 이행완료시 건당 managerRewardWon).
+   수당 금액은 상품 등록수당(원 환산)으로 자동 반영. 하단 '* CP·MP 포인트는 친비즈 정책에 따라 적립' 주석.
+■ 4. 하단 CTA 버튼 영역을 고정(fixed)에서 본문 내 영역으로 이동:
+   기존 fixed inset-x-0 bottom-0 하단바 제거 → 본문 파트너다른상품 아래 카드형 섹션으로 배치.
+   본문 pb-28 예약패딩 제거. 토스트 위치 bottom-8로 조정. 역할별 CTA 로직 동일 유지.
+■ 검증: BE 컴파일 0·HOME tsc 0. 서버 반영: BE 재기동(salePrice) + home 재빌드.
+
+[버그수정] 상품상세 확장4종/상세설명 — 이미지만 등록 시 미노출 (2026-08-28)
+====================================================================
+■ 원인1(섹션 숨김): RichBlock/상세설명의 '빈 내용' 판정이 태그 제거 후 텍스트만 검사 →
+   이미지만 등록한 경우(텍스트 0) 빈 값으로 간주되어 섹션 자동 숨김.
+   → hasContent(): <img|iframe|video|source|embed|svg|picture> 있으면 콘텐츠로 인정하도록 수정.
+■ 원인2(이미지 깨짐): 에디터가 삽입한 <img src="/uploads/..">(상대경로)가 HOME(8001)에선 BE(9001)로 안 붙음.
+   → rehostHtml(): 본문 HTML의 모든 src 를 mediaUrl()로 재구성(현재 API_BASE). YouTube 등 외부 절대URL은 그대로.
+   description·확장4종 렌더에 rehostHtml 적용.
+■ 스타일: home globals.css 에 .rte-content(img max-width:100% 등) 추가 — 임베드 이미지 반응형/오버플로 방지.
+■ 검증: HOME tsc 0. 서버 반영: home 재빌드.
+
+[추가] 본사 외 admin 상품 정보확인 화면에 확장필드 노출 (2026-08-28)
+====================================================================
+대상: 버즈/매니저·파트너 (본부·센터 마켓은 placeholder라 제외). 노출 항목:
+  월관리상품/AS지원 배지·상품영상(임베드)·핵심스펙효과·영업대상·상품특성·처리프로세스.
+■ 버즈/매니저 상품상세(components/buzz/ProductDetail.tsx + BE BuzzMarketController.detail):
+   BE /api/buzz/products/{id} 응답에 videoUrl·monthlyCare·asSupport·spec/target/feature/process 추가.
+   FE: 상단 카드 우측에 월관리상품/AS지원 배지, '상품 동영상' 카드(YouTube/Vimeo 임베드),
+     '상품 설명 및 규정' 아래 확장4종 카드(내용 있을때만). 이미지 src 는 richHtml()로 mediaUrl 재구성+sanitize.
+■ 파트너 상품정보(components/partner/ProductForm.tsx = edit는 보기전용 + BE PartnerProductController):
+   BE dto()에 확장필드 반환, ProductRequest/apply()에 7필드 추가(신규등록 시 저장).
+   FE: 기본정보에 상품특성(월관리/AS) 토글, 설명영역에 상품영상URL 입력 + 확장4종 RichTextEditor.
+■ 검증: BE 컴파일 0·admin tsc 0. 서버 반영: BE 재기동 + admin 재빌드.
+
+[추가] 버즈 상품상세 — 상품유형 4종 플래그 함께 표시 (2026-08-28)
+====================================================================
+ProductDetail.tsx 상단 카드 우측 배지에 설치상품·단순배송·월관리상품·AS지원 4종을 함께 노출
+  (색상: 설치=violet, 단순배송=slate, 월관리=emerald, AS지원=sky). 기존 D-day·수당유형 배지 유지.
+'상품 설명 및 규정' > 상품유형 안내 블록에도 월관리/AS 안내문 추가(설치·단순배송·취소보전비와 함께).
+BE 무변경(buzz 응답에 이미 4종 포함). 검증: admin tsc 0. FE-only(HMR 반영).
+
+[추가] 파트너 대시보드 신설 + 상단 [대시보드] 메뉴 (partner.docx p.2~3) (2026-08-28)
+====================================================================
+■ 상단메뉴: PartnerTopbar NAV 최상단에 [대시보드](/partner/dashboard) 추가.
+■ 신규 페이지 app/partner/dashboard/page.tsx = 2개 영역:
+  ① CommissionProductsSection(위탁 영업대행 상품 및 총수당 관리):
+     요약 3카드(등록상품수/총수당설정완료/활성상품) + 상품별 총수당 목록 테이블
+     (상품코드·상품명·카테고리·공급가/판매가·총수당(위탁비)·수당조건변경).
+  ② LiveSalesSection(실시간 상품 영업 및 고객정보 현황):
+     요약 4카드(전체유입/진행중/완결/취소반품) + 필터탭(전체·진행중·계약완료·설치완료·취소반품)
+     + 고객정보 목록(고객사·접수상품·1차버즈·2차매니저·진행상태 배지·최종업데이트).
+  현재 mock 데이터(디자인 일치). BE 무변경. 검증: admin tsc 0, /partner/dashboard 200.
+
+[수정] 파트너 대시보드 위탁상품 목록 — [수당/조건변경]→[상품보기]+실데이터 (2026-08-28)
+====================================================================
+CommissionProductsSection: mock→실데이터 전환(/api/partner/products·/categories 매핑).
+버튼 [수당/조건 변경]→[상품보기], 클릭 시 /partner/products/{id}(상품 상세, 보기전용) 이동.
+요약 3카드도 실데이터 기준 계산. 검증: admin tsc 0, /partner/dashboard 200.
+(LiveSalesSection은 요청 범위 외 → mock 유지)
+
+[수정] 파트너 상품상세보기 — 역할별 수당 영역 숨김 (2026-08-28)
+====================================================================
+partner ProductForm 역할별 수당 섹션을 {mode !== "edit"}로 감싸 상품상세보기(edit=보기전용)에서 제거.
+신규등록(new)에서는 유지(7주체 배분 100% 검증 필요). 검증: admin tsc 0.

@@ -37,7 +37,10 @@ public class ProductController {
             String contractEndDate, Boolean installProduct,
             Boolean simpleDelivery, Boolean cancelFeeFlag, Long cancelAmount,
             Boolean popular, Boolean recommended,
-            String descGuest, String descBuzz, String descManager, String descPartner, String descAdmin
+            String descGuest, String descBuzz, String descManager, String descPartner, String descAdmin,
+            // docs/25 확장 항목
+            Boolean monthlyCare, Boolean asSupport, String videoUrl,
+            String specEffect, String salesTarget, String productFeature, String processFlow
     ) {}
 
     private Map<String, Object> dto(Product p) {
@@ -74,6 +77,13 @@ public class ProductController {
         m.put("cancelAmount", p.getCancelAmount());
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
+        m.put("monthlyCare", p.isMonthlyCare());
+        m.put("asSupport", p.isAsSupport());
+        m.put("videoUrl", p.getVideoUrl());
+        m.put("specEffect", p.getSpecEffect());
+        m.put("salesTarget", p.getSalesTarget());
+        m.put("productFeature", p.getProductFeature());
+        m.put("processFlow", p.getProcessFlow());
         m.put("createdAt", p.getCreatedAt() == null ? null : p.getCreatedAt().toString());
         return m;
     }
@@ -165,6 +175,13 @@ public class ProductController {
         p.setCancelAmount(req.cancelAmount() == null ? 0L : req.cancelAmount());
         p.setPopular(req.popular() != null && req.popular());
         p.setRecommended(req.recommended() != null && req.recommended());
+        p.setMonthlyCare(req.monthlyCare() != null && req.monthlyCare());
+        p.setAsSupport(req.asSupport() != null && req.asSupport());
+        p.setVideoUrl(req.videoUrl());
+        p.setSpecEffect(req.specEffect());
+        p.setSalesTarget(req.salesTarget());
+        p.setProductFeature(req.productFeature());
+        p.setProcessFlow(req.processFlow());
     }
 
     /** "YYYY-MM-DD" 문자열 → LocalDate (빈값/파싱실패 → null) */

@@ -52,7 +52,7 @@ export default function ProductShowcase() {
             </div>
           </div>
           <p className="mt-4 flex-1 text-sm leading-relaxed text-muted">{p.description || "로그인 후 상세 정보를 확인하세요."}</p>
-          <Link href="/login" className="mt-5 flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-forest-700">
+          <Link href={`/products/${p.id}`} className="mt-5 flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-forest-700">
             상세정보 보기 <span aria-hidden>→</span>
           </Link>
         </div>

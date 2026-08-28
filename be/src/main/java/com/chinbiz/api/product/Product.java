@@ -79,6 +79,19 @@ public class Product {
     /** 취소비용(매니저 보전비, 원) — cancel_fee_flag=true 일 때 사용 */
     @Column(name = "cancel_amount") private Long cancelAmount = 0L;
 
+    // 상품 특성 플래그 (docs/25) — 키워드 태그 위 노출
+    @Column(name = "monthly_care", nullable = false) private boolean monthlyCare = false; // 월관리상품 여부
+    @Column(name = "as_support", nullable = false) private boolean asSupport = false;     // AS지원상품 여부
+
+    // 상품영상 URL (docs/25) — 상품설명 위 / 상세화면 자동재생
+    @Column(name = "video_url", length = 500) private String videoUrl;
+
+    // 상세 설명 확장 4종 (docs/25) — 에디터 HTML, 등록 내용 있을 때만 노출
+    @Column(name = "spec_effect", columnDefinition = "LONGTEXT") private String specEffect;       // 핵심스펙/효과
+    @Column(name = "sales_target", columnDefinition = "LONGTEXT") private String salesTarget;     // 영업대상
+    @Column(name = "product_feature", columnDefinition = "LONGTEXT") private String productFeature; // 상품특성
+    @Column(name = "process_flow", columnDefinition = "LONGTEXT") private String processFlow;     // 처리프로세스
+
     // 키워드 태그 (마켓 배지). 상품등록 시 선택
     @Column(name = "kw_popular", nullable = false) private boolean popular = false;      // 인기
     @Column(name = "kw_recommended", nullable = false) private boolean recommended = false; // 추천
@@ -130,6 +143,13 @@ public class Product {
     public Long getCancelAmount() { return cancelAmount; } public void setCancelAmount(Long v) { cancelAmount = v; }
     public boolean isPopular() { return popular; } public void setPopular(boolean v) { popular = v; }
     public boolean isRecommended() { return recommended; } public void setRecommended(boolean v) { recommended = v; }
+    public boolean isMonthlyCare() { return monthlyCare; } public void setMonthlyCare(boolean v) { monthlyCare = v; }
+    public boolean isAsSupport() { return asSupport; } public void setAsSupport(boolean v) { asSupport = v; }
+    public String getVideoUrl() { return videoUrl; } public void setVideoUrl(String v) { videoUrl = v; }
+    public String getSpecEffect() { return specEffect; } public void setSpecEffect(String v) { specEffect = v; }
+    public String getSalesTarget() { return salesTarget; } public void setSalesTarget(String v) { salesTarget = v; }
+    public String getProductFeature() { return productFeature; } public void setProductFeature(String v) { productFeature = v; }
+    public String getProcessFlow() { return processFlow; } public void setProcessFlow(String v) { processFlow = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

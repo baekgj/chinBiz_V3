@@ -265,3 +265,16 @@ CREATE TABLE IF NOT EXISTS `admin_scope` (
 --   활동수당 지급 세금신고용. 유효성 검증 후 숫자만 저장(평문·요구사항). ddl-auto=update 자동 반영되나 배포용 기재.
 ALTER TABLE `user` ADD COLUMN `resident_number` varchar(20) DEFAULT NULL;
 -- 완료.
+
+
+-- ── [컬럼 추가] product 상세 확장 (2026-08-21 docs/25) ─────────────────────────
+--   월관리/AS지원 여부, 상품영상URL, 핵심스펙/효과·영업대상·상품특성·처리프로세스(에디터 HTML).
+--   ddl-auto=update 자동 반영되나 배포용 병행.
+ALTER TABLE `product` ADD COLUMN `monthly_care` bit(1) NOT NULL DEFAULT b'0';
+ALTER TABLE `product` ADD COLUMN `as_support` bit(1) NOT NULL DEFAULT b'0';
+ALTER TABLE `product` ADD COLUMN `video_url` varchar(500) DEFAULT NULL;
+ALTER TABLE `product` ADD COLUMN `spec_effect` longtext;
+ALTER TABLE `product` ADD COLUMN `sales_target` longtext;
+ALTER TABLE `product` ADD COLUMN `product_feature` longtext;
+ALTER TABLE `product` ADD COLUMN `process_flow` longtext;
+-- 완료.

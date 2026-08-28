@@ -18,7 +18,32 @@ type Detail = Record<string, unknown> & {
   image1?: string; image2?: string; image3?: string; image4?: string; image5?: string;
   contractEndDate?: string | null;
   installProduct?: boolean; simpleDelivery?: boolean; cancelFeeFlag?: boolean; cancelAmount?: number;
+  videoUrl?: string | null; monthlyCare?: boolean; asSupport?: boolean;
+  specEffect?: string | null; salesTarget?: string | null; productFeature?: string | null; processFlow?: string | null;
 };
+
+/** YouTube/Vimeo URL → 자동재생 임베드 URL (아니면 null) */
+function embedUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0`;
+  const vm = url.match(/vimeo\.com\/(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+  return null;
+}
+
+/** HTML에 실제 콘텐츠(텍스트/이미지 등)가 있는지 */
+function hasContent(html?: string | null): boolean {
+  if (!html) return false;
+  if (/<(img|picture)\b/i.test(html)) return true;
+  return !!html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim();
+}
+
+/** 이미지 src(/uploads·레거시 절대URL)를 현재 API_BASE 로 재구성 후 정화 */
+function richHtml(html?: string | null): string {
+  const rehosted = (html ?? "").replace(/(\ssrc=)(["'])(.*?)\2/gi, (_m, pre, q, url) => `${pre}${q}${mediaUrl(url)}${q}`);
+  return sanitizeHtml(rehosted);
+}
 
 /** 상품 상세 — 수당내역은 역할별 표시(버즈: 버즈·추천인 / 매니저: 매니저·버즈·추천인) */
 export default function ProductDetail({ id }: { id: string }) {
@@ -62,7 +87,11 @@ export default function ProductDetail({ id }: { id: string }) {
       {dd?.closingSoon && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-bold text-red-500">[{dd.message}]</p>}
 
       <Card title={p.name} sub={`${p.partnerName ?? "-"}${p.categoryName ? " · " + p.categoryName : ""}`}
-        right={<div className="flex items-center gap-2">
+        right={<div className="flex flex-wrap items-center gap-2">
+          {p.installProduct && <span className="rounded-md bg-violet-600 px-2 py-0.5 text-xs font-black text-white">설치상품</span>}
+          {p.simpleDelivery && <span className="rounded-md bg-slate-500 px-2 py-0.5 text-xs font-black text-white">단순배송</span>}
+          {p.monthlyCare && <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-black text-white">월관리상품</span>}
+          {p.asSupport && <span className="rounded-md bg-sky-600 px-2 py-0.5 text-xs font-black text-white">AS지원</span>}
           {dd && <span className={`rounded-md px-2 py-0.5 text-xs font-black ${dd.closingSoon || dd.expired ? "bg-red-600 text-white" : "bg-black/75 text-amber-300"}`}>{dd.label}</span>}
           <GoldBadge>{isRate ? "비율" : "고정"} 수당</GoldBadge>
         </div>}>
@@ -80,6 +109,15 @@ export default function ProductDetail({ id }: { id: string }) {
         </div>
       </Card>
 
+      {/* 상품 동영상 (등록 시) */}
+      {embedUrl(p.videoUrl) && (
+        <Card title="상품 동영상">
+          <div className="aspect-video w-full overflow-hidden rounded-xl">
+            <iframe src={embedUrl(p.videoUrl)!} title="상품 영상" className="h-full w-full" allow="encrypted-media; picture-in-picture" allowFullScreen />
+          </div>
+        </Card>
+      )}
+
       <Card title="내 수당 내역" sub={isManager ? "관리매니저 기준 (매니저·버즈·추천인)" : "버즈회원 기준 (버즈·추천인)"}>
         <div className="space-y-2">
           {rewardRows.map((r) => (
@@ -92,21 +130,35 @@ export default function ProductDetail({ id }: { id: string }) {
         <p className={`mt-3 text-xs ${theme.note}`}>※ 센터·본부·본사 등 그 외 분배 항목은 표시되지 않습니다.</p>
       </Card>
 
-      {(p.description || p.installPolicy || p.returnPolicy || p.installProduct || p.simpleDelivery || p.cancelFeeFlag) && (
+      {(p.description || p.installPolicy || p.returnPolicy || p.installProduct || p.simpleDelivery || p.monthlyCare || p.asSupport || p.cancelFeeFlag) && (
         <Card title="상품 설명 및 규정">
-          {/* 상품 유형 안내 (설치/단순배송/취소보전비) */}
-          {(p.installProduct || p.simpleDelivery || p.cancelFeeFlag) && (
+          {/* 상품 유형 안내 (설치/단순배송/월관리/AS지원/취소보전비) */}
+          {(p.installProduct || p.simpleDelivery || p.monthlyCare || p.asSupport || p.cancelFeeFlag) && (
             <div className={`mb-3 space-y-1 rounded-lg border p-3 ${theme.tableWrap}`}>
               {p.installProduct && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 설치 및 교육대상 상품입니다.</p>}
               {p.simpleDelivery && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 배송상품이며, 설치나 교육이 진행되지 않습니다.</p>}
+              {p.monthlyCare && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 월관리(정기 관리) 상품입니다.</p>}
+              {p.asSupport && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 본 제품은 AS(사후관리) 지원 상품입니다.</p>}
               {p.cancelFeeFlag && <p className={`text-sm font-semibold ${theme.cellMain}`}>· 설치후 주문취소시 영업보전비 {(p.cancelAmount ?? 0).toLocaleString()}원 지급되는 상품입니다.</p>}
             </div>
           )}
-          {p.description && <div className={`rte-content text-sm ${theme.cellMain}`} dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.description) }} />}
+          {p.description && <div className={`rte-content text-sm ${theme.cellMain}`} dangerouslySetInnerHTML={{ __html: richHtml(p.description) }} />}
           {p.installPolicy && <p className={`mt-3 text-sm ${theme.cellSub}`}><b>설치 규정</b> · {p.installPolicy}</p>}
           {p.returnPolicy && <p className={`mt-1 text-sm ${theme.cellSub}`}><b>반품/취소 규정</b> · {p.returnPolicy}</p>}
         </Card>
       )}
+
+      {/* 상품등록 확장 4종 (docs/25) — 등록된 내용이 있을 때만 노출 */}
+      {([
+        ["핵심 스펙 / 효과", p.specEffect],
+        ["영업 대상", p.salesTarget],
+        ["상품 특징", p.productFeature],
+        ["처리 프로세스", p.processFlow],
+      ] as const).filter(([, html]) => hasContent(html)).map(([title, html]) => (
+        <Card key={title} title={title}>
+          <div className={`rte-content text-sm ${theme.cellMain}`} dangerouslySetInnerHTML={{ __html: richHtml(html) }} />
+        </Card>
+      ))}
 
       {/* 우측 하단 1차영업신청 */}
       {showApply && (

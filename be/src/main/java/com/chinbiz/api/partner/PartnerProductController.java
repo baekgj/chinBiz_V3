@@ -77,6 +77,14 @@ public class PartnerProductController {
         m.put("description", (p.getDescPartner() != null && !p.getDescPartner().isBlank()) ? p.getDescPartner() : p.getDescription());
         m.put("installPolicy", p.getInstallPolicy());
         m.put("returnPolicy", p.getReturnPolicy());
+        // 상품등록 확장필드(docs/25) — 상세 확인화면 노출
+        m.put("videoUrl", p.getVideoUrl());
+        m.put("monthlyCare", p.isMonthlyCare());
+        m.put("asSupport", p.isAsSupport());
+        m.put("specEffect", p.getSpecEffect());
+        m.put("salesTarget", p.getSalesTarget());
+        m.put("productFeature", p.getProductFeature());
+        m.put("processFlow", p.getProcessFlow());
         m.put("onSale", p.isOnSale());
         m.put("contractEndDate", p.getContractEndDate() == null ? null : p.getContractEndDate().toString());
         m.put("installProduct", p.isInstallProduct());
@@ -98,7 +106,9 @@ public class PartnerProductController {
             String description, String installPolicy, String returnPolicy, Boolean onSale,
             String contractEndDate, Boolean installProduct,
             Boolean simpleDelivery, Boolean cancelFeeFlag, Long cancelAmount,
-            Boolean popular, Boolean recommended
+            Boolean popular, Boolean recommended,
+            String videoUrl, Boolean monthlyCare, Boolean asSupport,
+            String specEffect, String salesTarget, String productFeature, String processFlow
     ) {}
 
     /** 본인 위탁 상품 목록 (필터 + 페이징) */
@@ -194,6 +204,14 @@ public class PartnerProductController {
         p.setCancelAmount(req.cancelAmount() == null ? 0L : req.cancelAmount());
         p.setPopular(req.popular() != null && req.popular());
         p.setRecommended(req.recommended() != null && req.recommended());
+        // 상품등록 확장필드(docs/25)
+        p.setVideoUrl(req.videoUrl());
+        p.setMonthlyCare(req.monthlyCare() != null && req.monthlyCare());
+        p.setAsSupport(req.asSupport() != null && req.asSupport());
+        p.setSpecEffect(req.specEffect());
+        p.setSalesTarget(req.salesTarget());
+        p.setProductFeature(req.productFeature());
+        p.setProcessFlow(req.processFlow());
     }
 
     /** "YYYY-MM-DD" 문자열 → LocalDate (빈값/파싱실패 → null) */
