@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
-import { API_BASE, mediaUrl } from "@/lib/api";
+import { API_BASE, mediaUrl, resolveAdminUrl } from "@/lib/api";
 
 type Detail = {
-  id: number; name: string; partnerId?: number | null; partnerName?: string | null; categoryName?: string | null;
+  id: number; name: string; partnerId?: number | null; partnerName?: string | null; categoryId?: number | null; categoryName?: string | null;
   images: string[]; videoUrl?: string | null; monthlyCare?: boolean; asSupport?: boolean;
   popular?: boolean; recommended?: boolean; role?: string | null; description?: string | null;
   specEffect?: string | null; salesTarget?: string | null; productFeature?: string | null; processFlow?: string | null;
@@ -66,6 +66,70 @@ function RichBlock({ title, html }: { title: string; html?: string | null }) {
   );
 }
 
+type OtherProduct = { id: number; name: string; image1?: string | null; salePrice?: number | null };
+
+/** 파트너사 다른 상품 — 데스크톱 4개·모바일 2개씩 페이징 + 좌우 화살표 + 슬라이드 효과 */
+function PartnerProductsCarousel({ partnerName, products }: { partnerName: string; products: OtherProduct[] }) {
+  const [perPage, setPerPage] = useState(4); // 모바일 2 / sm↑ 4
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const apply = () => setPerPage(mq.matches ? 4 : 2);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  const pages = Math.max(1, Math.ceil(products.length / perPage));
+  useEffect(() => { setPage((p) => Math.min(p, pages - 1)); }, [pages]); // 브레이크포인트 변경 시 페이지 보정
+
+  const canPrev = page > 0;
+  const canNext = page < pages - 1;
+  const arrowCls = "grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-lg font-bold text-ink-soft transition hover:border-forest-300 hover:text-forest-700 disabled:cursor-default disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ink-soft";
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-black text-ink">{partnerName}의 다른 상품</h2>
+        {pages > 1 && (
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={!canPrev} aria-label="이전 상품" className={arrowCls}>‹</button>
+            <button type="button" onClick={() => setPage((p) => Math.min(pages - 1, p + 1))} disabled={!canNext} aria-label="다음 상품" className={arrowCls}>›</button>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 overflow-hidden">
+        <div className="flex transition-transform duration-300 ease-out" style={{ transform: `translateX(-${page * 100}%)` }}>
+          {products.map((o) => (
+            <div key={o.id} className="box-border w-1/2 shrink-0 px-2 sm:w-1/4">
+              <Link href={`/products/${o.id}`} className="group block overflow-hidden rounded-xl border border-line bg-white transition-all hover:border-forest-300 hover:shadow-md">
+                <div className="aspect-square w-full bg-forest-50">
+                  {o.image1 ? <img src={mediaUrl(o.image1)} alt={o.name} className="h-full w-full object-cover" /> : <ImageMonitor />}
+                </div>
+                <div className="p-2.5">
+                  <p className="truncate text-xs font-bold text-ink">{o.name}</p>
+                  <p className="mt-0.5 text-sm font-black text-forest-700">{won(o.salePrice ?? 0)}</p>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {pages > 1 && (
+        <div className="mt-3 flex justify-center gap-1.5">
+          {Array.from({ length: pages }).map((_, i) => (
+            <button key={i} type="button" onClick={() => setPage(i)} aria-label={`${i + 1}페이지`}
+              className={`h-1.5 rounded-full transition-all ${i === page ? "w-5 bg-forest-600" : "w-1.5 bg-line hover:bg-forest-300"}`} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const [d, setD] = useState<Detail | null>(null);
@@ -86,6 +150,38 @@ export default function ProductDetailPage() {
 
   const embed = useMemo(() => embedUrl(d?.videoUrl), [d?.videoUrl]);
   const role = d?.role ?? null;
+  const cameraRef = useRef<HTMLInputElement>(null);
+
+  // 버즈 admin [1차 영업 등록] 화면 (크로스 앱). 상품·카테고리 자동선택.
+  const applyHref = useMemo(() => {
+    if (!d) return "#";
+    const q = new URLSearchParams({ productId: String(d.id) });
+    if (d.categoryId != null) q.set("categoryId", String(d.categoryId));
+    return `${resolveAdminUrl()}/buzz/pipeline/new?${q.toString()}`;
+  }, [d]);
+
+  // 모바일 여부 (설치완료 사진찍기 → 모바일은 카메라, PC는 안내)
+  function isMobile(): boolean {
+    if (typeof navigator === "undefined") return false;
+    return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+  }
+
+  function takeInstallPhoto() {
+    if (isMobile()) {
+      cameraRef.current?.click(); // capture 속성으로 카메라 앱 실행
+    } else {
+      setToast("모바일에서 접속해 주세요.");
+      setTimeout(() => setToast(null), 2600);
+    }
+  }
+
+  function onPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setToast(`사진이 선택되었습니다: ${file.name}`);
+    else setToast(null);
+    e.currentTarget.value = "";
+    if (file) setTimeout(() => setToast(null), 2600);
+  }
 
   async function copyUrl() {
     try {
@@ -166,24 +262,9 @@ export default function ProductDetailPage() {
                 </section>
               )}
 
-              {/* 파트너사 다른 상품 (최근 5) — 동영상과 상세설명 사이 */}
+              {/* 파트너사 다른 상품 — 4개씩 페이징 캐러셀 (동영상과 상세설명 사이) */}
               {d.partnerProducts && d.partnerProducts.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-black text-ink">{d.partnerName ?? "파트너사"}의 다른 상품</h2>
-                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
-                    {d.partnerProducts.map((o) => (
-                      <Link key={o.id} href={`/products/${o.id}`} className="group overflow-hidden rounded-xl border border-line bg-white transition-all hover:border-forest-300 hover:shadow-md">
-                        <div className="aspect-square w-full bg-forest-50">
-                          {o.image1 ? <img src={mediaUrl(o.image1)} alt={o.name} className="h-full w-full object-cover" /> : <ImageMonitor />}
-                        </div>
-                        <div className="p-2.5">
-                          <p className="truncate text-xs font-bold text-ink">{o.name}</p>
-                          <p className="mt-0.5 text-sm font-black text-forest-700">{won(o.salePrice ?? 0)}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
+                <PartnerProductsCarousel partnerName={d.partnerName ?? "파트너사"} products={d.partnerProducts} />
               )}
 
               {/* 상품 상세 설명 (역할별) */}
@@ -256,12 +337,16 @@ export default function ProductDetailPage() {
                   )}
                   {role === "BUZZ" && (
                     <>
-                      <Link href="/login" className="w-full flex-1 rounded-xl bg-forest-800 px-5 py-3 text-center text-sm font-bold text-white hover:bg-forest-700">가망고객 접수하기</Link>
+                      <a href={applyHref} className="w-full flex-1 rounded-xl bg-forest-800 px-5 py-3 text-center text-sm font-bold text-white hover:bg-forest-700">가망고객 접수하기</a>
                       <button onClick={copyUrl} className="w-full flex-1 rounded-xl border border-forest-600/40 px-5 py-3 text-center text-sm font-bold text-forest-700 hover:bg-forest-50">🔗 상품화면 URL 복사하기</button>
                     </>
                   )}
                   {role === "MANAGER" && (
-                    <p className="flex-1 py-2 text-center text-sm font-semibold text-muted">관리매니저 전용 기능은 준비 중입니다.</p>
+                    <>
+                      <a href={applyHref} className="w-full flex-1 rounded-xl bg-forest-800 px-5 py-3 text-center text-sm font-bold text-white hover:bg-forest-700">가망고객 접수하기</a>
+                      <button onClick={takeInstallPhoto} className="w-full flex-1 rounded-xl bg-gold-400 px-5 py-3 text-center text-sm font-bold text-forest-900 hover:bg-gold-300">📷 설치완료 사진찍기</button>
+                      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onPhotoSelected} />
+                    </>
                   )}
                   {role && role !== "BUZZ" && role !== "MANAGER" && (
                     <button onClick={copyUrl} className="w-full flex-1 rounded-xl border border-forest-600/40 px-5 py-3 text-center text-sm font-bold text-forest-700 hover:bg-forest-50">🔗 상품화면 URL 복사하기</button>

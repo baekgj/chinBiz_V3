@@ -81,6 +81,7 @@ public class PublicProductController {
         m.put("name", p.getName());
         m.put("partnerId", p.getPartnerId());
         m.put("partnerName", partnerName);
+        m.put("categoryId", p.getCategoryId());
         m.put("categoryName", categoryName);
         m.put("images", java.util.Arrays.asList(p.getImage1(), p.getImage2(), p.getImage3(), p.getImage4(), p.getImage5())
                 .stream().filter(s -> s != null && !s.isBlank()).toList());
@@ -98,14 +99,14 @@ public class PublicProductController {
         m.put("buzzRewardWon", rewardWon(p, p.getBuzzReward() == null ? 0 : p.getBuzzReward()));
         m.put("managerRewardWon", rewardWon(p, p.getManagerReward() == null ? 0 : p.getManagerReward()));
 
-        // 파트너사 다른 상품 (최근 5, 판매중, 본인 제외)
+        // 파트너사 다른 상품 (최근 12, 판매중, 본인 제외) — 홈 상세 캐러셀(4개씩 페이징)용
         List<Map<String, Object>> others = new ArrayList<>();
         if (p.getPartnerId() != null) {
             Specification<Product> os = (r, q, cb) -> cb.and(
                     cb.equal(r.get("partnerId"), p.getPartnerId()),
                     cb.isTrue(r.get("onSale")),
                     cb.notEqual(r.get("id"), p.getId()));
-            for (Product o : productRepo.findAll(os, PageRequest.of(0, 5, Sort.by(Sort.Order.desc("id")))).getContent()) {
+            for (Product o : productRepo.findAll(os, PageRequest.of(0, 12, Sort.by(Sort.Order.desc("id")))).getContent()) {
                 Map<String, Object> om = new LinkedHashMap<>();
                 om.put("id", o.getId()); om.put("name", o.getName()); om.put("image1", o.getImage1());
                 om.put("salePrice", o.getSalePrice());   // 판매가 노출(docs/25 후속 요청)
