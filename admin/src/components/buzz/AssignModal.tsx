@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiUpload, mediaUrl } from "@/lib/api";
 import { useBuzz } from "@/components/buzz/theme";
 
 type Detail = Record<string, unknown> & {
   id: number; productName?: string; customerName?: string; companyName?: string; ceoName?: string;
   phone?: string; address?: string; addressDetail?: string; status?: string; memo?: string; mine?: boolean;
-  categoryId?: number | null; productId?: number | null;
+  categoryId?: number | null; productId?: number | null; installPhotos?: string | null;
 };
 type Cat = { id: number; name: string; level: string };
 type Prod = { id: number; name: string; partnerName?: string };
@@ -28,6 +28,9 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
   const [err, setErr] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const prevCat = useRef<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]); // 현장설치 사진 URL 목록
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -37,6 +40,7 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
         setD(r.data); if (r.data.status) setStatus(r.data.status); setMemo(r.data.memo ?? "");
         if (r.data.categoryId != null) setCatId(String(r.data.categoryId));
         if (r.data.productId != null) setProdId(String(r.data.productId));
+        if (r.data.installPhotos) setPhotos(String(r.data.installPhotos).split(",").filter(Boolean));
       } else setErr(r.message ?? "영업 건을 불러오지 못했습니다.");
     });
     document.body.style.overflow = "hidden";
@@ -52,11 +56,25 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
     prevCat.current = catId;
   }, [catId]);
 
+  async function handlePhotos(list: FileList | null) {
+    if (!list) return;
+    const files = Array.from(list).filter((x) => x.type.startsWith("image/"));
+    if (files.length === 0) return;
+    setErr(null); setUploading(true);
+    for (const file of files.slice(0, 10 - photos.length)) {
+      const res = await apiUpload<{ url: string }>("/api/uploads", file);
+      if (res.ok && res.data?.url) setPhotos((p) => (p.length >= 10 ? p : [...p, res.data!.url]));
+      else setErr(res.message ?? "사진 업로드에 실패했습니다.");
+    }
+    setUploading(false);
+  }
+
   async function save() {
     if (!prodId) { setErr("상품을 선택해 주세요."); return; }
     setSaving(true); setErr(null);
     const res = await apiPost(`/api/buzz/sales/${saleId}/assign`, {
       status, memo, categoryId: catId ? Number(catId) : null, productId: Number(prodId),
+      installPhotos: photos.join(","),
     });
     setSaving(false);
     if (res.ok) { onSaved(); onClose(); }
@@ -115,6 +133,30 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
               <span className={`text-xs font-semibold ${theme.fieldLabel}`}>영업 내용</span>
               <textarea rows={4} className={`mt-1 ${inp}`} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="상담·방문·진행 내용을 기록하세요" />
             </label>
+
+            {/* 현장설치 사진 업로드 (docs/25_2) */}
+            <div className="block">
+              <span className={`text-xs font-semibold ${theme.fieldLabel}`}>현장설치 사진 <span className="font-normal opacity-70">({photos.length}/10)</span></span>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {photos.map((url, i) => (
+                  <div key={i} className={`relative h-20 w-20 overflow-hidden rounded-lg border ${theme.tableWrap}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={mediaUrl(url)} alt={`설치사진 ${i + 1}`} className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
+                      className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-black/60 text-xs text-white hover:bg-red-600">✕</button>
+                  </div>
+                ))}
+                {photos.length < 10 && (
+                  <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                    className={`grid h-20 w-20 place-items-center rounded-lg border-2 border-dashed ${theme.tableWrap} ${theme.cellSub} text-2xl disabled:opacity-40`}>
+                    {uploading ? "…" : "📷"}
+                  </button>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple hidden
+                  onChange={(e) => { handlePhotos(e.target.files); e.currentTarget.value = ""; }} />
+              </div>
+              <p className={`mt-1 text-[11px] ${theme.note}`}>모바일에서는 카메라로 촬영, PC에서는 파일 선택으로 업로드됩니다. (최대 10장)</p>
+            </div>
           </div>
         )}
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import { API_BASE, mediaUrl, resolveAdminUrl } from "@/lib/api";
@@ -15,6 +15,8 @@ type Detail = {
   buzzRewardWon?: number; managerRewardWon?: number;
   partnerProducts?: { id: number; name: string; image1?: string | null; salePrice?: number | null }[];
 };
+
+type ManagedSale = { id: number; createdAt?: string | null; customerName?: string | null; buzzName?: string | null; centerName?: string | null; status?: string | null };
 
 const won = (n?: number) => "₩" + (n ?? 0).toLocaleString("ko-KR");
 
@@ -150,37 +152,35 @@ export default function ProductDetailPage() {
 
   const embed = useMemo(() => embedUrl(d?.videoUrl), [d?.videoUrl]);
   const role = d?.role ?? null;
-  const cameraRef = useRef<HTMLInputElement>(null);
-
-  // 버즈 admin [1차 영업 등록] 화면 (크로스 앱). 상품·카테고리 자동선택.
+  // 버즈 admin [1차 영업 등록] 화면 (크로스 앱). 상품·카테고리 자동선택 + 매니저여도 B(버즈)모드로 진입.
   const applyHref = useMemo(() => {
     if (!d) return "#";
-    const q = new URLSearchParams({ productId: String(d.id) });
+    const q = new URLSearchParams({ productId: String(d.id), view: "buzz" });
     if (d.categoryId != null) q.set("categoryId", String(d.categoryId));
     return `${resolveAdminUrl()}/buzz/pipeline/new?${q.toString()}`;
   }, [d]);
 
-  // 모바일 여부 (설치완료 사진찍기 → 모바일은 카메라, PC는 안내)
-  function isMobile(): boolean {
-    if (typeof navigator === "undefined") return false;
-    return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+  // [설치완료 사진찍기] → 해당 상품의 내 2차영업관리 신청 리스트 레이어팝업
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoRows, setPhotoRows] = useState<ManagedSale[] | null>(null);
+
+  async function openInstallList() {
+    if (!d) return;
+    setPhotoOpen(true);
+    setPhotoRows(null);
+    const token = readToken();
+    try {
+      const r = await fetch(`${API_BASE}/api/buzz/sales/managed?productId=${d.id}&size=100`, {
+        headers: token ? { Authorization: `Bearer ${token}`, Accept: "application/json" } : { Accept: "application/json" },
+      });
+      const j = r.ok ? await r.json() : null;
+      setPhotoRows((j?.content as ManagedSale[]) ?? []);
+    } catch { setPhotoRows([]); }
   }
 
-  function takeInstallPhoto() {
-    if (isMobile()) {
-      cameraRef.current?.click(); // capture 속성으로 카메라 앱 실행
-    } else {
-      setToast("모바일에서 접속해 주세요.");
-      setTimeout(() => setToast(null), 2600);
-    }
-  }
-
-  function onPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setToast(`사진이 선택되었습니다: ${file.name}`);
-    else setToast(null);
-    e.currentTarget.value = "";
-    if (file) setTimeout(() => setToast(null), 2600);
+  // 고객 클릭 → 매니저 admin 2차영업관리 진행관리(영업권확보) 레이어로 이동 (M모드)
+  function goManage(saleId: number) {
+    window.location.href = `${resolveAdminUrl()}/buzz/managed?assign=${saleId}&view=manager`;
   }
 
   async function copyUrl() {
@@ -344,8 +344,7 @@ export default function ProductDetailPage() {
                   {role === "MANAGER" && (
                     <>
                       <a href={applyHref} className="w-full flex-1 rounded-xl bg-forest-800 px-5 py-3 text-center text-sm font-bold text-white hover:bg-forest-700">가망고객 접수하기</a>
-                      <button onClick={takeInstallPhoto} className="w-full flex-1 rounded-xl bg-gold-400 px-5 py-3 text-center text-sm font-bold text-forest-900 hover:bg-gold-300">📷 설치완료 사진찍기</button>
-                      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onPhotoSelected} />
+                      <button onClick={openInstallList} className="w-full flex-1 rounded-xl bg-gold-400 px-5 py-3 text-center text-sm font-bold text-forest-900 hover:bg-gold-300">📷 설치완료 사진찍기</button>
                     </>
                   )}
                   {role && role !== "BUZZ" && role !== "MANAGER" && (
@@ -361,6 +360,51 @@ export default function ProductDetailPage() {
 
       {toast && (
         <div className="fixed inset-x-0 bottom-8 z-50 mx-auto w-fit max-w-[90%] rounded-xl bg-forest-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl">{toast}</div>
+      )}
+
+      {/* [설치완료 사진찍기] 레이어팝업 — 내 2차영업관리 신청 리스트 (해당 상품) */}
+      {photoOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" onClick={() => setPhotoOpen(false)}>
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <div>
+                <h3 className="text-lg font-black text-ink">설치완료 사진찍기 · 2차영업관리</h3>
+                <p className="text-xs text-muted">{d?.name} · 고객을 선택하면 진행관리(영업권 확보) 화면으로 이동합니다.</p>
+              </div>
+              <button onClick={() => setPhotoOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-soft hover:bg-surface">✕</button>
+            </div>
+            <div className="max-h-[65vh] overflow-y-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead className="sticky top-0 bg-surface">
+                  <tr className="text-xs text-muted">
+                    <th className="px-4 py-2.5 text-left font-semibold">등록일자</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">고객명</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">1차영업자</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">활동센터</th>
+                    <th className="px-4 py-2.5 text-center font-semibold">영업단계</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {photoRows === null ? (
+                    <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-muted">불러오는 중…</td></tr>
+                  ) : photoRows.length === 0 ? (
+                    <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-muted">해당 상품으로 배정받은 2차 영업 건이 없습니다.</td></tr>
+                  ) : photoRows.map((s) => (
+                    <tr key={s.id} onClick={() => goManage(s.id)} className="cursor-pointer hover:bg-surface">
+                      <td className="px-4 py-3 text-ink-soft">{s.createdAt ?? "-"}</td>
+                      <td className="px-4 py-3 font-bold text-ink">{s.customerName ?? "-"}</td>
+                      <td className="px-4 py-3 text-ink-soft">{s.buzzName ?? "-"}</td>
+                      <td className="px-4 py-3 text-ink-soft">{s.centerName ?? "-"}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="rounded-full bg-forest-100 px-2 py-0.5 text-xs font-bold text-forest-700">{s.status ?? "-"}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

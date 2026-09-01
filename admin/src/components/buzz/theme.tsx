@@ -104,10 +104,16 @@ export function BuzzProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     apiGet<{ name: string; role: string }>("/api/auth/me").then((r) => { if (r.data) setMe(r.data); setLoaded(true); });
-    // 매니저의 이전 뷰 선택 복원 (페이지 이동 간 유지)
     if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem(VIEW_KEY) as BuzzView | null;
-      if (saved === "manager" || saved === "buzz") setViewState(saved);
+      // URL ?view=buzz|manager 가 있으면 강제 적용(예: 홈 [가망고객 접수하기]→1차영업은 B모드). 없으면 이전 선택 복원.
+      const q = new URLSearchParams(window.location.search).get("view");
+      if (q === "buzz" || q === "manager") {
+        setViewState(q);
+        window.localStorage.setItem(VIEW_KEY, q);
+      } else {
+        const saved = window.localStorage.getItem(VIEW_KEY) as BuzzView | null;
+        if (saved === "manager" || saved === "buzz") setViewState(saved);
+      }
     }
   }, []);
 

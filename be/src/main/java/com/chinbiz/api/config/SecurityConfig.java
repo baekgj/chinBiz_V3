@@ -72,8 +72,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/center/**").hasRole("CENTER_ADMIN")
                         // 본부 대시보드 등은 본부 전용
                         .requestMatchers("/api/division/**").hasRole("DIVISION_ADMIN")
-                        // 이미지 업로드는 본사·파트너 공통 허용 (상품 이미지 등록)
-                        .requestMatchers("/api/uploads", "/api/uploads/**").hasAnyRole("MASTER_ADMIN", "PARTNER")
+                        // 이미지 업로드: 본사·파트너(상품 이미지) + 버즈·매니저(현장설치 사진, docs/25_2)
+                        .requestMatchers("/api/uploads", "/api/uploads/**").hasAnyRole("MASTER_ADMIN", "PARTNER", "BUZZ", "MANAGER")
                         // 공지사항 관리(등록/수정/삭제/대상별 조회)는 본사 마스터 어드민 전용
                         .requestMatchers("/api/notices/**").hasRole("MASTER_ADMIN")
                         // 역할별 내 공지 조회(본부/센터/매니저/버즈)는 인증 사용자 공용

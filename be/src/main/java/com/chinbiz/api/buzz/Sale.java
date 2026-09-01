@@ -38,6 +38,7 @@ public class Sale {
 
     @Column(length = 20) private String status = "접수";  // 영업진행상태
     @Column(columnDefinition = "TEXT") private String memo;
+    @Column(name = "install_photos", columnDefinition = "TEXT") private String installPhotos; // 현장설치 사진 URL(콤마 구분, docs/25_2)
 
     @Column(name = "created_at", nullable = false, updatable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at") private LocalDateTime updatedAt;
@@ -66,6 +67,7 @@ public class Sale {
     public String getAddressDetail() { return addressDetail; } public void setAddressDetail(String v) { addressDetail = v; }
     public String getStatus() { return status; } public void setStatus(String v) { status = v; }
     public String getMemo() { return memo; } public void setMemo(String v) { memo = v; }
+    public String getInstallPhotos() { return installPhotos; } public void setInstallPhotos(String v) { installPhotos = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

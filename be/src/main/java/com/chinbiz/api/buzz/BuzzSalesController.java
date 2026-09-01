@@ -144,6 +144,7 @@ public class BuzzSalesController {
         m.put("address", s.getAddress());
         m.put("addressDetail", s.getAddressDetail());
         m.put("memo", s.getMemo());
+        m.put("installPhotos", s.getInstallPhotos());  // 현장설치 사진(콤마구분 URL)
         return m;
     }
 
@@ -207,6 +208,7 @@ public class BuzzSalesController {
     @GetMapping("/managed")
     public ResponseEntity<?> managed(Authentication auth,
                                      @RequestParam(required = false) String keyword,
+                                     @RequestParam(required = false) Long productId,
                                      @RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "10") int size) {
         User me = me(auth);
@@ -214,6 +216,8 @@ public class BuzzSalesController {
         if (me.getRole() != Role.MANAGER) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "관리매니저 전용"));
         List<Specification<Sale>> specs = new ArrayList<>();
         specs.add((r, q, cb) -> cb.equal(r.get("managerId"), me.getId()));
+        if (productId != null)
+            specs.add((r, q, cb) -> cb.equal(r.get("productId"), productId));  // 상품별 필터(홈 설치완료 사진찍기 팝업)
         if (keyword != null && !keyword.isBlank())
             specs.add((r, q, cb) -> cb.like(r.get("companyName"), "%" + keyword.trim() + "%"));
         Specification<Sale> spec = specs.stream().reduce(Specification::and).orElse(null);
@@ -291,7 +295,7 @@ public class BuzzSalesController {
         return ResponseEntity.ok(detail(s, me));
     }
 
-    public record AssignRequest(String status, String memo, Long categoryId, Long productId) {}
+    public record AssignRequest(String status, String memo, Long categoryId, Long productId, String installPhotos) {}
 
     /** [우선할당] — 매니저가 영업권 확보(manager_id 저장) + 카테고리/상품·진행현황/내용 기록. 교육 승인 필수. */
     @PostMapping("/{id}/assign")
@@ -313,6 +317,7 @@ public class BuzzSalesController {
         s.setManagerDatedAt(java.time.LocalDateTime.now()); // 매니저 배정 일시
         if (!isBlank(req.status())) s.setStatus(req.status());
         if (req.memo() != null) s.setMemo(req.memo());
+        if (req.installPhotos() != null) s.setInstallPhotos(req.installPhotos()); // 현장설치 사진(docs/25_2)
         saleRepo.save(s);
 
         // 영업권 확보 시 매니저·관리센터 수당 원장 레코드 생성

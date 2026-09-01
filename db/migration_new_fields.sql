@@ -277,4 +277,7 @@ ALTER TABLE `product` ADD COLUMN `spec_effect` longtext;
 ALTER TABLE `product` ADD COLUMN `sales_target` longtext;
 ALTER TABLE `product` ADD COLUMN `product_feature` longtext;
 ALTER TABLE `product` ADD COLUMN `process_flow` longtext;
+
+-- [2026-08-30] sale: 현장설치 사진 (docs/25_2, 매니저 2차영업관리 영업권확보 레이어 업로드)
+ALTER TABLE `sale` ADD COLUMN `install_photos` text;
 -- 완료.

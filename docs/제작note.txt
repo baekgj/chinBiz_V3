@@ -398,6 +398,8 @@ CREATE TABLE IF NOT EXISTS `terms` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- (이후 신규 필드는 여기 아래에 날짜/사유와 함께 계속 추가)
+-- [2026-08-30] sale: 현장설치 사진 (docs/25_2, 매니저 2차영업관리 영업권확보 레이어 업로드)
+ALTER TABLE `sale` ADD COLUMN `install_photos` text;
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
    · 센터 [1차영업관리]/[2차영업관리]에 기존 상품별 합산은 유지하고, 개별 영업 내역 리스트를 추가.
@@ -1151,6 +1153,29 @@ partner ProductForm 역할별 수당 섹션을 {mode !== "edit"}로 감싸 상�
 PartnerProductsCarousel: matchMedia("(min-width:640px)")로 perPage 결정(모바일 2 / sm↑ 4),
 카드 폭 w-1/2 sm:w-1/4. translateX(-page*100%)는 화면당 개수와 무관하게 1화면씩 이동(폭 일치).
 브레이크포인트 변경 시 page 클램프. FE-only. 검증: home tsc 0.
+
+[추가] docs/25_2 — 매니저 상품상세 버튼 개편 + 현장설치 사진 (2026-08-30)
+====================================================================
+■ 1. [가망고객 접수하기](버즈·매니저 공통): admin 모드가 M이어도 B(버즈)모드로 진입.
+   - home applyHref 에 view=buzz 추가. BuzzProvider가 URL ?view=buzz|manager 를 localStorage보다 우선 적용.
+■ 2. [설치완료 사진찍기](매니저): 카메라 직접실행 → 레이어팝업으로 변경.
+   - home: /api/buzz/sales/managed?productId={id} (매니저 토큰) 조회 → 등록일자·고객명·1차영업자·활동센터·영업단계 리스트.
+   - 고객 클릭 → {ADMIN}/buzz/managed?assign={saleId}&view=manager 이동.
+   - ManagerSalesSection: URL ?assign={id} → 진행관리(AssignModal) 자동 오픈.
+   - BE: managed 엔드포인트에 productId 필터 파라미터 추가.
+■ 3. 매니저 2차영업관리 [진행관리]→[영업권확보·관리](AssignModal)에 현장설치 사진 업로드:
+   - 사진 최대 10장(모바일 카메라 capture=environment / PC 파일선택), /api/uploads 업로드→URL, 썸네일+삭제.
+   - BE Sale.install_photos(TEXT) 추가, AssignRequest/assign 저장, detail 응답 반환.
+■ 검증: BE 컴파일 0, home·admin tsc 0, install_photos 컬럼 자동생성 확인, 관련 라우트 200,
+   managed?productId 인증게이트 403(정상). ⚠ 매니저 계정 로그인 E2E는 미수행(로컬 매니저 비번 미상).
+   DB: migration_new_fields.sql + [DB 마이그레이션] 섹션에 sale.install_photos ALTER 기재.
+
+[버그수정] 매니저 현장설치 사진 업로드 403 (2026-08-30)
+====================================================================
+증상: 영업권확보·관리 레이어에서 사진 등록 시 "사진 업로드에 실패했습니다".
+원인: SecurityConfig /api/uploads 가 hasAnyRole("MASTER_ADMIN","PARTNER")로 제한 → MANAGER 403.
+해결: /api/uploads 허용 역할에 BUZZ·MANAGER 추가(현장설치 사진 업로드).
+검증: 임시 MANAGER 계정으로 POST /api/uploads → 201 {url} 확인(테스트 계정·파일 정리). BE 재기동 반영.
 
 [⚠ 중요/주의] BE 로컬 실행 시 DB 접속 대상 (2026-08-30)
 ====================================================================

@@ -45,6 +45,13 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
 
   useEffect(() => { load(0); }, [load]);
 
+  // 홈 [설치완료 사진찍기] 팝업에서 넘어온 ?assign={saleId} → 진행관리(영업권확보) 레이어 자동 오픈
+  useEffect(() => {
+    if (typeof window === "undefined" || mode !== "managed") return;
+    const a = new URLSearchParams(window.location.search).get("assign");
+    if (a && /^\d+$/.test(a)) setAssignId(Number(a));
+  }, [mode]);
+
   const colCount = 8;
 
   function IntakeAction({ s }: { s: Sale }) {
