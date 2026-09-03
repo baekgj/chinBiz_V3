@@ -88,7 +88,7 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
 
   return createPortal(
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className={`max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl shadow-xl ${panel}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`flex h-[80vh] w-[80vw] flex-col overflow-hidden rounded-2xl shadow-xl sm:h-[70vh] sm:w-[70vw] ${panel}`} onClick={(e) => e.stopPropagation()}>
         <div className={`flex items-center justify-between border-b px-5 py-4 ${theme.tableWrap}`}>
           <div>
             <h3 className="text-lg font-black">{d?.mine ? "영업권 확보 · 관리" : "우선 할당"}</h3>
@@ -97,6 +97,7 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
           <button onClick={onClose} className={`grid h-8 w-8 place-items-center rounded-lg ${theme.cellSub} hover:opacity-70`}>✕</button>
         </div>
 
+        <div className="flex-1 overflow-y-auto">
         {err && <div className="mx-5 mt-4 rounded-lg bg-red-500/15 px-4 py-2 text-sm text-red-500">{err}</div>}
 
         {!d ? <div className={`px-5 py-10 text-center text-sm ${theme.cardSub}`}>불러오는 중…</div> : (
@@ -159,8 +160,9 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
             </div>
           </div>
         )}
+        </div>
 
-        <div className={`sticky bottom-0 flex justify-end gap-2 border-t px-5 py-3 ${theme.tableWrap} ${panel}`}>
+        <div className={`flex justify-end gap-2 border-t px-5 py-3 ${theme.tableWrap} ${panel}`}>
           <button onClick={onClose} className={`rounded-xl px-5 py-2.5 text-sm font-semibold ${theme.cancelBtn}`}>취소</button>
           <button onClick={save} disabled={saving || !d} className={`rounded-xl px-6 py-2.5 text-sm font-bold disabled:opacity-60 ${theme.primaryBtn}`}>
             {saving ? "저장 중…" : d?.mine ? "저장" : "영업권 확보"}

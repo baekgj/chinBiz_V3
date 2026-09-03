@@ -344,7 +344,7 @@ export default function ProductDetailPage() {
                   {role === "MANAGER" && (
                     <>
                       <a href={applyHref} className="w-full flex-1 rounded-xl bg-forest-800 px-5 py-3 text-center text-sm font-bold text-white hover:bg-forest-700">가망고객 접수하기</a>
-                      <button onClick={openInstallList} className="w-full flex-1 rounded-xl bg-gold-400 px-5 py-3 text-center text-sm font-bold text-forest-900 hover:bg-gold-300">📷 설치완료 사진찍기</button>
+                      <button onClick={openInstallList} className="w-full flex-1 rounded-xl bg-gold-400 px-5 py-3 text-center text-sm font-bold text-forest-900 hover:bg-gold-300">📷 설치완료 사진등록</button>
                     </>
                   )}
                   {role && role !== "BUZZ" && role !== "MANAGER" && (
@@ -365,15 +365,15 @@ export default function ProductDetailPage() {
       {/* [설치완료 사진찍기] 레이어팝업 — 내 2차영업관리 신청 리스트 (해당 상품) */}
       {photoOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" onClick={() => setPhotoOpen(false)}>
-          <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex h-[80vh] w-[80vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:h-[70vh] sm:w-[70vw]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div>
-                <h3 className="text-lg font-black text-ink">설치완료 사진찍기 · 2차영업관리</h3>
+                <h3 className="text-lg font-black text-ink">설치완료 사진등록 · 2차영업관리</h3>
                 <p className="text-xs text-muted">{d?.name} · 고객을 선택하면 진행관리(영업권 확보) 화면으로 이동합니다.</p>
               </div>
               <button onClick={() => setPhotoOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-soft hover:bg-surface">✕</button>
             </div>
-            <div className="max-h-[65vh] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
               <table className="w-full min-w-[560px] text-sm">
                 <thead className="sticky top-0 bg-surface">
                   <tr className="text-xs text-muted">
