@@ -75,6 +75,10 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerRep
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerSalesController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerSelfController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerSettlementController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\payment\MembershipPayment.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\payment\MembershipPaymentRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\payment\PaymentController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\payment\TossPaymentClient.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\product\Product.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\product\ProductController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\product\ProductRepository.java

@@ -24,6 +24,13 @@ public class AppSettingController {
     public static final String JOIN_FALLBACK_REF = "join_fallback_ref";  // 추천인 미입력/미존재 시 CP 받을 대상 id
     public static final String JOIN_FALLBACK_DEFAULT = "dukebaek";
 
+    // 관리비설정 (본사 [시스템설정]-[관리비설정]) — 매니저/센터 회비, 파트너 입점비 (원)
+    public static final String[] FEE_KEYS = {
+        "fee_manager_monthly", "fee_manager_yearly",
+        "fee_center_monthly", "fee_center_yearly",
+        "fee_partner_entry",
+    };
+
     private final AppSettingRepository repo;
 
     public AppSettingController(AppSettingRepository repo) { this.repo = repo; }
@@ -36,6 +43,7 @@ public class AppSettingController {
         m.putIfAbsent(JOIN_CP_BUZZ, "500");
         m.putIfAbsent(JOIN_CP_REFERRER, "500");
         m.putIfAbsent(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
+        for (String k : FEE_KEYS) m.putIfAbsent(k, "0");   // 관리비 기본 0원
         return m;
     }
 
@@ -55,6 +63,7 @@ public class AppSettingController {
             if (repo.findById(JOIN_CP_BUZZ).isEmpty()) repo.put(JOIN_CP_BUZZ, "500");
             if (repo.findById(JOIN_CP_REFERRER).isEmpty()) repo.put(JOIN_CP_REFERRER, "500");
             if (repo.findById(JOIN_FALLBACK_REF).isEmpty()) repo.put(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
+            for (String k : FEE_KEYS) if (repo.findById(k).isEmpty()) repo.put(k, "0");
         }
     }
 }

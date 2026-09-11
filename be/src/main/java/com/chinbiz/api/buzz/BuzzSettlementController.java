@@ -92,7 +92,8 @@ public class BuzzSettlementController {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("saleDate", a.getContractDate() != null ? a.getContractDate().toString()
                     : (a.getCreatedAt() == null ? null : a.getCreatedAt().toLocalDate().toString()));
-            m.put("gubun", MT_LABEL.getOrDefault(a.getMemberType().name(), a.getMemberType().name()));
+            m.put("gubun", a.getType() == Allowance.Type.MEMBERSHIP ? "회비결제"
+                    : MT_LABEL.getOrDefault(a.getMemberType().name(), a.getMemberType().name()));
             m.put("productName", a.getProductId() == null ? null : pName.get(a.getProductId()));
             m.put("customerName", s == null ? null : s.getCompanyName());
             // 버즈뷰: 추천수당이면 하위 버즈명 / 매니저뷰: 1차 영업 버즈명

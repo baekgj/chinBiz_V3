@@ -280,4 +280,39 @@ ALTER TABLE `product` ADD COLUMN `process_flow` longtext;
 
 -- [2026-08-30] sale: 현장설치 사진 (docs/25_2, 매니저 2차영업관리 영업권확보 레이어 업로드)
 ALTER TABLE `sale` ADD COLUMN `install_photos` text;
+
+-- [2026-09-10] 회비/입점비 결제 (매니저·센터 회비, 파트너 입점비)
+ALTER TABLE `user` ADD COLUMN `membership_expiry` date DEFAULT NULL;            -- 매니저/센터 회원 만기일자
+ALTER TABLE `partner` ADD COLUMN `entry_fee_paid` bit(1) NOT NULL DEFAULT b'0'; -- 파트너 입점비 납부여부
+ALTER TABLE `partner` ADD COLUMN `entry_fee_paid_date` date DEFAULT NULL;        -- 파트너 입점비 납부일자
+CREATE TABLE IF NOT EXISTS `membership_payment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `payer_type` varchar(10) DEFAULT NULL,       -- USER | PARTNER
+  `payer_id` bigint DEFAULT NULL,
+  `payer_login_id` varchar(60) DEFAULT NULL,
+  `role` varchar(20) DEFAULT NULL,
+  `fee_type` varchar(12) DEFAULT NULL,          -- MONTHLY | YEARLY | ENTRY(monthly/yearly/entry)
+  `method` varchar(12) DEFAULT NULL,            -- CARD|VBANK|TRANSFER|EASYPAY|MP
+  `base_fee` bigint DEFAULT NULL,
+  `vat` bigint DEFAULT NULL,
+  `amount` bigint DEFAULT NULL,
+  `expiry_after` date DEFAULT NULL,
+  `order_id` varchar(64) DEFAULT NULL,          -- 토스 주문번호(가맹점)
+  `payment_key` varchar(200) DEFAULT NULL,      -- 토스 결제키(승인 후)
+  `status` varchar(20) DEFAULT NULL,            -- PENDING|DONE|WAITING_DEPOSIT|CANCELED
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_membership_payment_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- (이미 membership_payment 가 있는 환경) 토스 연동 컬럼 추가:
+ALTER TABLE `membership_payment` ADD COLUMN `order_id` varchar(64) DEFAULT NULL;
+ALTER TABLE `membership_payment` ADD COLUMN `payment_key` varchar(200) DEFAULT NULL;
+ALTER TABLE `membership_payment` ADD COLUMN `status` varchar(20) DEFAULT NULL;
+ALTER TABLE `membership_payment` ADD UNIQUE KEY `uk_membership_payment_order` (`order_id`);
+-- [2026-09-10] 현금영수증 (가상계좌·계좌이체 결제 시 자동 발급)
+ALTER TABLE `membership_payment` ADD COLUMN `receipt_type` varchar(20) DEFAULT NULL;    -- CASH_RECEIPT
+ALTER TABLE `membership_payment` ADD COLUMN `receipt_status` varchar(20) DEFAULT NULL;  -- ISSUED|FAILED
+ALTER TABLE `membership_payment` ADD COLUMN `receipt_key` varchar(300) DEFAULT NULL;    -- 발행 참조(현금영수증키)
+-- [2026-09-10] 본사 회비결제내역 조회용 회원명 저장
+ALTER TABLE `membership_payment` ADD COLUMN `payer_name` varchar(120) DEFAULT NULL;
 -- 완료.

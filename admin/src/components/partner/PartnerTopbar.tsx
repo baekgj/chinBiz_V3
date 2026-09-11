@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   { href: "/partner/products", label: "상품 관리" },
   { href: "/partner/pipeline", label: "영업 현황" },
   { href: "/partner/voc", label: "민원 센터" },
+  { href: "/partner/payment", label: "결제" },
 ];
 
 export default function PartnerTopbar() {
@@ -58,7 +59,7 @@ export default function PartnerTopbar() {
               <button
                 type="button"
                 onClick={() => setOpenKey(openKey === n.href ? null : n.href)}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) || openKey === n.href ? activeCls : idleCls}`}>
+                className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) || openKey === n.href ? activeCls : idleCls}`}>
                 {n.label} <span className="text-[10px]">{openKey === n.href ? "▲" : "▼"}</span>
               </button>
               {openKey === n.href && (
@@ -71,7 +72,7 @@ export default function PartnerTopbar() {
             </div>
           ) : (
             <Link key={n.href} href={n.href}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) ? activeCls : idleCls}`}>
+              className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) ? activeCls : idleCls}`}>
               {n.label}
             </Link>
           ))}

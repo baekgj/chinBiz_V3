@@ -30,6 +30,7 @@ const NAV: NavItem[] = [
     { href: "/center/settlement/manager", label: "관리매니저 영업 정산현황" },
     { href: "/center/settlement/payouts", label: "수당지급 현황" },
   ] },
+  { href: "/center/payment", label: "결제" },
   { href: "/center/notices", label: "공지사항" },
 ];
 
@@ -69,7 +70,7 @@ export default function CenterTopbar() {
               <button
                 type="button"
                 onClick={() => setOpenKey(openKey === n.href ? null : n.href)}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) || openKey === n.href ? ct.navActive : ct.navIdle}`}>
+                className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) || openKey === n.href ? ct.navActive : ct.navIdle}`}>
                 {n.label} <span className="text-[10px]">{openKey === n.href ? "▲" : "▼"}</span>
               </button>
               {openKey === n.href && (
@@ -81,7 +82,7 @@ export default function CenterTopbar() {
               )}
             </div>
           ) : (
-            <Link key={n.href} href={n.href} className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) ? ct.navActive : ct.navIdle}`}>{n.label}</Link>
+            <Link key={n.href} href={n.href} className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) ? ct.navActive : ct.navIdle}`}>{n.label}</Link>
           ))}
         </nav>
 

@@ -78,6 +78,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/notices/**").hasRole("MASTER_ADMIN")
                         // 역할별 내 공지 조회(본부/센터/매니저/버즈)는 인증 사용자 공용
                         .requestMatchers("/api/my/**").authenticated()
+
+                        // 회비/입점비 결제 (매니저·센터·파트너 공통)
+                        .requestMatchers(HttpMethod.POST, "/api/payment/webhook").permitAll()  // 토스 웹훅(서버 호출)
+                        .requestMatchers("/api/payment", "/api/payment/**").authenticated()
                         // 파트너사·카테고리·상품·조직 관리 API는 본사 마스터 어드민 전용
                         .requestMatchers("/api/partners/**", "/api/categories/**", "/api/products/**", "/api/org/**").hasRole("MASTER_ADMIN")
                         // /api/auth/me 등 그 외는 유효한 JWT 필요

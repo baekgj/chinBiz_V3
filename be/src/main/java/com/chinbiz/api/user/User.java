@@ -77,6 +77,10 @@ public class User {
 
     // 매니저 신청/승인/활동센터는 manager_center 테이블이 소스 (docs/19에서 user.manager_* 필드 제거)
 
+    // 회원 만기일자 (매니저/센터 회비 결제 시 갱신, docs/25_x 결제)
+    @Column(name = "membership_expiry")
+    private java.time.LocalDate membershipExpiry;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -123,5 +127,7 @@ public class User {
     public void setResidentNumber(String v) { this.residentNumber = v; }
     public boolean isAgreeMarketing() { return agreeMarketing; }
     public void setAgreeMarketing(boolean agreeMarketing) { this.agreeMarketing = agreeMarketing; }
+    public java.time.LocalDate getMembershipExpiry() { return membershipExpiry; }
+    public void setMembershipExpiry(java.time.LocalDate v) { this.membershipExpiry = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

@@ -88,7 +88,12 @@ export function goToLogin() {
   if (typeof window !== "undefined") window.location.href = LOGIN_URL;
 }
 
-export type Me = { userId: string; name: string; role: string; salesCenterId?: string | number; adminScopes?: string[] };
+export type Me = {
+  userId: string; name: string; role: string; salesCenterId?: string | number; adminScopes?: string[];
+  // 결제 게이트(매니저/센터 회비 만기, 파트너 입점비 납부)
+  membershipExpiry?: string; membershipExpired?: boolean;
+  entryFeePaid?: boolean; entryFeePaidDate?: string;
+};
 
 /** /api/auth/me 로 토큰 검증 + 사용자 정보 조회 */
 export async function fetchMe(token: string): Promise<Me | null> {
