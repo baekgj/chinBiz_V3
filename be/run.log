@@ -5412,3 +5412,1837 @@ Hibernate:
         a1_0.recipient_id=? 
     order by
         a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        cc1_0.idx,
+        cc1_0.center_code,
+        cc1_0.center_name,
+        cc1_0.head_code,
+        cc1_0.head_code_idx,
+        cc1_0.head_name,
+        cc1_0.match_key,
+        cc1_0.search_key,
+        cc1_0.status 
+    from
+        center_code cc1_0
+Hibernate: 
+    select
+        cc1_0.idx,
+        cc1_0.center_code,
+        cc1_0.center_name,
+        cc1_0.head_code,
+        cc1_0.head_code_idx,
+        cc1_0.head_name,
+        cc1_0.match_key,
+        cc1_0.search_key,
+        cc1_0.status 
+    from
+        center_code cc1_0
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.sales_center_id=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.address,
+        a1_0.agree_check,
+        a1_0.agree_date,
+        a1_0.agree_type,
+        a1_0.email,
+        a1_0.name,
+        a1_0.phone 
+    from
+        agree a1_0 
+    where
+        a1_0.agree_type=? 
+        and a1_0.name=? 
+        and a1_0.phone=? 
+    order by
+        a1_0.id desc 
+    limit
+        ?
+Hibernate: 
+    insert 
+    into
+        sale
+        (address, address_detail, agree_check, agree_date, business_number, buzz_id, category_id, ceo_name, ceo_phone, company_name, company_phone, created_at, customer_center_id, email, install_photos, manager_dated_at, manager_id, manager_name, memo, order_no, parent_id, phone, product_id, status, updated_at, zipcode) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    update
+        sale 
+    set
+        address=?,
+        address_detail=?,
+        agree_check=?,
+        agree_date=?,
+        business_number=?,
+        buzz_id=?,
+        category_id=?,
+        ceo_name=?,
+        ceo_phone=?,
+        company_name=?,
+        company_phone=?,
+        customer_center_id=?,
+        email=?,
+        install_photos=?,
+        manager_dated_at=?,
+        manager_id=?,
+        manager_name=?,
+        memo=?,
+        order_no=?,
+        parent_id=?,
+        phone=?,
+        product_id=?,
+        status=?,
+        updated_at=?,
+        zipcode=? 
+    where
+        id=?
+2026-10-04T23:03:26.605+09:00  INFO 10336 --- [chinbiz-api] [nio-9001-exec-4] c.chinbiz.api.agree.SaleConsentService   : [KAKAO-PENDING] sale=65 to=010-4444-7777 url=http://localhost:8001/products/15?refId=65&ordNo=OD20261004-000065
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.as_support,
+        p1_0.buzz_reward,
+        p1_0.cancel_amount,
+        p1_0.cancel_fee_flag,
+        p1_0.category_id,
+        p1_0.chinku_reward,
+        p1_0.contract_end_date,
+        p1_0.created_at,
+        p1_0.desc_admin,
+        p1_0.desc_buzz,
+        p1_0.desc_guest,
+        p1_0.desc_manager,
+        p1_0.desc_partner,
+        p1_0.description,
+        p1_0.division_reward,
+        p1_0.hq_reward,
+        p1_0.image1,
+        p1_0.image2,
+        p1_0.image3,
+        p1_0.image4,
+        p1_0.image5,
+        p1_0.install_policy,
+        p1_0.install_product,
+        p1_0.manager_reward,
+        p1_0.mgmt_center_reward,
+        p1_0.monthly_care,
+        p1_0.name,
+        p1_0.on_sale,
+        p1_0.partner_id,
+        p1_0.kw_popular,
+        p1_0.process_flow,
+        p1_0.product_feature,
+        p1_0.kw_recommended,
+        p1_0.return_policy,
+        p1_0.reward_type,
+        p1_0.sale_price,
+        p1_0.sales_center_reward,
+        p1_0.sales_target,
+        p1_0.simple_delivery,
+        p1_0.spec_effect,
+        p1_0.total_allowance,
+        p1_0.updated_at,
+        p1_0.video_url 
+    from
+        product p1_0 
+    where
+        p1_0.id=?
+Hibernate: 
+    select
+        a1_0.member_id,
+        a1_0.member_type,
+        a1_0.order_no,
+        a1_0.type,
+        a1_0.account_holder,
+        a1_0.account_number,
+        a1_0.amount,
+        a1_0.bank_name,
+        a1_0.confirm_date,
+        a1_0.contract_date,
+        a1_0.created_at,
+        a1_0.fixed_date,
+        a1_0.fixed_month,
+        a1_0.handler_id,
+        a1_0.paid,
+        a1_0.paid_date,
+        a1_0.partner_id,
+        a1_0.product_id,
+        a1_0.seq,
+        a1_0.status 
+    from
+        allowance a1_0 
+    where
+        (
+            a1_0.member_id, a1_0.member_type, a1_0.order_no, a1_0.type
+        ) in ((?, ?, ?, ?))
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.sales_center_id=?
+Hibernate: 
+    select
+        a1_0.member_id,
+        a1_0.member_type,
+        a1_0.order_no,
+        a1_0.type,
+        a1_0.account_holder,
+        a1_0.account_number,
+        a1_0.amount,
+        a1_0.bank_name,
+        a1_0.confirm_date,
+        a1_0.contract_date,
+        a1_0.created_at,
+        a1_0.fixed_date,
+        a1_0.fixed_month,
+        a1_0.handler_id,
+        a1_0.paid,
+        a1_0.paid_date,
+        a1_0.partner_id,
+        a1_0.product_id,
+        a1_0.seq,
+        a1_0.status 
+    from
+        allowance a1_0 
+    where
+        (
+            a1_0.member_id, a1_0.member_type, a1_0.order_no, a1_0.type
+        ) in ((?, ?, ?, ?))
+Hibernate: 
+    select
+        cc1_0.idx,
+        cc1_0.center_code,
+        cc1_0.center_name,
+        cc1_0.head_code,
+        cc1_0.head_code_idx,
+        cc1_0.head_name,
+        cc1_0.match_key,
+        cc1_0.search_key,
+        cc1_0.status 
+    from
+        center_code cc1_0 
+    where
+        cc1_0.head_code=? 
+        and cc1_0.center_code is null 
+    limit
+        ?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.sales_center_id=?
+Hibernate: 
+    select
+        a1_0.member_id,
+        a1_0.member_type,
+        a1_0.order_no,
+        a1_0.type,
+        a1_0.account_holder,
+        a1_0.account_number,
+        a1_0.amount,
+        a1_0.bank_name,
+        a1_0.confirm_date,
+        a1_0.contract_date,
+        a1_0.created_at,
+        a1_0.fixed_date,
+        a1_0.fixed_month,
+        a1_0.handler_id,
+        a1_0.paid,
+        a1_0.paid_date,
+        a1_0.partner_id,
+        a1_0.product_id,
+        a1_0.seq,
+        a1_0.status 
+    from
+        allowance a1_0 
+    where
+        (
+            a1_0.member_id, a1_0.member_type, a1_0.order_no, a1_0.type
+        ) in ((?, ?, ?, ?))
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.role=?
+Hibernate: 
+    select
+        a1_0.member_id,
+        a1_0.member_type,
+        a1_0.order_no,
+        a1_0.type,
+        a1_0.account_holder,
+        a1_0.account_number,
+        a1_0.amount,
+        a1_0.bank_name,
+        a1_0.confirm_date,
+        a1_0.contract_date,
+        a1_0.created_at,
+        a1_0.fixed_date,
+        a1_0.fixed_month,
+        a1_0.handler_id,
+        a1_0.paid,
+        a1_0.paid_date,
+        a1_0.partner_id,
+        a1_0.product_id,
+        a1_0.seq,
+        a1_0.status 
+    from
+        allowance a1_0 
+    where
+        (
+            a1_0.member_id, a1_0.member_type, a1_0.order_no, a1_0.type
+        ) in ((?, ?, ?, ?))
+Hibernate: 
+    insert 
+    into
+        allowance
+        (account_holder, account_number, amount, bank_name, confirm_date, contract_date, created_at, fixed_date, fixed_month, handler_id, paid, paid_date, partner_id, product_id, status, member_id, member_type, order_no, type) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        allowance
+        (account_holder, account_number, amount, bank_name, confirm_date, contract_date, created_at, fixed_date, fixed_month, handler_id, paid, paid_date, partner_id, product_id, status, member_id, member_type, order_no, type) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        allowance
+        (account_holder, account_number, amount, bank_name, confirm_date, contract_date, created_at, fixed_date, fixed_month, handler_id, paid, paid_date, partner_id, product_id, status, member_id, member_type, order_no, type) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        allowance
+        (account_holder, account_number, amount, bank_name, confirm_date, contract_date, created_at, fixed_date, fixed_month, handler_id, paid, paid_date, partner_id, product_id, status, member_id, member_type, order_no, type) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.sales_center_id=?
+Hibernate: 
+    select
+        cc1_0.idx,
+        cc1_0.center_code,
+        cc1_0.center_name,
+        cc1_0.head_code,
+        cc1_0.head_code_idx,
+        cc1_0.head_name,
+        cc1_0.match_key,
+        cc1_0.search_key,
+        cc1_0.status 
+    from
+        center_code cc1_0 
+    where
+        cc1_0.head_code=? 
+        and cc1_0.center_code is null 
+    limit
+        ?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.role=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.role=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.account_holder,
+        p1_0.account_number,
+        p1_0.address,
+        p1_0.address_detail,
+        p1_0.bank_name,
+        p1_0.business_number,
+        p1_0.ceo_name,
+        p1_0.company_name,
+        p1_0.company_phone,
+        p1_0.created_at,
+        p1_0.email,
+        p1_0.manager_name,
+        p1_0.manager_phone,
+        p1_0.partner_id,
+        p1_0.password,
+        p1_0.updated_at,
+        p1_0.zipcode 
+    from
+        partner p1_0 
+    where
+        p1_0.id=?
+Hibernate: 
+    select
+        as1_0.id,
+        as1_0.enabled,
+        as1_0.message,
+        as1_0.process_code,
+        as1_0.process_name,
+        as1_0.sort_order,
+        as1_0.target,
+        as1_0.target_order,
+        as1_0.trigger_desc,
+        as1_0.updated_at 
+    from
+        alram_setting as1_0 
+    where
+        as1_0.process_code=? 
+        and as1_0.enabled
+Hibernate: 
+    insert 
+    into
+        alram
+        (created_at, message, process_code, read_at, read_flag, recipient_id, recipient_name, recipient_role, ref_id, ref_type, target) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.account in (?)
+Hibernate: 
+    insert 
+    into
+        alram
+        (created_at, message, process_code, read_at, read_flag, recipient_id, recipient_name, recipient_role, ref_id, ref_type, target) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        alram
+        (created_at, message, process_code, read_at, read_flag, recipient_id, recipient_name, recipient_role, ref_id, ref_type, target) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.account in (?, ?)
+2026-10-04T23:03:28.630+09:00  INFO 10336 --- [chinbiz-api] [nio-9001-exec-4] com.chinbiz.api.push.WebPushService      : [push] 발송 완료 1/1건 (대상 계정 2명)
+Hibernate: 
+    insert 
+    into
+        alram
+        (created_at, message, process_code, read_at, read_flag, recipient_id, recipient_name, recipient_role, ref_id, ref_type, target) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.account in (?)
+Hibernate: 
+    select
+        a1_0.member_id,
+        a1_0.member_type,
+        a1_0.order_no,
+        a1_0.type,
+        a1_0.account_holder,
+        a1_0.account_number,
+        a1_0.amount,
+        a1_0.bank_name,
+        a1_0.confirm_date,
+        a1_0.contract_date,
+        a1_0.created_at,
+        a1_0.fixed_date,
+        a1_0.fixed_month,
+        a1_0.handler_id,
+        a1_0.paid,
+        a1_0.paid_date,
+        a1_0.partner_id,
+        a1_0.product_id,
+        a1_0.seq,
+        a1_0.status 
+    from
+        allowance a1_0 
+    where
+        a1_0.member_id=? 
+        and a1_0.type=? 
+        and a1_0.status=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.as_support,
+        p1_0.buzz_reward,
+        p1_0.cancel_amount,
+        p1_0.cancel_fee_flag,
+        p1_0.category_id,
+        p1_0.chinku_reward,
+        p1_0.contract_end_date,
+        p1_0.created_at,
+        p1_0.desc_admin,
+        p1_0.desc_buzz,
+        p1_0.desc_guest,
+        p1_0.desc_manager,
+        p1_0.desc_partner,
+        p1_0.description,
+        p1_0.division_reward,
+        p1_0.hq_reward,
+        p1_0.image1,
+        p1_0.image2,
+        p1_0.image3,
+        p1_0.image4,
+        p1_0.image5,
+        p1_0.install_policy,
+        p1_0.install_product,
+        p1_0.manager_reward,
+        p1_0.mgmt_center_reward,
+        p1_0.monthly_care,
+        p1_0.name,
+        p1_0.on_sale,
+        p1_0.partner_id,
+        p1_0.kw_popular,
+        p1_0.process_flow,
+        p1_0.product_feature,
+        p1_0.kw_recommended,
+        p1_0.return_policy,
+        p1_0.reward_type,
+        p1_0.sale_price,
+        p1_0.sales_center_reward,
+        p1_0.sales_target,
+        p1_0.simple_delivery,
+        p1_0.spec_effect,
+        p1_0.total_allowance,
+        p1_0.updated_at,
+        p1_0.video_url 
+    from
+        product p1_0 
+    where
+        p1_0.id=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.account_holder,
+        p1_0.account_number,
+        p1_0.address,
+        p1_0.address_detail,
+        p1_0.bank_name,
+        p1_0.business_number,
+        p1_0.ceo_name,
+        p1_0.company_name,
+        p1_0.company_phone,
+        p1_0.created_at,
+        p1_0.email,
+        p1_0.manager_name,
+        p1_0.manager_phone,
+        p1_0.partner_id,
+        p1_0.password,
+        p1_0.updated_at,
+        p1_0.zipcode 
+    from
+        partner p1_0 
+    where
+        p1_0.id=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.as_support,
+        p1_0.buzz_reward,
+        p1_0.cancel_amount,
+        p1_0.cancel_fee_flag,
+        p1_0.category_id,
+        p1_0.chinku_reward,
+        p1_0.contract_end_date,
+        p1_0.created_at,
+        p1_0.desc_admin,
+        p1_0.desc_buzz,
+        p1_0.desc_guest,
+        p1_0.desc_manager,
+        p1_0.desc_partner,
+        p1_0.description,
+        p1_0.division_reward,
+        p1_0.hq_reward,
+        p1_0.image1,
+        p1_0.image2,
+        p1_0.image3,
+        p1_0.image4,
+        p1_0.image5,
+        p1_0.install_policy,
+        p1_0.install_product,
+        p1_0.manager_reward,
+        p1_0.mgmt_center_reward,
+        p1_0.monthly_care,
+        p1_0.name,
+        p1_0.on_sale,
+        p1_0.partner_id,
+        p1_0.kw_popular,
+        p1_0.process_flow,
+        p1_0.product_feature,
+        p1_0.kw_recommended,
+        p1_0.return_policy,
+        p1_0.reward_type,
+        p1_0.sale_price,
+        p1_0.sales_center_reward,
+        p1_0.sales_target,
+        p1_0.simple_delivery,
+        p1_0.spec_effect,
+        p1_0.total_allowance,
+        p1_0.updated_at,
+        p1_0.video_url 
+    from
+        product p1_0 
+    where
+        p1_0.partner_id=? 
+        and p1_0.on_sale 
+        and p1_0.id<>? 
+    order by
+        p1_0.id desc 
+    limit
+        ?, ?
+Hibernate: 
+    select
+        s1_0.id,
+        s1_0.address,
+        s1_0.address_detail,
+        s1_0.agree_check,
+        s1_0.agree_date,
+        s1_0.business_number,
+        s1_0.buzz_id,
+        s1_0.category_id,
+        s1_0.ceo_name,
+        s1_0.ceo_phone,
+        s1_0.company_name,
+        s1_0.company_phone,
+        s1_0.created_at,
+        s1_0.customer_center_id,
+        s1_0.email,
+        s1_0.install_photos,
+        s1_0.manager_dated_at,
+        s1_0.manager_id,
+        s1_0.manager_name,
+        s1_0.memo,
+        s1_0.order_no,
+        s1_0.parent_id,
+        s1_0.phone,
+        s1_0.product_id,
+        s1_0.status,
+        s1_0.updated_at,
+        s1_0.zipcode 
+    from
+        sale s1_0 
+    where
+        s1_0.id=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.address,
+        a1_0.agree_check,
+        a1_0.agree_date,
+        a1_0.agree_type,
+        a1_0.email,
+        a1_0.name,
+        a1_0.phone 
+    from
+        agree a1_0 
+    where
+        a1_0.agree_type=? 
+        and a1_0.name=? 
+        and a1_0.phone=? 
+    order by
+        a1_0.id desc 
+    limit
+        ?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.address,
+        a1_0.agree_check,
+        a1_0.agree_date,
+        a1_0.agree_type,
+        a1_0.email,
+        a1_0.name,
+        a1_0.phone 
+    from
+        agree a1_0 
+    where
+        a1_0.agree_type=? 
+        and a1_0.name=? 
+        and a1_0.phone=? 
+    order by
+        a1_0.id desc 
+    limit
+        ?
+Hibernate: 
+    select
+        s1_0.id,
+        s1_0.address,
+        s1_0.address_detail,
+        s1_0.agree_check,
+        s1_0.agree_date,
+        s1_0.business_number,
+        s1_0.buzz_id,
+        s1_0.category_id,
+        s1_0.ceo_name,
+        s1_0.ceo_phone,
+        s1_0.company_name,
+        s1_0.company_phone,
+        s1_0.created_at,
+        s1_0.customer_center_id,
+        s1_0.email,
+        s1_0.install_photos,
+        s1_0.manager_dated_at,
+        s1_0.manager_id,
+        s1_0.manager_name,
+        s1_0.memo,
+        s1_0.order_no,
+        s1_0.parent_id,
+        s1_0.phone,
+        s1_0.product_id,
+        s1_0.status,
+        s1_0.updated_at,
+        s1_0.zipcode 
+    from
+        sale s1_0 
+    where
+        s1_0.id=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.address,
+        a1_0.agree_check,
+        a1_0.agree_date,
+        a1_0.agree_type,
+        a1_0.email,
+        a1_0.name,
+        a1_0.phone 
+    from
+        agree a1_0 
+    where
+        a1_0.agree_type=? 
+        and a1_0.name=? 
+        and a1_0.phone=? 
+    order by
+        a1_0.id desc 
+    limit
+        ?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.address,
+        a1_0.agree_check,
+        a1_0.agree_date,
+        a1_0.agree_type,
+        a1_0.email,
+        a1_0.name,
+        a1_0.phone 
+    from
+        agree a1_0 
+    where
+        a1_0.agree_type=? 
+        and a1_0.name=? 
+        and a1_0.phone=? 
+    order by
+        a1_0.id desc 
+    limit
+        ?
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.level,
+        c1_0.name,
+        c1_0.parent_id,
+        c1_0.status,
+        c1_0.updated_at 
+    from
+        category c1_0
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.account_holder,
+        u1_0.account_number,
+        u1_0.address,
+        u1_0.address_detail,
+        u1_0.agree_marketing,
+        u1_0.bank_name,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.name,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.resident_number,
+        u1_0.role,
+        u1_0.sales_center_id,
+        u1_0.status,
+        u1_0.user_id,
+        u1_0.zipcode 
+    from
+        `user` u1_0 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.level,
+        c1_0.name,
+        c1_0.parent_id,
+        c1_0.status,
+        c1_0.updated_at 
+    from
+        category c1_0
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.account_holder,
+        p1_0.account_number,
+        p1_0.address,
+        p1_0.address_detail,
+        p1_0.bank_name,
+        p1_0.business_number,
+        p1_0.ceo_name,
+        p1_0.company_name,
+        p1_0.company_phone,
+        p1_0.created_at,
+        p1_0.email,
+        p1_0.manager_name,
+        p1_0.manager_phone,
+        p1_0.partner_id,
+        p1_0.password,
+        p1_0.updated_at,
+        p1_0.zipcode 
+    from
+        partner p1_0
+Hibernate: 
+    select
+        as1_0.login_id,
+        as1_0.areas 
+    from
+        admin_scope as1_0 
+    where
+        as1_0.login_id=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.as_support,
+        p1_0.buzz_reward,
+        p1_0.cancel_amount,
+        p1_0.cancel_fee_flag,
+        p1_0.category_id,
+        p1_0.chinku_reward,
+        p1_0.contract_end_date,
+        p1_0.created_at,
+        p1_0.desc_admin,
+        p1_0.desc_buzz,
+        p1_0.desc_guest,
+        p1_0.desc_manager,
+        p1_0.desc_partner,
+        p1_0.description,
+        p1_0.division_reward,
+        p1_0.hq_reward,
+        p1_0.image1,
+        p1_0.image2,
+        p1_0.image3,
+        p1_0.image4,
+        p1_0.image5,
+        p1_0.install_policy,
+        p1_0.install_product,
+        p1_0.manager_reward,
+        p1_0.mgmt_center_reward,
+        p1_0.monthly_care,
+        p1_0.name,
+        p1_0.on_sale,
+        p1_0.partner_id,
+        p1_0.kw_popular,
+        p1_0.process_flow,
+        p1_0.product_feature,
+        p1_0.kw_recommended,
+        p1_0.return_policy,
+        p1_0.reward_type,
+        p1_0.sale_price,
+        p1_0.sales_center_reward,
+        p1_0.sales_target,
+        p1_0.simple_delivery,
+        p1_0.spec_effect,
+        p1_0.total_allowance,
+        p1_0.updated_at,
+        p1_0.video_url 
+    from
+        product p1_0 
+    where
+        p1_0.on_sale 
+    order by
+        p1_0.id desc 
+    limit
+        ?, ?
+Hibernate: 
+    select
+        count(p1_0.id) 
+    from
+        product p1_0 
+    where
+        p1_0.on_sale
+Hibernate: 
+    select
+        count(a1_0.id) 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+        and a1_0.read_flag=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.created_at,
+        a1_0.message,
+        a1_0.process_code,
+        a1_0.read_at,
+        a1_0.read_flag,
+        a1_0.recipient_id,
+        a1_0.recipient_name,
+        a1_0.recipient_role,
+        a1_0.ref_id,
+        a1_0.ref_type,
+        a1_0.target 
+    from
+        alram a1_0 
+    where
+        a1_0.recipient_id=? 
+    order by
+        a1_0.id desc

@@ -22,6 +22,7 @@ const PROVIDE_DENY_MSG = "개인정보 3자제공 미동의 시 매니저 배정
 /**
  * 상품화면 고객(대표자) 동의 패널 (docs/27). 카카오톡 링크(refId·ordNo)로 진입한 경우에만 노출.
  *  - 개인정보 3자제공: 진입 시 sale.agree_check ≠ Y 이면 [보기]·동의/미동의(radio)
+ *                     [동의] → agree 저장 + sale 반영 / [미동의] → 안내 알림만(저장 없음)
  *  - 마케팅 활용동의 : 최초 접속 시 agree(marketing·대표자명·대표자 전화) 최신 기록이 Y면 숨김, 없거나 N이면 노출.
  *                     [동의] → agree 저장 후 숨김 / [미동의] → 저장 없이 영역만 숨김
  *  - 진입 시 sale.agree_check = Y : 매니저 배정완료(이름·연락처) / 매니저 배정중
@@ -47,7 +48,7 @@ export default function SaleConsentPanel({ refId, ordNo, productId }: { refId: s
   if (!c) return null;
 
   async function choose(type: AgreeType, check: "Y" | "N") {
-    if (type === "provide" && check === "N") alert(PROVIDE_DENY_MSG);
+    if (type === "provide" && check === "N") { alert(PROVIDE_DENY_MSG); return; } // 3자제공 미동의: 알림만, 저장 안 함
     if (type === "marketing" && check === "N") { setMarketingDone(true); return; } // 마케팅 미동의: 저장 없이 숨김
     setBusy(type);
     const r = await apiPost<Consent>("/api/public/sale-consent", { refId: Number(refId), ordNo, agreeType: type, agreeCheck: check });
