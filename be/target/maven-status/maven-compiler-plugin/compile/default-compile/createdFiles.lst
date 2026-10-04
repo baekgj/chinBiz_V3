@@ -33,6 +33,7 @@ com\chinbiz\api\alarm\MyAlarmController.class
 com\chinbiz\api\auth\JwtUtil.class
 com\chinbiz\api\category\CategoryController$CategoryRequest.class
 com\chinbiz\api\notice\NoticeRecipientResolver.class
+com\chinbiz\api\agree\PublicSaleConsentController$ConsentRequest.class
 com\chinbiz\api\config\WebConfig.class
 com\chinbiz\api\org\DivisionDashboardController.class
 com\chinbiz\api\ChinbizApiApplication.class
@@ -62,9 +63,11 @@ com\chinbiz\api\terms\TermRepository.class
 com\chinbiz\api\alarm\AlarmDefs.class
 com\chinbiz\api\buzz\ManagerCenterRepository.class
 com\chinbiz\api\org\CenterCodeRepository.class
+com\chinbiz\api\agree\Agree.class
 com\chinbiz\api\partner\dto\PartnerResponse.class
 com\chinbiz\api\org\DivisionSettlementController.class
 com\chinbiz\api\notice\NoticeController$NoticeRequest.class
+com\chinbiz\api\agree\PublicSaleConsentController.class
 com\chinbiz\api\alarm\AlarmSettingController$UpdateReq.class
 com\chinbiz\api\org\OrgController$CascadeCenterRequest.class
 com\chinbiz\api\org\MasterDashboardController.class
@@ -94,6 +97,7 @@ com\chinbiz\api\common\Mask.class
 com\chinbiz\api\common\ResidentNumber.class
 com\chinbiz\api\partner\Partner.class
 com\chinbiz\api\alarm\AlarmSettingController$TargetReq.class
+com\chinbiz\api\agree\SaleConsentService.class
 com\chinbiz\api\buzz\Sale.class
 com\chinbiz\api\upload\UploadController.class
 com\chinbiz\api\alarm\Alarm.class
@@ -132,6 +136,7 @@ com\chinbiz\api\user\Role.class
 com\chinbiz\api\partner\PartnerController.class
 com\chinbiz\api\user\UserSelfController.class
 com\chinbiz\api\alarm\AlarmSetting.class
+com\chinbiz\api\agree\AgreeRepository.class
 com\chinbiz\api\org\OrgController.class
 com\chinbiz\api\product\ProductRepository.class
 com\chinbiz\api\user\User.class

@@ -1,0 +1,64 @@
+1. DB테이블 추가
+   1) sale테이블에 다음필드 추가
+       - 대표자 핸드폰번호(ceo_phone)를 ceo_name 필드 뒤에 추가
+       - 동의여부 필드(agree_check)를 마지막에 추가, 기본값(N)
+       - 동의일자 필드(agree_date)를 마지막에 추가
+
+    2) 동의테이블(agree) 생성
+       - 필드구성 : 순서(id), 동의구분(agree_type), 이름(name), 연락처(phone), 이메일(email), 주소(address), 동의여부(agree_check), 동의일자(agree_date)
+       - 동의구분 : 개인정보3자제공(provide), 마케팅동의(marketing)
+
+2. 버즈ADMIN의 [1차영업등록]화면에서 
+   1) 대표자 핸드폰번호를 입력하는 화면을 추가하고, 저장시 테이블에 저장해줘
+       1차영업등록 화면을 보여주는 모든 admin의 화면에 대표자 핸드폰번호를 표시해줘
+       단, 개인정보 일부만 보여주는 화면에서는 전화번호 중간자리는 ****으로 표시해줘
+   2) agree테이블에서 대표자명과 핸드폰번호, agree_type=provide을 검색해서 
+       - 검색결과가 없으면 : pass
+       - 검색결과가 있으면 : sale.agree_check = agree.agree_check, sale.agree_date = agree.agree_date 저장
+   3) sale테이블에 저장이 완료되면 대표자의 핸드폰으로 아래의 상품url 정보를 카카오톡으로 발송해줘
+      단, 카카오톡의 발송작업은 차후 진행할수 있도록 대기해줘
+      - 로컬에서 작업할경우 : http://localhost:8001/products/(상품번호)&refId=(sale.id)&ordNo=(sale.order_no)
+      - 서버에서 작업할경우 : https://chinbiz.kr/products/(상품번호)&refId=(sale.id)&ordNo=(sale.order_no)
+
+3. 본사admin의 [시스템설정]-[약관설정]에 다음의 내용을 추가할 수 있도록 해줘
+    1) 개인정보3자제공 : customer_provide
+    2) 마케팅활용동의 : customer_marketing
+
+
+4. HOME의 상품정보화면에서 refId, ordNo값이 전송될 경우 docs/27_product.jpg 이미지의 붉은사각형 위치에 다음과 같이 표시해줘
+   1) sale의 agree_check가 없거나 N이면 
+       개인정보 3자제공 [보기] : 동의 / 미동의
+       마케팅 활용동의 [보기] : 동의 / 미동의
+
+       - [보기]버튼 클릭시 위 3번에서 등록한 내용을 layer popup으로 보여주기
+       - 동의 / 미동의 버튼 클릭시 agree테이블에 저장
+       - 단, 개인정보 3자제공의 미동의 버튼 클릭시 [개인정보 3자제공 미동의 시 매니저 배정이되지 않아 상담이 진행되지 않습니다. 반드시 동의해 주시기 바랍니다.] 알람 창 띄워줘
+
+    2) sale의 agree_check가 Y이면
+       - managet_id 가 있으면 : [매니저 배정완료 : (매니저명) (매니저 연락처) ]
+      - managet_id 가 없으면: [매니저 배정중]
+  
+5. 매니저ADMIN의 [영업관리]-[버즈1차접수현황] 메뉴는 agree_check가 Y인 데이터만 노출되도록 수정해줘
+
+
+
+
+HOME의 상품정보화면의 [동의 / 미동의]를 radio 버튼으로 만들어줘
+
+마케팅활용동의 내역을 아래와 같이 변경해줘
+- agree테이블의 agree_type=marketing, 대표자명, 대표자 전화번호가 없을경우
+       마케팅 활용동의 가 보여지도록 수정해줘
+
+마케팅활용동의의 동의/미동의 클릭시 agree테이블에 저장되면 해당영역은  보이지 않도록 
+숨겨줘
+
+HOME의 상품정보화면에서 마케팅활용동의 영역은 다음과 같이 변경해줘
+1) 최초 접속시 agree테이블의 agree_type=marketing, 대표자명, 대표자 전화번호가 없으면 마케팅 활용동의 가 보여짐
+2) 최초 접속시 agree테이블의 agree_type=marketing, 대표자명, 대표자 전화번호가 있고, agree_check가 Y이면 영역을 숨김
+3) 마케팅활용동의의 [동의] 버튼 클릭시 agree테이블을 저장  
+4) 마케팅활용동의의 [미동의] 버튼 클릭시 영역을 숨김
+
+
+
+
+http://localhost:8001/products/9?refId=57&ordNo=OD20260820-000057

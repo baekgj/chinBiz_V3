@@ -73,7 +73,7 @@ export default function ManagerSalesSection({ mode }: { mode: "intake" | "manage
 
       <Card
         title={mode === "intake" ? "버즈1차접수현황" : "2차영업관리"}
-        sub={mode === "intake" ? `총 ${total}건 · 내 관리센터 소속 버즈의 미배정 1차영업` : `총 ${total}건 · 내가 배정받은 2차 관리영업`}
+        sub={mode === "intake" ? `총 ${total}건 · 내 관리센터 소속 버즈의 미배정 1차영업 (고객 개인정보 3자제공 동의 건)` : `총 ${total}건 · 내가 배정받은 2차 관리영업`}
       >
         <div className={`overflow-x-auto rounded-xl border ${theme.tableWrap}`}>
           <table className="w-full min-w-[860px] text-sm">

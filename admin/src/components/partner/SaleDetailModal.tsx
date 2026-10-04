@@ -6,7 +6,7 @@ import { apiGet } from "@/lib/api";
 
 type Detail = {
   id: number; status?: string; group?: string; productName?: string; createdAt?: string; updatedAt?: string;
-  buzzName?: string; companyName?: string; businessNumber?: string; ceoName?: string; companyPhone?: string;
+  buzzName?: string; companyName?: string; businessNumber?: string; ceoName?: string; ceoPhone?: string; companyPhone?: string;
   managerContactName?: string; phone?: string; email?: string; zipcode?: string; address?: string; addressDetail?: string; memo?: string;
   managerId?: number | null; managerName?: string; assigned?: boolean;
 };
@@ -80,6 +80,7 @@ export default function SaleDetailModal({ id, onClose }: { id: number; onClose: 
               <Row label="상호명" value={d.companyName} />
               <Row label="사업자등록번호" value={d.businessNumber} />
               <Row label="대표자명" value={d.ceoName} />
+              <Row label="대표자 핸드폰번호" value={d.ceoPhone} />
               <Row label="회사 전화번호" value={d.companyPhone} />
               <Row label="담당자명" value={d.managerContactName} />
               <Row label="핸드폰번호" value={d.phone} />

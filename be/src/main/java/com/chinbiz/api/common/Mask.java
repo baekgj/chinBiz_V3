@@ -34,6 +34,15 @@ public final class Mask {
         return s;
     }
 
+    /** 대표자 핸드폰 (docs/27): 010-1234-5678 → 010-****-5678 (가운데 자리 ****) */
+    public static String phoneStar(String v) {
+        if (v == null || v.isBlank()) return v;
+        String d = v.replaceAll("[^0-9]", "");
+        if (d.length() < 7) return v.trim();
+        int head = d.startsWith("02") ? 2 : 3;
+        return d.substring(0, head) + "-****-" + d.substring(d.length() - 4);
+    }
+
     /** 아이디: 앞 4자 유지 + 나머지 X (예: hong1234 → hongXXXX) */
     public static String userId(String v) {
         if (v == null || v.isBlank()) return v;

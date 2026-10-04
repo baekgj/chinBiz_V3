@@ -4,7 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-/** 약관 10종 코드 시드 (없으면 제목만 생성, 내용은 [약관설정] 화면/PUT으로 등록) */
+/** 약관 12종 코드 시드 (없으면 제목만 생성, 내용은 [약관설정] 화면/PUT으로 등록) */
 @Component
 @Order(20)
 public class TermSeeder implements CommandLineRunner {
@@ -24,6 +24,9 @@ public class TermSeeder implements CommandLineRunner {
             {"DIVISION_PAPER", "본부 위수탁계약서"},
             {"PARTNER", "파트너 이용약관"},
             {"PRIVACY_CONSENT", "개인정보 수집·이용 동의"},
+            // 홈 상품화면 고객(대표자) 동의 [보기] 레이어 (docs/27)
+            {"customer_provide", "개인정보 3자제공"},
+            {"customer_marketing", "마케팅 활용동의"},
     };
 
     @Override

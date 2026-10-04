@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS `partner` (
   `bank_name` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `business_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ceo_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ceo_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,       -- 대표자 핸드폰 (docs/27)
   `company_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `company_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime(6) NOT NULL,
@@ -212,6 +213,7 @@ CREATE TABLE IF NOT EXISTS `sale` (
   `buzz_id` bigint DEFAULT NULL,
   `category_id` bigint DEFAULT NULL,
   `ceo_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ceo_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,       -- 대표자 핸드폰 (docs/27)
   `company_name` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `company_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime(6) NOT NULL,
@@ -228,6 +230,9 @@ CREATE TABLE IF NOT EXISTS `sale` (
   `order_no` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `manager_dated_at` datetime(6) DEFAULT NULL,     -- 매니저 배정(영업권확보) 일시
   `customer_center_id` bigint DEFAULT NULL,         -- 고객 주소 → center_code.idx (매니저 지역 배정 기준)
+  `install_photos` text COLLATE utf8mb4_unicode_ci,  -- 현장설치 사진 URL(콤마)
+  `agree_check` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT 'N', -- 개인정보 3자제공 동의 (docs/27)
+  `agree_date` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -341,6 +346,20 @@ CREATE TABLE IF NOT EXISTS `admin_scope` (
   `login_id` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
   `areas` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`login_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 고객 동의 기록 (docs/27) — provide(개인정보3자제공) / marketing(마케팅동의)
+CREATE TABLE IF NOT EXISTS `agree` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `agree_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(400) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `agree_check` varchar(1) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N',
+  `agree_date` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_agree_lookup` (`agree_type`,`name`,`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

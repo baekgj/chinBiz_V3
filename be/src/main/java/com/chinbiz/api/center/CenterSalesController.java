@@ -167,6 +167,8 @@ public class CenterSalesController {
             m.put("actorName", byBuzz ? userName.get(s.getBuzzId()) : userName.get(s.getManagerId()));
             m.put("customerName", Mask.name(rawName));   // 고객명 마스킹
             m.put("phone", Mask.phone(s.getPhone()));    // 전화 마스킹
+            m.put("ceoName", Mask.name(s.getCeoName()));
+            m.put("ceoPhone", Mask.phoneStar(s.getCeoPhone())); // 대표자 핸드폰 중간 **** (docs/27)
             m.put("email", Mask.email(s.getEmail()));    // 이메일 마스킹
             m.put("status", s.getStatus());
             rows.add(m);

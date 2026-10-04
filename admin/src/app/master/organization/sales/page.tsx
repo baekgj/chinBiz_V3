@@ -78,6 +78,7 @@ function CustomerModal({ id, onClose }: { id: number; onClose: () => void }) {
           <Row label="상호명" value={g("customerName")} />
           <Row label="사업자등록번호" value={g("businessNumber")} />
           <Row label="대표자명" value={g("ceoName")} />
+          <Row label="대표자 핸드폰번호" value={g("ceoPhone")} />
           <Row label="회사 전화번호" value={g("companyPhone")} />
           <Row label="담당자명" value={g("contactName")} />
           <Row label="핸드폰번호" value={g("phone")} />

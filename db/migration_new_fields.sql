@@ -281,3 +281,44 @@ ALTER TABLE `product` ADD COLUMN `process_flow` longtext;
 -- [2026-08-30] sale: 현장설치 사진 (docs/25_2, 매니저 2차영업관리 영업권확보 레이어 업로드)
 ALTER TABLE `sale` ADD COLUMN `install_photos` text;
 -- 완료.
+
+
+-- ── [2026-10-04] docs/27 — 1차영업 대표자 핸드폰 + 고객 동의(agree) ─────────
+--   sale.ceo_phone(ceo_name 뒤), sale.agree_check(기본 N)/agree_date(마지막),
+--   agree 테이블 신규(개인정보3자제공 provide / 마케팅 marketing). 멱등.
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+DELIMITER $$
+CREATE PROCEDURE chinbiz_add_col(IN p_tbl VARCHAR(64), IN p_col VARCHAR(64), IN p_ddl TEXT)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_tbl AND COLUMN_NAME = p_col) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `', p_tbl, '` ADD COLUMN ', p_ddl);
+    PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+  END IF;
+END$$
+DELIMITER ;
+CALL chinbiz_add_col('sale','ceo_phone',   "`ceo_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `ceo_name`");
+CALL chinbiz_add_col('sale','agree_check', "`agree_check` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT 'N'");
+CALL chinbiz_add_col('sale','agree_date',  "`agree_date` datetime(6) DEFAULT NULL");
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+UPDATE `sale` SET `agree_check` = 'N' WHERE `agree_check` IS NULL;
+
+
+ALTER TABLE `sale` ADD COLUMN `ceo_phone` varchar(20)  NULL;
+ALTER TABLE `sale` ADD COLUMN `agree_check` varchar(1)  NULL DEFAULT 'N';
+ALTER TABLE `sale` ADD COLUMN `agree_date` datetime(6)  NULL ;
+
+
+CREATE TABLE IF NOT EXISTS `agree` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `agree_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,   -- provide(개인정보3자제공) / marketing(마케팅동의)
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(400) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `agree_check` varchar(1) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N',
+  `agree_date` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_agree_lookup` (`agree_type`,`name`,`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 완료.

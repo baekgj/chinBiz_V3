@@ -400,6 +400,25 @@ CREATE TABLE IF NOT EXISTS `terms` (
 -- (이후 신규 필드는 여기 아래에 날짜/사유와 함께 계속 추가)
 -- [2026-08-30] sale: 현장설치 사진 (docs/25_2, 매니저 2차영업관리 영업권확보 레이어 업로드)
 ALTER TABLE `sale` ADD COLUMN `install_photos` text;
+-- [2026-10-04] sale: 대표자 핸드폰 / 고객 3자제공 동의 + agree 테이블 (docs/27)
+ALTER TABLE `sale` ADD COLUMN `ceo_phone` varchar(20) DEFAULT NULL AFTER `ceo_name`;
+ALTER TABLE `sale` ADD COLUMN `agree_check` varchar(1) DEFAULT 'N';
+ALTER TABLE `sale` ADD COLUMN `agree_date` datetime(6) DEFAULT NULL;
+UPDATE `sale` SET `agree_check` = 'N' WHERE `agree_check` IS NULL;
+CREATE TABLE IF NOT EXISTS `agree` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `agree_type` varchar(20) NOT NULL,          -- provide / marketing
+  `name` varchar(50) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `email` varchar(120) DEFAULT NULL,
+  `address` varchar(400) DEFAULT NULL,
+  `agree_check` varchar(1) NOT NULL DEFAULT 'N',
+  `agree_date` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_agree_lookup` (`agree_type`,`name`,`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- ⚠ 기존 sale 행은 agree_check=N 이 되어 매니저 [버즈1차접수현황]에서 숨겨짐. 기존 건을 계속 노출하려면:
+--   UPDATE `sale` SET `agree_check`='Y' WHERE `manager_id` IS NULL;  (운영 판단 후 실행)
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
    · 센터 [1차영업관리]/[2차영업관리]에 기존 상품별 합산은 유지하고, 개별 영업 내역 리스트를 추가.
@@ -1191,3 +1210,55 @@ application.yml datasource url 기본값이 ${DB_HOST:175.125.94.198} = **원격
 Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw spring-boot:run` 하면 **운영 DB(175.125.94.198)** 에 붙는다.
 → 로컬 개발 시 반드시 env 지정: `DB_HOST=localhost DB_USER=chin4_test DB_PASSWORD=1234 DB_NAME=chin4 mvnw ... spring-boot:run`.
 (이번 세션 중 잠깐 운영DB로 기동된 적 있으나 GET 조회만 수행, 쓰기 없음 → 운영 데이터 무변경 확인. 이후 로컬로 재기동.)
+
+[추가] docs/27 — 대표자 핸드폰 + 고객 동의(agree) + 상품화면 동의/매니저배정 표시 (2026-10-04)
+====================================================================
+■ DB: sale.ceo_phone(ceo_name 뒤) / sale.agree_check(기본 N) / sale.agree_date, agree 테이블 신규
+   (id·agree_type[provide|marketing]·name·phone·email·address·agree_check·agree_date).
+   → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+■ 버즈 [1차영업등록](SaleForm): '대표자 핸드폰번호' 입력(자동 하이픈) → sale.ceo_phone 저장.
+   표시: 버즈 영업상세 · 매니저 진행관리(AssignModal) · 본사 고객상세 · 파트너 SaleDetailModal = 원문,
+         센터 개별영업내역(마스킹 화면) = 010-****-5678 (Mask.phoneStar) + 대표자명 마스킹.
+■ 등록/수정 시 agree(대표자명+핸드폰+provide) 최신 기록 조회 → 있으면 sale.agree_check/agree_date 반영(SaleConsentService).
+■ 카카오톡 상품URL 발송: SaleConsentService.sendProductLink — ⚠ 대기(실발송 없음, 로그 "[KAKAO-PENDING]"만).
+   URL = {app.home-url}/products/{상품번호}?refId={sale.id}&ordNo={order_no}
+   app.home-url 기본 http://localhost:8001, 서버는 환경변수 HOME_URL=https://chinbiz.kr 지정.
+   (문서의 "/products/15&refId=.." 형식도 홈에서 그대로 인식하도록 처리)
+■ 본사 [약관설정]: customer_provide(개인정보 3자제공) / customer_marketing(마케팅 활용동의) 시드 추가 → 내용 등록 필요.
+■ HOME 상품상세: refId+ordNo 진입 시 수당 박스 아래 SaleConsentPanel
+   - 진입 시 agree_check≠Y : 개인정보 3자제공 / 마케팅 활용동의 [보기](약관 레이어)·동의·미동의 → agree Insert
+     (provide는 sale.agree_check 동기화. 3자제공 미동의 클릭 시 안내 alert)
+   - 진입 시 agree_check=Y : [매니저 배정완료 : 이름 연락처] / [매니저 배정중]
+   - 공개 API: GET/POST /api/public/sale-consent (refId·ordNo 모두 일치해야 조회/저장, POST permitAll 추가)
+■ 매니저 [버즈1차접수현황](/api/buzz/sales/intake, 대시보드 신규리드 포함): agree_check='Y' 건만 노출.
+   ⚠ 기존 sale 행은 모두 N → 접수현황에서 숨겨짐(필요 시 [DB 마이그레이션]의 UPDATE 주석 참고).
+■ 검증(로컬 DB): BE 컴파일·home/admin tsc 0. 기존 동의有→등록 시 Y 자동반영, 동의無→N, 공개 GET/POST(오답 ordNo 404),
+   provide Y→sale Y, intake Y/N 필터, 센터 마스킹 010-****-2222, 홈 패널 3상태(동의버튼/배정중/배정완료) 화면 확인.
+   테스트 데이터(sale 59~61, allowance·alram·agree) 삭제 완료.
+
+[수정] docs/27 보완 — 상품화면 동의 radio + 마케팅 동의 노출 조건 (2026-10-04)
+====================================================================
+■ HOME SaleConsentPanel: [동의 / 미동의] 버튼 → radio(항목별 name 그룹). 선택 즉시 agree 저장(3자제공 미동의 alert 유지).
+■ 마케팅 활용동의 노출 조건 변경: 진입 시 agree(agree_type=marketing·대표자명·대표자 전화) 기록이 없으면 노출
+   (sale.agree_check=Y 로 매니저 배정 현황이 보이는 경우에도 함께 노출). 기록이 있으면 숨김.
+   3자제공은 기존대로 진입 시 sale.agree_check≠Y 일 때만 노출.
+■ 검증: home tsc 0. 신규건 → 두 항목 radio 노출·선택 저장(sale Y, agree 2건) → 재진입 시 둘 다 숨김+[매니저 배정중],
+   marketing 기록 삭제 후 재진입 → 마케팅만 노출+[매니저 배정중]. 테스트 데이터(sale 62 등) 삭제.
+
+[수정] docs/27 보완2 — 마케팅 활용동의 선택 시 영역 숨김 (2026-10-04)
+====================================================================
+■ HOME SaleConsentPanel: 마케팅 동의/미동의 radio 선택 → agree 저장 성공 즉시 마케팅 영역 숨김(재진입 시에도 기록 있으면 숨김).
+■ BE PublicSaleConsentController: 대표자 전화 미입력(구 데이터) 건도 agree 조회되도록 phone IS NULL 매칭
+   (기존엔 전화 null이면 기록 미조회 → 재진입마다 마케팅 영역 재노출·중복 Insert 발생). 대표자명 없으면 조회 안 함.
+■ 검증: home tsc 0, BE 재기동(로컬DB). 신규건 마케팅 미동의 클릭 → 영역 즉시 사라짐·agree 저장,
+   sale 58(대표자 전화 없음) GET → marketing:"Y" 반환(숨김). 테스트 데이터(sale 63, agree 12) 삭제.
+
+[수정] docs/27 보완3 — 마케팅 활용동의 노출/저장 규칙 재정의 (2026-10-04)
+====================================================================
+■ HOME SaleConsentPanel 마케팅 활용동의:
+   1) 최초 접속 시 agree(marketing·대표자명·대표자 전화) 기록 없음 → 노출
+   2) 최초 접속 시 최신 기록 agree_check=Y → 숨김 (기록이 N이면 노출)
+   3) [동의] → agree 저장(Y) 후 영역 숨김
+   4) [미동의] → 저장하지 않고 영역만 숨김 (재접속 시 Y 기록 없으면 다시 노출)
+■ 검증: home tsc 0. 신규건 노출 → 미동의 클릭 숨김·저장 0건 → 재접속 재노출 → 동의 클릭 숨김·Y 저장 → 재접속 숨김.
+   테스트 데이터(sale 64, 관련 agree) 삭제.

@@ -6,7 +6,7 @@ import { apiGet, apiPost, apiUpload, mediaUrl } from "@/lib/api";
 import { useBuzz } from "@/components/buzz/theme";
 
 type Detail = Record<string, unknown> & {
-  id: number; productName?: string; customerName?: string; companyName?: string; ceoName?: string;
+  id: number; productName?: string; customerName?: string; companyName?: string; ceoName?: string; ceoPhone?: string;
   phone?: string; address?: string; addressDetail?: string; status?: string; memo?: string; mine?: boolean;
   categoryId?: number | null; productId?: number | null; installPhotos?: string | null;
 };
@@ -104,7 +104,7 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
           <div className="space-y-4 px-5 py-5">
             <div className={`rounded-xl border p-4 ${theme.tableWrap}`}>
               <p className={`text-xs ${theme.cardSub}`}>고객</p>
-              <p className={`font-bold ${theme.cellMain}`}>{d.companyName ?? d.customerName}{d.ceoName ? ` · ${d.ceoName}` : ""}</p>
+              <p className={`font-bold ${theme.cellMain}`}>{d.companyName ?? d.customerName}{d.ceoName ? ` · ${d.ceoName}` : ""}{d.ceoPhone ? ` (${d.ceoPhone})` : ""}</p>
               <p className={`mt-0.5 text-xs ${theme.cellSub}`}>{[d.phone, d.address, d.addressDetail].filter(Boolean).join(" · ")}</p>
             </div>
             {/* 카테고리·상품 선택 (docs/24) — 저장 시 sale 에 반영 */}

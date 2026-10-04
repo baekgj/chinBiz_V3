@@ -52,7 +52,7 @@ export default function SaleForm() {
   const [prods, setProds] = useState<Prod[]>([]);
   const [catId, setCatId] = useState(initCat);
   const [f, setF] = useState({
-    productId: initProd, companyName: "", businessNumber: "", ceoName: "", companyPhone: "",
+    productId: initProd, companyName: "", businessNumber: "", ceoName: "", ceoPhone: "", companyPhone: "",
     managerName: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "",
     status: "접수", memo: "",
   });
@@ -117,6 +117,7 @@ export default function SaleForm() {
           <F label="상호명 *" labelCls={lc}><input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="상호명" /></F>
           <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} inputMode="numeric" onChange={(e) => set("businessNumber")(fmtBiz(e.target.value))} placeholder="000-00-00000" /></F>
           <F label="대표자명" labelCls={lc}><input className={inputCls} value={f.ceoName} onChange={(e) => set("ceoName")(e.target.value)} placeholder="대표자명" /></F>
+          <F label="대표자 핸드폰번호" labelCls={lc}><input className={inputCls} value={f.ceoPhone} inputMode="numeric" onChange={(e) => set("ceoPhone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
           <F label="회사 전화번호" labelCls={lc}><input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(fmtPhone(e.target.value))} placeholder="02-000-0000" /></F>
           <F label="담당자명" labelCls={lc}><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자명" /></F>
           <F label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>

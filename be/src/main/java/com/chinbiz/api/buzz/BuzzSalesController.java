@@ -44,6 +44,7 @@ public class BuzzSalesController {
     private final com.chinbiz.api.alarm.AlarmService alarmService;
     private final com.chinbiz.api.org.CenterCodeRepository centerCodeRepo;
     private final ManagerCenterRepository managerCenterRepo;
+    private final com.chinbiz.api.agree.SaleConsentService consentService;
 
     public BuzzSalesController(SaleRepository saleRepo, ProductRepository productRepo, PartnerRepository partnerRepo,
                                UserRepository userRepo, EducationRepository eduRepo, CenterMatcher centerMatcher,
@@ -51,7 +52,9 @@ public class BuzzSalesController {
                                com.chinbiz.api.allowance.AllowanceRepository allowanceRepo,
                                com.chinbiz.api.alarm.AlarmService alarmService,
                                com.chinbiz.api.org.CenterCodeRepository centerCodeRepo,
-                               ManagerCenterRepository managerCenterRepo) {
+                               ManagerCenterRepository managerCenterRepo,
+                               com.chinbiz.api.agree.SaleConsentService consentService) {
+        this.consentService = consentService;
         this.saleRepo = saleRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo;
         this.userRepo = userRepo; this.eduRepo = eduRepo; this.centerMatcher = centerMatcher;
         this.allowanceService = allowanceService; this.allowanceRepo = allowanceRepo;
@@ -136,6 +139,8 @@ public class BuzzSalesController {
         m.put("companyName", s.getCompanyName());
         m.put("businessNumber", s.getBusinessNumber());
         m.put("ceoName", s.getCeoName());
+        m.put("ceoPhone", s.getCeoPhone());
+        m.put("agreeCheck", s.getAgreeCheck());
         m.put("companyPhone", s.getCompanyPhone());
         m.put("managerName", s.getManagerName());
         m.put("phone", s.getPhone());
@@ -194,6 +199,7 @@ public class BuzzSalesController {
         List<Specification<Sale>> specs = new ArrayList<>();
         specs.add((r, q, cb) -> r.get("customerCenterId").in(myCenters)); // 고객 주소 지역 ∈ 내 활동센터들
         specs.add((r, q, cb) -> cb.isNull(r.get("managerId")));  // 아직 매니저 미선정
+        specs.add((r, q, cb) -> cb.equal(r.get("agreeCheck"), "Y")); // 고객 개인정보 3자제공 동의 건만 (docs/27)
         if (keyword != null && !keyword.isBlank())
             specs.add((r, q, cb) -> cb.like(r.get("companyName"), "%" + keyword.trim() + "%"));
         Specification<Sale> spec = specs.stream().reduce(Specification::and).orElse(null);
@@ -241,7 +247,7 @@ public class BuzzSalesController {
 
     public record SaleRequest(
             Long productId, Long categoryId,
-            String companyName, String businessNumber, String ceoName, String companyPhone,
+            String companyName, String businessNumber, String ceoName, String ceoPhone, String companyPhone,
             String managerName, String phone, String email,
             String zipcode, String address, String addressDetail,
             String status, String memo) {}
@@ -257,12 +263,16 @@ public class BuzzSalesController {
         s.setBuzzId(me.getId());
         apply(s, req);
         s.setParentId(centerParentId(req.address()));
+        consentService.syncProvideAgree(s); // 대표자 기존 3자제공 동의 기록 반영 (docs/27)
         saleRepo.save(s); // id 생성
 
         // 주문번호 생성(OD+yyyyMMdd-일련번호) → 저장
         s.setOrderNo(String.format("OD%s-%06d",
                 java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE), s.getId()));
         saleRepo.save(s);
+
+        // 대표자 핸드폰으로 상품 URL 카카오톡 발송 (docs/27) — 현재 대기(로그만)
+        try { consentService.sendProductLink(s); } catch (Exception ignore) {}
 
         // 수당 원장 레코드 생성 (버즈/소속센터/본부/본사 + 추천인)
         User referrer = (me.getReferralCode() != null && !me.getReferralCode().isBlank())
@@ -291,6 +301,7 @@ public class BuzzSalesController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
         apply(s, req);
         s.setParentId(centerParentId(req.address()));
+        if (!"Y".equals(s.getAgreeCheck())) consentService.syncProvideAgree(s);
         saleRepo.save(s);
         return ResponseEntity.ok(detail(s, me));
     }
@@ -344,6 +355,7 @@ public class BuzzSalesController {
         s.setCompanyName(req.companyName());
         s.setBusinessNumber(req.businessNumber());
         s.setCeoName(req.ceoName());
+        s.setCeoPhone(req.ceoPhone());
         s.setCompanyPhone(req.companyPhone());
         s.setManagerName(req.managerName());
         s.setPhone(req.phone());

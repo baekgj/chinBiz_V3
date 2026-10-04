@@ -64,6 +64,8 @@ public class AdminSalesController {
         m.put("partnerName", partnerName);
         m.put("customerName", s.getCompanyName());
         m.put("ceoName", s.getCeoName());
+        m.put("ceoPhone", s.getCeoPhone());
+        m.put("agreeCheck", s.getAgreeCheck());
         m.put("buzzName", userName(s.getBuzzId()));
         m.put("managerName", userName(s.getManagerId()));
         m.put("status", s.getStatus());

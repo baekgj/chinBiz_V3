@@ -9,7 +9,7 @@ import { apiGet } from "@/lib/api";
 
 type Sale = Record<string, unknown> & {
   id: number; createdAt: string; productId?: number; productName?: string; partnerName?: string; status?: string;
-  companyName?: string; businessNumber?: string; ceoName?: string; companyPhone?: string;
+  companyName?: string; businessNumber?: string; ceoName?: string; ceoPhone?: string; companyPhone?: string;
   managerName?: string; phone?: string; email?: string; zipcode?: string; address?: string; addressDetail?: string; memo?: string;
 };
 
@@ -50,6 +50,7 @@ export default function BuzzSaleDetailPage() {
               <Row label="상호명" value={s.companyName} />
               <Row label="사업자등록번호" value={s.businessNumber} />
               <Row label="대표자명" value={s.ceoName} />
+              <Row label="대표자 핸드폰번호" value={s.ceoPhone} />
               <Row label="회사 전화번호" value={s.companyPhone} />
               <Row label="담당자명" value={s.managerName} />
               <Row label="핸드폰번호" value={s.phone} />

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
+import SaleConsentPanel from "@/components/site/SaleConsentPanel";
 import { API_BASE, mediaUrl, resolveAdminUrl } from "@/lib/api";
 
 type Detail = {
@@ -139,16 +140,28 @@ export default function ProductDetailPage() {
   const [mainImg, setMainImg] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
 
+  // 카카오톡 링크 고객 동의 파라미터 (docs/27): ?refId=&ordNo= 또는 /products/15&refId=..&ordNo=.. 둘 다 허용
+  const [rawPath, ...pathQs] = decodeURIComponent(params?.id ?? "").split("&");
+  const productId = rawPath;
+  const [consent, setConsent] = useState<{ refId: string; ordNo: string } | null>(null);
   useEffect(() => {
-    if (!params?.id) return;
+    const q = new URLSearchParams(window.location.search);
+    const extra = new URLSearchParams(pathQs.join("&"));
+    const refId = q.get("refId") ?? extra.get("refId");
+    const ordNo = q.get("ordNo") ?? extra.get("ordNo");
+    setConsent(refId && ordNo ? { refId, ordNo } : null);
+  }, [params?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!productId) return;
     const token = readToken();
-    fetch(`${API_BASE}/api/public/products/${params.id}`, {
+    fetch(`${API_BASE}/api/public/products/${productId}`, {
       headers: token ? { Authorization: `Bearer ${token}`, Accept: "application/json" } : { Accept: "application/json" },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: Detail) => { setD(data); setStatus("ok"); })
       .catch(() => setStatus("error"));
-  }, [params?.id]);
+  }, [productId]);
 
   const embed = useMemo(() => embedUrl(d?.videoUrl), [d?.videoUrl]);
   const role = d?.role ?? null;
@@ -250,6 +263,9 @@ export default function ProductDetailPage() {
                   <p className="mt-3 text-xs leading-relaxed text-muted">
                     * 실제 지급액은 영업 단계·정산 정책에 따라 확정됩니다. 아래 <b className="text-forest-700">수익을 만드는 2가지 방법</b>에서 자세히 확인하세요.
                   </p>
+
+                  {/* 고객(대표자) 동의 / 매니저 배정 현황 — 카카오톡 상품링크(refId·ordNo) 진입 시 (docs/27) */}
+                  {consent && <SaleConsentPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} />}
                 </div>
               </div>
 

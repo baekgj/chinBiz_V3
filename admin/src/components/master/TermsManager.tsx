@@ -43,7 +43,7 @@ export default function TermsManager() {
   return (
     <div className="space-y-6 animate-float-up">
       <Card>
-        <SectionTitle title="약관설정" sub="10종 약관/동의서 등록·수정 (home·회원가입·입점신청 등에 노출). 서식 편집 또는 HTML 코드로 등록" />
+        <SectionTitle title="약관설정" sub="12종 약관/동의서 등록·수정 (home·회원가입·입점신청·상품화면 고객동의 등에 노출). 서식 편집 또는 HTML 코드로 등록" />
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           {/* 목록 */}
           <ul className="space-y-1">

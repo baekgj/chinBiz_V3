@@ -141,6 +141,7 @@ public class PartnerSalesController {
         m.put("companyName", s.getCompanyName());
         m.put("businessNumber", s.getBusinessNumber());
         m.put("ceoName", s.getCeoName());
+        m.put("ceoPhone", s.getCeoPhone());
         m.put("companyPhone", s.getCompanyPhone());
         m.put("managerContactName", s.getManagerName());   // 고객사 담당자명
         m.put("phone", s.getPhone());

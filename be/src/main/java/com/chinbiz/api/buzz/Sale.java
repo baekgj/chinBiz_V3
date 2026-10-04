@@ -28,6 +28,7 @@ public class Sale {
     @Column(name = "company_name", length = 120) private String companyName;   // 상호명
     @Column(name = "business_number", length = 20) private String businessNumber; // 사업자등록번호
     @Column(name = "ceo_name", length = 50) private String ceoName;            // 대표자명
+    @Column(name = "ceo_phone", length = 20) private String ceoPhone;          // 대표자 핸드폰번호 (docs/27)
     @Column(name = "company_phone", length = 20) private String companyPhone;  // 회사 전화번호
     @Column(name = "manager_name", length = 50) private String managerName;    // 담당자명
     @Column(length = 20) private String phone;                                 // 담당자 핸드폰
@@ -43,7 +44,11 @@ public class Sale {
     @Column(name = "created_at", nullable = false, updatable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at") private LocalDateTime updatedAt;
 
-    @PrePersist void onCreate() { createdAt = LocalDateTime.now(); updatedAt = createdAt; if (status == null) status = "접수"; }
+    // 개인정보 3자제공 동의 (docs/27) — agree(provide) 조회 / 홈 상품화면 동의로 갱신. Y인 건만 매니저 [버즈1차접수현황] 노출
+    @Column(name = "agree_check", length = 1, columnDefinition = "varchar(1) DEFAULT 'N'") private String agreeCheck = "N";
+    @Column(name = "agree_date") private LocalDateTime agreeDate;
+
+    @PrePersist void onCreate() { createdAt = LocalDateTime.now(); updatedAt = createdAt; if (status == null) status = "접수"; if (agreeCheck == null) agreeCheck = "N"; }
     @PreUpdate void onUpdate() { updatedAt = LocalDateTime.now(); }
 
     public Long getId() { return id; }
@@ -58,6 +63,7 @@ public class Sale {
     public String getCompanyName() { return companyName; } public void setCompanyName(String v) { companyName = v; }
     public String getBusinessNumber() { return businessNumber; } public void setBusinessNumber(String v) { businessNumber = v; }
     public String getCeoName() { return ceoName; } public void setCeoName(String v) { ceoName = v; }
+    public String getCeoPhone() { return ceoPhone; } public void setCeoPhone(String v) { ceoPhone = v; }
     public String getCompanyPhone() { return companyPhone; } public void setCompanyPhone(String v) { companyPhone = v; }
     public String getManagerName() { return managerName; } public void setManagerName(String v) { managerName = v; }
     public String getPhone() { return phone; } public void setPhone(String v) { phone = v; }
@@ -68,6 +74,8 @@ public class Sale {
     public String getStatus() { return status; } public void setStatus(String v) { status = v; }
     public String getMemo() { return memo; } public void setMemo(String v) { memo = v; }
     public String getInstallPhotos() { return installPhotos; } public void setInstallPhotos(String v) { installPhotos = v; }
+    public String getAgreeCheck() { return agreeCheck; } public void setAgreeCheck(String v) { agreeCheck = v; }
+    public LocalDateTime getAgreeDate() { return agreeDate; } public void setAgreeDate(LocalDateTime v) { agreeDate = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
