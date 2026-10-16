@@ -96,8 +96,9 @@ public class PublicProductController {
         m.put("salesTarget", p.getSalesTarget());
         m.put("productFeature", p.getProductFeature());
         m.put("processFlow", p.getProcessFlow());
-        m.put("buzzRewardWon", rewardWon(p, p.getBuzzReward() == null ? 0 : p.getBuzzReward()));
-        m.put("managerRewardWon", rewardWon(p, p.getManagerReward() == null ? 0 : p.getManagerReward()));
+        // 수당(CP/MP) 금액은 로그인 회원에게만 노출 (docs/28 · Guardrail) — 비로그인은 null
+        m.put("buzzRewardWon", role == null ? null : rewardWon(p, p.getBuzzReward() == null ? 0 : p.getBuzzReward()));
+        m.put("managerRewardWon", role == null ? null : rewardWon(p, p.getManagerReward() == null ? 0 : p.getManagerReward()));
 
         // 파트너사 다른 상품 (최근 12, 판매중, 본인 제외) — 홈 상세 캐러셀(4개씩 페이징)용
         List<Map<String, Object>> others = new ArrayList<>();

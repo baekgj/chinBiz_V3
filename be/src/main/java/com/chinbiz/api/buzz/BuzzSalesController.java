@@ -259,6 +259,7 @@ public class BuzzSalesController {
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증 필요"));
         if (req.productId() == null) return ResponseEntity.badRequest().body(Map.of("message", "상품을 선택해 주세요."));
         if (isBlank(req.companyName())) return ResponseEntity.badRequest().body(Map.of("message", "고객 상호명을 입력해 주세요."));
+        if (isDuplicate(req, null)) return dupResponse();
         Sale s = new Sale();
         s.setBuzzId(me.getId());
         apply(s, req);
@@ -299,6 +300,7 @@ public class BuzzSalesController {
         Sale s = saleRepo.findById(id).orElse(null);
         if (s == null || me == null || !me.getId().equals(s.getBuzzId()))
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
+        if (isDuplicate(req, s.getId())) return dupResponse();
         apply(s, req);
         s.setParentId(centerParentId(req.address()));
         if (!"Y".equals(s.getAgreeCheck())) consentService.syncProvideAgree(s);
@@ -338,6 +340,23 @@ public class BuzzSalesController {
         try { alarmService.fireSaleEvent("SALE2", s); } catch (Exception ignore) {}
 
         return ResponseEntity.ok(detail(s, me));
+    }
+
+    /**
+     * 중복 상품 신청 체크 (docs/28) — 사업자등록번호가 있으면 사업자등록번호+상품번호,
+     * 없으면 대표자 핸드폰번호+상품번호. 하이픈/공백 무시, 취소/반품 건 제외.
+     */
+    private boolean isDuplicate(SaleRequest req, Long excludeId) {
+        if (req.productId() == null) return false;
+        String biz = digits(req.businessNumber());
+        if (!biz.isEmpty()) return saleRepo.countDupByBizNo(req.productId(), biz, excludeId) > 0;
+        String phone = digits(req.ceoPhone());
+        if (!phone.isEmpty()) return saleRepo.countDupByCeoPhone(req.productId(), phone, excludeId) > 0;
+        return false;
+    }
+    private static String digits(String v) { return v == null ? "" : v.replaceAll("[^0-9]", ""); }
+    private static ResponseEntity<?> dupResponse() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("code", "DUPLICATE_SALE", "message", "동일한 상품에 대한 신청내역이 존재합니다."));
     }
 
     /** 고객 주소 → center_code idx → 해당 센터(CENTER_ADMIN) user.id */

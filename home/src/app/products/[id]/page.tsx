@@ -249,7 +249,8 @@ export default function ProductDetailPage() {
                   <p className="mt-3 text-sm font-medium text-muted">{d.partnerName ?? "파트너사"}{d.categoryName ? ` · ${d.categoryName}` : ""}</p>
                   <h1 className="mt-1 text-2xl font-black leading-tight text-ink sm:text-3xl">{d.name}</h1>
 
-                  {/* 수익 요약 (버즈=CP / 매니저=MP) */}
+                  {/* 수익 요약 (버즈=CP / 매니저=MP) — 로그인 회원만 노출(docs/28), 고객 동의 링크(refId·ordNo) 진입 시 숨김 */}
+                  {role && !consent && (<>
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-forest-200 bg-forest-50 p-4">
                       <p className="text-xs font-bold text-forest-700">버즈회원 추천 수당 (CP)</p>
@@ -263,6 +264,7 @@ export default function ProductDetailPage() {
                   <p className="mt-3 text-xs leading-relaxed text-muted">
                     * 실제 지급액은 영업 단계·정산 정책에 따라 확정됩니다. 아래 <b className="text-forest-700">수익을 만드는 2가지 방법</b>에서 자세히 확인하세요.
                   </p>
+                  </>)}
 
                   {/* 고객(대표자) 동의 / 매니저 배정 현황 — 카카오톡 상품링크(refId·ordNo) 진입 시 (docs/27) */}
                   {consent && <SaleConsentPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} />}
@@ -297,7 +299,8 @@ export default function ProductDetailPage() {
               <RichBlock title="상품 특징" html={d.productFeature} />
               <RichBlock title="처리 프로세스" html={d.processFlow} />
 
-              {/* ★ 이 상품으로 수익을 만드는 2가지 방법 (goods_view.docx 04/REVENUE) */}
+              {/* ★ 이 상품으로 수익을 만드는 2가지 방법 (goods_view.docx 04/REVENUE) — 로그인 회원만 노출(docs/28), 고객 동의 링크 진입 시 숨김 */}
+              {role && !consent && (
               <section>
                 <p className="text-xs font-bold tracking-widest text-muted">04 / REVENUE</p>
                 <h2 className="mt-1 text-2xl font-black text-ink sm:text-3xl">
@@ -341,6 +344,7 @@ export default function ProductDetailPage() {
                 </div>
                 <p className="mt-3 text-xs text-muted">* CP · MP 포인트는 친비즈 정책에 따라 적립됩니다.</p>
               </section>
+              )}
 
               {/* 하단 CTA — 역할별 (본문 내 영역, 고정 아님) */}
               <section className="rounded-2xl border border-line bg-white p-4 sm:p-5">

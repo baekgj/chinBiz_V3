@@ -62,5 +62,11 @@ HOME의 상품정보화면에서 마케팅활용동의 영역은 다음과 같�
 
 HOME의 상품정보화면에서 개인정보 3자제공의 미동의 버튼 클릭시 알림창만 나타나고, agree테이블에 저장하지 말아줘
 
-http://localhost/products/9?refId=4&ordNo=OD20260820-000004
-https://chinbiz.kr/products/1?refId=4&ordNo=OD20260820-000004
+
+http://localhost/products/9?refId=58&ordNo=OD20260820-000058
+https://chinbiz.kr/products/2?refId=3&ordNo=OD20260820-000003
+
+HOME의 상품상세화면 조회에서 refId, ordNo값이 있을 경우,
+docs/27_1.jpg, docs/27_2.jpg 이미지파일에서 붉은사각형으로 표시되어 있는 부분은 보이지 않도록 숨겨줘
+
+

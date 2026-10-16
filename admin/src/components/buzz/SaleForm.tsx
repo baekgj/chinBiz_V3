@@ -88,6 +88,11 @@ export default function SaleForm() {
     const res = await apiPost("/api/buzz/sales", payload);
     setSaving(false);
     if (res.ok) router.push("/buzz/pipeline");
+    else if (res.status === 409) { // 중복 상품 신청 (docs/28)
+      const msg = res.message ?? "동일한 상품에 대한 신청내역이 존재합니다.";
+      alert(msg);
+      setNotice(msg);
+    }
     else setNotice(res.message ?? "저장에 실패했습니다.");
   }
 
