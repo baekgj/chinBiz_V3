@@ -35,6 +35,48 @@ NEXT_PUBLIC_HOME_URL="https://chinbiz.kr"          # admin 빌드에 박히는 h
 log() { echo -e "\n\033[1;36m▶ $*\033[0m"; }
 ok()  { echo -e "\033[1;32m✓ $*\033[0m"; }
 
+# 서버 교체(원자적) + 재시작 + 정적자산 검증
+#  - 기존: 실행 중 프로세스 아래에서 rm -rf .next → tar 해제 → pm2 restart.
+#    해제 실패(디스크 부족 등)·재시작 누락 시 구 HTML 이 존재하지 않는 /_next/static 청크를 참조 →
+#    CSS/JS 404·500 → 화면 깨짐(거대한 방패 아이콘 + "이동 중…")·로그인 불가 (docs/28_app.jpg).
+#  - 개선: 별도 폴더에 해제·BUILD_ID 확인 → pm2 stop → 폴더 교체 → pm2 restart →
+#    로컬 포트에서 각 페이지가 참조하는 CSS/JS 가 모두 200 인지 검사(실패 시 비정상 종료).
+#  사용: remote_swap <DEST> <PM2이름> <PORT> <tar파일명> <검사경로...>
+remote_swap() {
+  local dest="$1" pm2name="$2" port="$3" tarball="$4"; shift 4
+  ssh "$SERVER" bash -s -- "$dest" "$pm2name" "$port" "$tarball" "$@" <<'REMOTE'
+set -euo pipefail
+DEST="$1"; PM2="$2"; PORT="$3"; TARBALL="$4"; shift 4
+cd "$DEST"
+echo "디스크 여유: $(df -h . | awk 'NR==2{print $4}')"
+rm -rf .deploy_new && mkdir .deploy_new
+tar -xzf "$TARBALL" -C .deploy_new
+[ -s .deploy_new/.next/BUILD_ID ] || { echo "✗ 해제 결과에 .next/BUILD_ID 없음 — 중단(기존 서비스 유지)"; exit 1; }
+echo "새 BUILD_ID: $(cat .deploy_new/.next/BUILD_ID)"
+pm2 stop "$PM2" >/dev/null
+rm -rf .next.old public.old
+[ -d .next ] && mv .next .next.old
+mv .deploy_new/.next .next
+if [ -d .deploy_new/public ]; then
+  [ -d public ] && mv public public.old
+  mv .deploy_new/public public
+fi
+rm -rf .deploy_new "$TARBALL"
+pm2 restart "$PM2" --update-env >/dev/null
+for i in $(seq 1 30); do curl -sf -o /dev/null "http://127.0.0.1:$PORT/" && break; sleep 1; done
+FAIL=0
+for path in "$@"; do
+  for a in $(curl -s "http://127.0.0.1:$PORT$path" | grep -o '/_next/static/[^"]*\.\(css\|js\)' | sort -u); do
+    code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$a")
+    [ "$code" = 200 ] || { echo "✗ $path → $code $a"; FAIL=1; }
+  done
+done
+[ "$FAIL" = 0 ] || { echo "✗ 정적자산 누락 — 'pm2 logs $PM2' 확인 (이전 빌드는 .next.old 에 보존)"; exit 1; }
+rm -rf .next.old public.old
+echo "상태: 정적자산 검증 통과 ($*)"
+REMOTE
+}
+
 deploy_home() {
   log "[home] 빌드 (NEXT_PUBLIC_ADMIN_URL=$NEXT_PUBLIC_ADMIN_URL)"
   ( cd "$HOME_SRC" && rm -rf .next && NEXT_PUBLIC_ADMIN_URL="$NEXT_PUBLIC_ADMIN_URL" npm run build )
@@ -45,8 +87,8 @@ deploy_home() {
   log "[home] 전송 → $SERVER:$HOME_DEST"
   scp "$REPO/home-dist.tar.gz" "$SERVER:$HOME_DEST/"
 
-  log "[home] 서버 교체 + 재시작"
-  ssh "$SERVER" "cd '$HOME_DEST' && rm -rf .next && tar -xzf home-dist.tar.gz && rm -f home-dist.tar.gz && pm2 restart '$HOME_PM2' && sleep 2 && echo -n '상태: ' && curl -sI http://127.0.0.1:$HOME_PORT | head -1"
+  log "[home] 서버 교체 + 재시작 + 정적자산 검증"
+  remote_swap "$HOME_DEST" "$HOME_PM2" "$HOME_PORT" home-dist.tar.gz / /login
 
   rm -f "$REPO/home-dist.tar.gz"
   ok "[home] 배포 완료 (https://chinbiz.kr)"
@@ -62,8 +104,8 @@ deploy_admin() {
   log "[admin] 전송 → $SERVER:$ADMIN_DEST"
   scp "$REPO/admin-dist.tar.gz" "$SERVER:$ADMIN_DEST/"
 
-  log "[admin] 서버 교체 + 재시작"
-  ssh "$SERVER" "cd '$ADMIN_DEST' && rm -rf .next && tar -xzf admin-dist.tar.gz && rm -f admin-dist.tar.gz && pm2 restart '$ADMIN_PM2' && sleep 2 && echo -n '상태: ' && curl -sI http://127.0.0.1:$ADMIN_PORT | head -1"
+  log "[admin] 서버 교체 + 재시작 + 정적자산 검증"
+  remote_swap "$ADMIN_DEST" "$ADMIN_PM2" "$ADMIN_PORT" admin-dist.tar.gz / /login /master
 
   rm -f "$REPO/admin-dist.tar.gz"
   ok "[admin] 배포 완료 (https://admin.chinbiz.kr)"

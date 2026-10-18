@@ -1268,3 +1268,16 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
 ■ HOME SaleConsentPanel: 3자제공 [미동의] 클릭 → 안내 alert 만 표시, agree 저장·sale 반영 없음(radio 선택 상태도 유지 안 함).
    [동의]는 기존대로 agree 저장 + sale.agree_check=Y.
 ■ 검증: home tsc 0. 신규건 미동의 클릭 → alert 1회, agree 0건, sale.agree_check=N 유지. 테스트 데이터(sale 65) 삭제.
+
+[장애] docs/28_app — 모바일 앱 바로가기 실행 시 화면 깨짐 + admin 로그인 불가 (2026-10-18)
+====================================================================
+■ 증상: admin.chinbiz.kr 접속 시 스타일 없는 거대한 방패 아이콘 + "이동 중…"에서 멈춤. 로그인 불가.
+■ 원인(코드 아님, 운영 서버 배포 상태 불일치): admin(3100)이 내려주는 HTML 이 서버에 없는 정적 청크를 참조.
+   · / → 404 /_next/static/chunks/1zvmem-eg1-e0.css, 2cpf4at9cibf7.js
+   · /login, /master → 500 2ml8c3b8mt73j.css, 0m5r6f0fmeyp5.js (서로 다른 빌드의 HTML 이 섞여 있음)
+   → CSS 미적용 + JS 미실행(하이드레이션 실패) → 리다이렉트/로그인 동작 불가.
+   · 홈(chinbiz.kr)은 정상. PC 브라우저는 캐시된 청크로 우연히 동작할 수 있으나 모바일 새 실행에선 재현.
+   · 추정: 실행 중 프로세스 아래에서 rm -rf .next → tar 해제 실패/불완전 또는 pm2 재시작 누락.
+■ 조치: deploy.sh 서버 교체 로직 보강(remote_swap) — 별도 폴더 해제·BUILD_ID 확인 → pm2 stop → 폴더 교체 →
+   pm2 restart → 각 페이지 참조 CSS/JS 200 검사(실패 시 비정상 종료, 이전 빌드 .next.old 보존).
+■ 서버 반영: ./deploy.sh admin 재배포 필요(Git Bash). 이후 모바일은 앱 완전 종료 후 재실행.
