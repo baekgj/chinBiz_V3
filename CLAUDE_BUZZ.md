@@ -73,4 +73,4 @@
 ### docs/28 (2026-10-16)
 - **1차영업 중복 신청 차단**: `POST/PUT /api/buzz/sales` 저장 전 `isDuplicate` — 사업자등록번호 있으면 (사업자번호+상품), 없으면 (대표자 핸드폰+상품). 숫자만 비교(하이픈 무시), `취소/반품` 건 제외. 중복 시 **409** `{code:DUPLICATE_SALE, message:"동일한 상품에 대한 신청내역이 존재합니다."}` → `SaleForm` 이 `alert`.
 - **home 상품상세 수당 노출**: CP/MP 요약 박스 + `04 / REVENUE` 섹션은 로그인 회원만 표시. BE `PublicProductController` 도 비로그인 시 `buzzRewardWon/managerRewardWon=null`(Guardrail).
-- **앱설치 배너**(`components/pwa/InstallAppButton`): 모바일 + BUZZ/MANAGER(JWT role 클레임)면 로그인 즉시 [앱설치하기] 노출. 네이티브 프롬프트(`beforeinstallprompt`) 가능 시 실행, 불가 시 iOS/삼성인터넷/Chrome별 '홈 화면에 추가' 안내. ⚠ 네이티브 설치 프롬프트는 **HTTPS**에서만 동작(HTTP 서버IP 접속 시 안내 모드).
+- **앱설치 배너**(`components/pwa/InstallAppButton`): 모바일 + BUZZ/MANAGER(JWT role 클레임)면 로그인 즉시 [앱설치하기] 노출. 네이티브 프롬프트(`beforeinstallprompt`)로 바로 설치(docs/29: 메뉴 경유 안내 제거). 이벤트는 `app/layout` 인라인 스크립트가 하이드레이션 전에 `window.__chinbizBIP`로 선캡처, 미도착 시 최대 4초 대기 후 실행. iOS만 '홈 화면에 추가' 안내(설치 API 없음). 아이콘: favicon.ico·apple-touch-icon도 '친' 로고(home도 동일 manifest/아이콘). ⚠ 네이티브 설치 프롬프트는 **HTTPS**에서만 동작(HTTP 서버IP 접속 시 안내 모드).

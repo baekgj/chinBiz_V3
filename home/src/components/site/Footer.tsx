@@ -60,9 +60,9 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-8 text-xs leading-relaxed text-forest-200/70">
-          <p className="font-semibold text-forest-100">훈마(주) · 친비즈(ChinBiz)</p>
+          <p className="font-semibold text-forest-100">친쿠(주) · 친비즈(ChinBiz)</p>
           <p className="mt-1.5">
-            대표 최경호 &nbsp;|&nbsp; 사업자등록번호 822-81-00277
+            대표 최경호 &nbsp;|&nbsp; 사업자등록번호 822-87-04028
           </p>
           <p className="mt-1">
             고객센터 02-6412-0505 &nbsp;|&nbsp; mocanet@naver.com
