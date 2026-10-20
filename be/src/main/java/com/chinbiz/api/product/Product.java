@@ -52,9 +52,8 @@ public class Product {
     @Column(name = "division_reward") private Long divisionReward = 0L;
     @Column(name = "hq_reward") private Long hqReward = 0L;
 
-    @Column(columnDefinition = "TEXT") private String description;   // 레거시(하위호환 폴백)
-    // 대상별 상품설명 (docs/18): 비로그인/버즈/매니저/파트너/관리자
-    @Column(name = "desc_guest", columnDefinition = "LONGTEXT") private String descGuest;
+    @Column(columnDefinition = "LONGTEXT") private String description;   // 비로그인 전용 상품설명(구 desc_guest) + 역할별 미등록 시 폴백
+    // 대상별 상품설명 (docs/18): 버즈/매니저/파트너/관리자 (비로그인 = description)
     @Column(name = "desc_buzz", columnDefinition = "LONGTEXT") private String descBuzz;
     @Column(name = "desc_manager", columnDefinition = "LONGTEXT") private String descManager;
     @Column(name = "desc_partner", columnDefinition = "LONGTEXT") private String descPartner;
@@ -128,7 +127,6 @@ public class Product {
     public Long getDivisionReward() { return divisionReward; } public void setDivisionReward(Long v) { divisionReward = v; }
     public Long getHqReward() { return hqReward; } public void setHqReward(Long v) { hqReward = v; }
     public String getDescription() { return description; } public void setDescription(String v) { description = v; }
-    public String getDescGuest() { return descGuest; } public void setDescGuest(String v) { descGuest = v; }
     public String getDescBuzz() { return descBuzz; } public void setDescBuzz(String v) { descBuzz = v; }
     public String getDescManager() { return descManager; } public void setDescManager(String v) { descManager = v; }
     public String getDescPartner() { return descPartner; } public void setDescPartner(String v) { descPartner = v; }

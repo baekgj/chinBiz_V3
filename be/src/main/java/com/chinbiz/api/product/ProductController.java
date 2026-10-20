@@ -37,7 +37,7 @@ public class ProductController {
             String contractEndDate, Boolean installProduct,
             Boolean simpleDelivery, Boolean cancelFeeFlag, Long cancelAmount,
             Boolean popular, Boolean recommended,
-            String descGuest, String descBuzz, String descManager, String descPartner, String descAdmin,
+            String descBuzz, String descManager, String descPartner, String descAdmin,
             // docs/25 확장 항목
             Boolean monthlyCare, Boolean asSupport, String videoUrl,
             String specEffect, String salesTarget, String productFeature, String processFlow
@@ -62,7 +62,6 @@ public class ProductController {
         m.put("divisionReward", p.getDivisionReward());
         m.put("hqReward", p.getHqReward());
         m.put("description", p.getDescription());
-        m.put("descGuest", p.getDescGuest());
         m.put("descBuzz", p.getDescBuzz());
         m.put("descManager", p.getDescManager());
         m.put("descPartner", p.getDescPartner());
@@ -160,7 +159,6 @@ public class ProductController {
         p.setDivisionReward(n(req.divisionReward()));
         p.setHqReward(n(req.hqReward()));
         p.setDescription(req.description());
-        p.setDescGuest(req.descGuest());
         p.setDescBuzz(req.descBuzz());
         p.setDescManager(req.descManager());
         p.setDescPartner(req.descPartner());

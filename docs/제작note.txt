@@ -1281,3 +1281,17 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
 ■ 조치: deploy.sh 서버 교체 로직 보강(remote_swap) — 별도 폴더 해제·BUILD_ID 확인 → pm2 stop → 폴더 교체 →
    pm2 restart → 각 페이지 참조 CSS/JS 200 검사(실패 시 비정상 종료, 이전 빌드 .next.old 보존).
 ■ 서버 반영: ./deploy.sh admin 재배포 필요(Git Bash). 이후 모바일은 앱 완전 종료 후 재실행.
+
+[수정] 본사admin 상품등록 — 비로그인 전용 상품설명 필드 desc_guest → description (2026-10-20)
+====================================================================
+■ admin master/ProductForm: 상품설명 탭 [비로그인 전용] 바인딩 descGuest → description (폼 state·저장 payload에서 descGuest 제거).
+■ BE: Product 엔티티 descGuest 필드 제거, description 컬럼 TEXT → LONGTEXT.
+   ProductController 요청 DTO/응답/apply 에서 descGuest 제거(description 은 기존대로 저장).
+   PublicProductController 상세: 비로그인 → p.getDescription() (역할별 설명 미등록 시 폴백도 description 유지).
+■ DB(서버 적용) [DB 마이그레이션]:
+   ALTER TABLE `product` MODIFY `description` longtext COLLATE utf8mb4_unicode_ci;
+   UPDATE `product` SET `description` = `desc_guest`
+    WHERE (`description` IS NULL OR `description` = '') AND `desc_guest` IS NOT NULL AND `desc_guest` <> '';
+   -- (선택) 이관 확인 후: ALTER TABLE `product` DROP COLUMN `desc_guest`;
+   migration_new_fields.sql / schema_chin4.sql 반영. 로컬DB 적용 완료(product 15 이관).
+■ 검증: admin tsc 0, BE compile OK, 소스 내 descGuest/desc_guest 참조 0건.

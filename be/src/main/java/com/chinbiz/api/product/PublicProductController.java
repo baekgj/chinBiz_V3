@@ -67,7 +67,7 @@ public class PublicProductController {
             case "MANAGER" -> p.getDescManager();
             case "PARTNER" -> p.getDescPartner();
             case "MASTER_ADMIN" -> p.getDescAdmin();
-            default -> p.getDescGuest();
+            default -> p.getDescription();   // 비로그인 전용
         };
         if (desc == null || desc.isBlank()) desc = p.getDescription(); // 폴백
 

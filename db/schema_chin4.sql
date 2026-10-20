@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `product` (
   `category_id` bigint DEFAULT NULL,
   `chinku_reward` bigint DEFAULT NULL,
   `created_at` datetime(6) NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `description` longtext COLLATE utf8mb4_unicode_ci,
   `division_reward` bigint DEFAULT NULL,
   `hq_reward` bigint DEFAULT NULL,
   `image1` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

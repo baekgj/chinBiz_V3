@@ -46,7 +46,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     mgmtCenterReward: String(g("mgmtCenterReward", 0)), divisionReward: String(g("divisionReward", 0)),
     hqReward: String(g("hqReward", 0)),
     description: String(g("description")), installPolicy: String(g("installPolicy")), returnPolicy: String(g("returnPolicy")),
-    descGuest: String(g("descGuest")), descBuzz: String(g("descBuzz")), descManager: String(g("descManager")),
+    descBuzz: String(g("descBuzz")), descManager: String(g("descManager")),
     descPartner: String(g("descPartner")), descAdmin: String(g("descAdmin")),
     // docs/25 확장
     videoUrl: String(g("videoUrl")),
@@ -157,7 +157,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       salesCenterReward: num(f.salesCenterReward), mgmtCenterReward: num(f.mgmtCenterReward),
       divisionReward: num(f.divisionReward), hqReward: num(f.hqReward),
       description: f.description, installPolicy: f.installPolicy, returnPolicy: f.returnPolicy, onSale,
-      descGuest: f.descGuest, descBuzz: f.descBuzz, descManager: f.descManager, descPartner: f.descPartner, descAdmin: f.descAdmin,
+      descBuzz: f.descBuzz, descManager: f.descManager, descPartner: f.descPartner, descAdmin: f.descAdmin,
       contractEndDate: f.contractEndDate || null, installProduct, simpleDelivery,
       cancelFeeFlag, cancelAmount: cancelFeeFlag ? Number(cancelAmount || 0) : 0,
       popular, recommended,
@@ -415,7 +415,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
 }
 
 const DESC_TABS: { key: string; label: string; note: string }[] = [
-  { key: "descGuest", label: "비로그인 전용", note: "홈(비로그인) 노출용 — 차후 개발 시 적용 예정" },
+  { key: "description", label: "비로그인 전용", note: "홈(비로그인) 상품 상세·목록 요약에 노출" },
   { key: "descBuzz", label: "버즈회원 전용", note: "버즈admin [상품마켓] [상세보기]에 노출" },
   { key: "descManager", label: "매니저회원 전용", note: "매니저admin [관리마켓] [상세보기]에 노출" },
   { key: "descPartner", label: "파트너 전용", note: "파트너admin [상품관리] [상품수정]에 노출" },

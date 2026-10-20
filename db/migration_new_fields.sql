@@ -97,14 +97,23 @@ CALL chinbiz_add_col('product','simple_delivery', "`simple_delivery` bit(1) NOT 
 CALL chinbiz_add_col('product','cancel_fee_flag', "`cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0'");
 CALL chinbiz_add_col('product','cancel_amount',   "`cancel_amount` bigint DEFAULT 0");
 
--- ── [product] 대상별 상품설명 5종 (docs/18) ──────────────────────────
-CALL chinbiz_add_col('product','desc_guest',   "`desc_guest` longtext");
+-- ── [product] 대상별 상품설명 (docs/18) — 비로그인 전용은 description 사용(구 desc_guest, 2026-10-20) ──
 CALL chinbiz_add_col('product','desc_buzz',    "`desc_buzz` longtext");
 CALL chinbiz_add_col('product','desc_manager', "`desc_manager` longtext");
 CALL chinbiz_add_col('product','desc_partner', "`desc_partner` longtext");
 CALL chinbiz_add_col('product','desc_admin',   "`desc_admin` longtext");
 
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
+
+-- ── [product] 비로그인 전용 상품설명 desc_guest → description 이관 (2026-10-20, 재실행 안전) ──
+ALTER TABLE `product` MODIFY `description` longtext COLLATE utf8mb4_unicode_ci;
+SET @has_dg := (SELECT COUNT(*) FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product' AND COLUMN_NAME = 'desc_guest');
+SET @sql := IF(@has_dg > 0,
+  'UPDATE `product` SET `description` = `desc_guest` WHERE (`description` IS NULL OR `description` = '''') AND `desc_guest` IS NOT NULL AND `desc_guest` <> ''''',
+  'DO 0');
+PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+-- (선택) 이관 확인 후 컬럼 제거: ALTER TABLE `product` DROP COLUMN `desc_guest`;
 
 -- ── [신규 테이블] 정산(수당지급) allowance_payment (2026-07-24) ──────
 CREATE TABLE IF NOT EXISTS `allowance_payment` (
