@@ -51,4 +51,9 @@ public interface AllowanceRepository extends JpaRepository<Allowance, AllowanceI
 
     /** [본사 마감내역/정산완료] fixed_month=검색월, paid=false */
     List<Allowance> findByFixedMonthAndPaidFalse(String fixedMonth);
+
+    /** 회원의 사용 가능한 MP(확정수당, 미지급) 총액 — 회비/입점비 MP수당 결제용 */
+    @Query("select coalesce(sum(a.amount),0) from Allowance a " +
+           "where a.memberId = :mid and a.status = com.chinbiz.api.allowance.Allowance.Status.MP and a.paid = false")
+    long sumAvailableMp(@Param("mid") String mid);
 }

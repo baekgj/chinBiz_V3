@@ -32,6 +32,7 @@ const NAV_MANAGER: NavItem[] = [
   ] },
   { href: "/buzz/allowances", label: "수당현황" },
   { href: "/buzz/payments", label: "정산현황" },
+  { href: "/buzz/payment", label: "결제" },
   { href: "/buzz/notices", label: "공지사항" },
 ];
 
@@ -42,7 +43,8 @@ export default function BuzzTopbar() {
   const nav = isManager ? NAV_MANAGER : NAV;
   // 뷰 전환 시 대시보드(/buzz)로 이동
   const toggleView = () => { setView(isManager ? "buzz" : "manager"); router.push("/buzz"); };
-  const active = (href: string) => (href === "/buzz" ? pathname === "/buzz" : pathname.startsWith(href));
+  // 경로 경계 기준 활성화(예: /buzz/payment 가 /buzz/payments 를 잘못 매칭하지 않도록)
+  const active = (href: string) => (href === "/buzz" ? pathname === "/buzz" : pathname === href || pathname.startsWith(href + "/"));
 
   // 소매뉴: hover 대신 클릭 토글(사라짐 방지). 외부 클릭·라우트 변경 시 닫힘
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -74,7 +76,7 @@ export default function BuzzTopbar() {
               <button
                 type="button"
                 onClick={() => setOpenKey(openKey === n.href ? null : n.href)}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) || openKey === n.href ? theme.navActive : theme.navIdle}`}>
+                className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) || openKey === n.href ? theme.navActive : theme.navIdle}`}>
                 {n.label} <span className="text-[10px]">{openKey === n.href ? "▲" : "▼"}</span>
               </button>
               {openKey === n.href && (
@@ -90,7 +92,7 @@ export default function BuzzTopbar() {
             </div>
           ) : (
             <Link key={n.href} href={n.href}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${active(n.href) ? theme.navActive : theme.navIdle}`}>
+              className={`rounded-lg px-2 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${active(n.href) ? theme.navActive : theme.navIdle}`}>
               {n.label}
             </Link>
           ))}

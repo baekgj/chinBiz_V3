@@ -12,7 +12,7 @@ type Row = {
 type Resp = { content: Row[]; cpTotal: number; mpTotal: number };
 
 const MT_LABEL: Record<string, string> = { BUZZ_CENTER: "버즈(소속)", MANAGER_CENTER: "매니저(관리)" };
-const TYPE_LABEL: Record<string, string> = { ORDER: "발생", CANCEL: "취소(-)", CANCEL_FEE: "보전(+)" };
+const TYPE_LABEL: Record<string, string> = { ORDER: "발생", CANCEL: "취소(-)", CANCEL_FEE: "보전(+)", MEMBERSHIP: "회비결제" };
 
 /** 센터 정산 원장 소메뉴 — scope=buzz | manager | payouts */
 export default function CenterSettlementSection({ scope }: { scope: "buzz" | "manager" | "payouts" }) {

@@ -56,6 +56,12 @@ public class Partner {
     @Column(name = "account_holder", length = 50)
     private String accountHolder;     // 예금주
 
+    // 입점비 납부 여부/일자 (파트너 결제, docs/25_x)
+    @Column(name = "entry_fee_paid", nullable = false)
+    private boolean entryFeePaid = false;
+    @Column(name = "entry_fee_paid_date")
+    private java.time.LocalDate entryFeePaidDate;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -98,6 +104,10 @@ public class Partner {
     public void setAccountNumber(String v) { this.accountNumber = v; }
     public String getAccountHolder() { return accountHolder; }
     public void setAccountHolder(String v) { this.accountHolder = v; }
+    public boolean isEntryFeePaid() { return entryFeePaid; }
+    public void setEntryFeePaid(boolean v) { this.entryFeePaid = v; }
+    public java.time.LocalDate getEntryFeePaidDate() { return entryFeePaidDate; }
+    public void setEntryFeePaidDate(java.time.LocalDate v) { this.entryFeePaidDate = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

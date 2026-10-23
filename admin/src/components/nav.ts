@@ -63,6 +63,7 @@ export const NAV: NavItem[] = [
       { href: "/master/settlement/closed", label: "마감내역" },
       { href: "/master/settlement/payments", label: "정산내역" },
       { href: "/master/settlement/paid", label: "지급내역" },
+      { href: "/master/settlement/fees", label: "회비결제내역" },
     ],
   },
   {
@@ -79,6 +80,7 @@ export const NAV: NavItem[] = [
     href: "/master/settings", label: "시스템 설정", desc: "RBAC·배정·약관·알람", icon: "gear", area: "SUPER",
     children: [
       { href: "/master/settings", label: "환경설정" },
+      { href: "/master/settings/fees", label: "관리비설정" },
       { href: "/master/settings/terms", label: "약관설정" },
       { href: "/master/settings/alarms", label: "알람설정" },
     ],

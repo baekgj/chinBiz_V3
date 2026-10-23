@@ -72,12 +72,15 @@ public class AuthController {
         if (u != null) {
             if ("STOP".equalsIgnoreCase(u.getStatus()))
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "중지된 계정입니다."));
+            boolean expired = u.getMembershipExpiry() == null || u.getMembershipExpiry().isBefore(java.time.LocalDate.now());
             return ResponseEntity.ok(Map.of(
                     "userId", u.getUserId(),
                     "name", u.getName(),
                     "role", u.getRole().name(),
                     "salesCenterId", u.getSalesCenterId() == null ? "" : u.getSalesCenterId(),
-                    "adminScopes", u.getRole() == Role.MASTER_ADMIN ? adminScopesOf(u.getUserId()) : java.util.List.of()
+                    "adminScopes", u.getRole() == Role.MASTER_ADMIN ? adminScopesOf(u.getUserId()) : java.util.List.of(),
+                    "membershipExpiry", u.getMembershipExpiry() == null ? "" : u.getMembershipExpiry().toString(),
+                    "membershipExpired", expired  // 매니저/센터 결제 게이트용
             ));
         }
         // partner 테이블 계정
@@ -87,7 +90,9 @@ public class AuthController {
                     "userId", p.getPartnerId(),
                     "name", p.getCompanyName(),
                     "role", Role.PARTNER.name(),
-                    "salesCenterId", ""
+                    "salesCenterId", "",
+                    "entryFeePaid", p.isEntryFeePaid(),                       // 파트너 입점비 결제 게이트용
+                    "entryFeePaidDate", p.getEntryFeePaidDate() == null ? "" : p.getEntryFeePaidDate().toString()
             ));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "사용자를 찾을 수 없습니다."));

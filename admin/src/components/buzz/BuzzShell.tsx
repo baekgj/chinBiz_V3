@@ -7,7 +7,7 @@ import BuzzTopbar from "@/components/buzz/BuzzTopbar";
 
 // 뷰 전용 라우트 (대시보드·마켓·공지사항·내정보는 공용) — 네트워크는 버즈 전용
 const BUZZ_ONLY = ["/buzz/pipeline", "/buzz/network"];
-const MANAGER_ONLY = ["/buzz/intake", "/buzz/managed", "/buzz/education"];
+const MANAGER_ONLY = ["/buzz/intake", "/buzz/managed", "/buzz/education", "/buzz/payment"];
 
 export default function BuzzShell({ children }: { children: React.ReactNode }) {
   const { theme, isManager, loaded } = useBuzz();
