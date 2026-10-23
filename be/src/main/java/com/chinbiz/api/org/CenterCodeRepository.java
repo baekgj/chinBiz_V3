@@ -11,4 +11,7 @@ public interface CenterCodeRepository extends JpaRepository<CenterCode, Long> {
     // 본부(center_code IS NULL) — head_code 로 조회
     java.util.Optional<CenterCode> findFirstByHeadCodeAndCenterCodeIsNull(String headCode);
     long count();
+    // 할당(fix_idx) 조회 — 본부장/센터장 중복등록 판정용
+    List<CenterCode> findByFixIdx(Long fixIdx);
+    boolean existsByFixIdx(Long fixIdx);
 }

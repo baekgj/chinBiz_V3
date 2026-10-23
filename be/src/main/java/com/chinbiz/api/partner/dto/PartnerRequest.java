@@ -18,5 +18,6 @@ public record PartnerRequest(
         String email,
         String bankName,
         String accountNumber,
-        String accountHolder
+        String accountHolder,
+        String saleId             // 영업본부(본부 계정 로그인 아이디)
 ) {}

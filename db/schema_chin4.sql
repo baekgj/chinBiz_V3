@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS `center_code` (
   `search_key` varchar(255) DEFAULT NULL,
   `match_key` varchar(255) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
+  `fix_idx` bigint DEFAULT NULL COMMENT '할당된 본부장/센터장 user.id',
   PRIMARY KEY (`idx`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -124,6 +125,7 @@ CREATE TABLE IF NOT EXISTS `notice` (
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE IF NOT EXISTS `partner` (
   `id` bigint NOT NULL AUTO_INCREMENT,
+  `sale_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,   -- 영업본부(본부 계정 user.user_id)
   `account_holder` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `account_number` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `address` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

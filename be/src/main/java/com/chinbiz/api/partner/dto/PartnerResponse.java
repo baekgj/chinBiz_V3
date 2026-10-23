@@ -19,6 +19,7 @@ public record PartnerResponse(
         String bankName,
         String accountNumber,
         String accountHolder,
+        String saleId,
         String createdAt
 ) {
     public static PartnerResponse of(Partner p) {
@@ -26,7 +27,7 @@ public record PartnerResponse(
                 p.getId(), p.getPartnerId(), p.getCompanyName(), p.getBusinessNumber(),
                 p.getCeoName(), p.getCompanyPhone(), p.getZipcode(), p.getAddress(),
                 p.getAddressDetail(), p.getManagerName(), p.getManagerPhone(), p.getEmail(),
-                p.getBankName(), p.getAccountNumber(), p.getAccountHolder(),
+                p.getBankName(), p.getAccountNumber(), p.getAccountHolder(), p.getSaleId(),
                 p.getCreatedAt() == null ? null : p.getCreatedAt().toString()
         );
     }

@@ -58,11 +58,14 @@ LNB 상품 관리 아래 하위메뉴: **카테고리 관리 / 상품 등록 / �
 - 검증: 카테고리 등록/토글, 상품 등록(UI)→리스트 반영, 필터·페이징·시뮬레이터 E2E 통과.
 
 ## ★ 조직망 관리 (하위메뉴 · docs/04.txt B · 일부 실 BE 연동)
-LNB 조직망 관리 하위: **본부·센터 등록 / 회원 리스트 / 조직 관리**.
-- **center_code 테이블(원본 chin4 재사용)**: `idx`·`head_code`·`head_name`(본부명)·`center_code`(null=본부/not null=센터)·`center_name`(센터명). 본부/센터 계정은 **user 테이블**에 저장, `user.sales_center_id = center_code.idx`.
-- **본부·센터 등록** `/master/organization/register` — 역할(본부/센터)·아이디+중복확인(user+partner)·비번·이름·전화·이메일·계좌(은행/번호/예금주).
-  - 본부: `GET /api/org/center-codes/divisions`(center_code IS NULL) 선택 → role=DIVISION_ADMIN.
-  - 센터: `GET /api/org/divisions`(본부 계정) 선택 → 그 본부 sales_center_id로 `GET /api/org/center-codes/centers?divisionIdx=`(head_code 그룹의 센터 후보) 선택 → role=CENTER_ADMIN.
+LNB 조직망 관리 하위: **본부ᆞ센터 리스트 / 회원 리스트 / 매니저신청 / 조직 관리 / 영업 관리** (본부·센터 등록은 LNB에서 빠지고 리스트 상단 버튼으로 진입, docs/30).
+- **center_code 테이블(원본 chin4 재사용)**: `idx`·`head_code`·`head_name`(본부명)·`center_code`(null=본부/not null=센터)·`center_name`(센터명)·**`fix_idx`(할당된 본부장/센터장 user.id)**. 본부/센터 계정은 **user 테이블**에 저장, `user.sales_center_id = center_code.idx`. 데이터 재적재: `db/center_code_reload.sql`(docs/center.xlsx 273행).
+- **본부ᆞ센터 리스트** `/master/organization/list` — 상단 중복등록불가/허용 토글(app_setting `org_dup_allow`), 좌 본부리스트·우 선택 본부의 센터리스트, 행별 [등록](후보 팝업 → fix_idx·sales_center_id 설정)/[삭제](둘 다 해제). API `GET org-list/divisions`·`org-list/centers?divisionIdx=`·`org-list/{idx}/candidates`, `POST|DELETE org-list/{idx}/assign`.
+- **본부·센터 등록** `/master/organization/register` — 역할(본부/센터)·아이디+중복확인(user+partner)·비번·이름·전화·이메일·계좌(은행/번호/예금주). 저장 후 `center_code.fix_idx = user.id`(불가 정책 위반 시 409).
+  - 본부: `GET /api/org/center-codes/divisions?available=true`(불가 시 본부장 미할당만) 선택 → role=DIVISION_ADMIN.
+  - 센터: 본부 목록은 항상 전체(`center-codes/divisions`) → `GET /api/org/center-codes/centers?divisionIdx=&available=true`(불가 시 센터장 미할당만) 선택 → role=CENTER_ADMIN.
+- **파트너 등록/수정**: [영업본부] 선택 → `partner.sale_id` = 본부 계정 user_id (입점비 결제 시 본부 수당 수취자).
+- **관리비설정**: 회비/입점비 결제 시 수당지급 %(`fee_reward_*_pct`, 소수 둘째자리·0~100) → 결제 확정 시 공급가액(회비−부가세)×% (원 미만 절사)를 allowance MEMBERSHIP/CP로 지급 + 알람 `MEMBERSHIP_ALLOWANCE`(수취자 + 담당영역 C 수당담당자).
 - **회원 리스트** `/master/organization/members` — 전체 user 페이징, 역할/소속(center_name) 표시, 회원명 클릭→수정(비번 변경 가능).
 - **조직 관리 트리** `/master/organization` — 본부 클릭→산하 센터, 센터 클릭→소속 버즈/매니저 lazy 전개. API `tree/divisions`·`tree/centers?divisionId=`·`tree/members?centerIdx=` (head_code로 본부↔센터 연결, sales_center_id로 센터↔버즈/매니저 연결).
 - API `/api/org/**`(`hasRole("MASTER_ADMIN")`): `check-id`·`center-codes/divisions`·`center-codes/centers`·`divisions`·`members`(GET 페이징/POST)·`members/{id}`(GET/PUT). BE: `com.chinbiz.api.org`.

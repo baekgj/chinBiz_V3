@@ -42,7 +42,7 @@ export const NAV: NavItem[] = [
   {
     href: "/master/organization", label: "조직망 및 영업 관리", desc: "본부·센터·매니저·버즈·영업", icon: "sitemap", area: "B",
     children: [
-      { href: "/master/organization/register", label: "본부·센터 등록" },
+      { href: "/master/organization/list", label: "본부ᆞ센터 리스트" },
       { href: "/master/organization/members", label: "회원 리스트" },
       { href: "/master/organization/manager-applications", label: "매니저신청" },
       { href: "/master/organization", label: "조직망 관리" },

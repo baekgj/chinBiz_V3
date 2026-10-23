@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { formatBiz, formatPhone } from "@/lib/format";
 
@@ -23,9 +23,12 @@ export type PartnerData = {
   bankName?: string;
   accountNumber?: string;
   accountHolder?: string;
+  saleId?: string | null; // 영업본부(본부 계정 로그인 아이디)
 };
 
-type Form = Required<Omit<PartnerData, "id">> & { password: string };
+type DivisionAccount = { id: number; userId: string; name: string; centerName: string | null };
+
+type Form = Required<Omit<PartnerData, "id" | "saleId">> & { password: string; saleId: string };
 
 function loadDaumPostcode(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -79,7 +82,14 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
     bankName: initial?.bankName ?? "",
     accountNumber: initial?.accountNumber ?? "",
     accountHolder: initial?.accountHolder ?? "",
+    saleId: initial?.saleId ?? "",
   });
+  const [divisions, setDivisions] = useState<DivisionAccount[]>([]);
+
+  // 영업본부 선택용 본부 계정 목록
+  useEffect(() => {
+    apiGet<DivisionAccount[]>("/api/org/divisions").then((r) => { if (r.data) setDivisions(r.data); });
+  }, []);
   const [idStatus, setIdStatus] = useState<"idle" | "checking" | "ok" | "dup">(mode === "edit" ? "ok" : "idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -189,6 +199,14 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
           </Field>
           <Field label="회사 전화번호">
             <input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(formatPhone(e.target.value))} placeholder="02-1234-5678" />
+          </Field>
+          <Field label="영업본부" hint="입점비 결제 시 본부 수당 수취 대상">
+            <select className={inputCls} value={f.saleId} onChange={(e) => set("saleId")(e.target.value)}>
+              <option value="">선택 안 함</option>
+              {divisions.map((d) => (
+                <option key={d.id} value={d.userId}>{d.centerName ? `${d.centerName} · ` : ""}{d.name} ({d.userId})</option>
+              ))}
+            </select>
           </Field>
           <div className="sm:col-span-2">
             <Field label="사업자 주소">

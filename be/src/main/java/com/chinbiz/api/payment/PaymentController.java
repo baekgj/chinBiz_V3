@@ -43,12 +43,18 @@ public class PaymentController {
     private final AppSettingRepository settingRepo;
     private final AllowanceRepository allowanceRepo;
     private final MembershipPaymentRepository payRepo;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentController.class);
     private final TossPaymentClient toss;
+    private final com.chinbiz.api.allowance.AllowanceService allowanceService;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     public PaymentController(UserRepository userRepo, PartnerRepository partnerRepo, AppSettingRepository settingRepo,
-                             AllowanceRepository allowanceRepo, MembershipPaymentRepository payRepo, TossPaymentClient toss) {
+                             AllowanceRepository allowanceRepo, MembershipPaymentRepository payRepo, TossPaymentClient toss,
+                             com.chinbiz.api.allowance.AllowanceService allowanceService,
+                             com.chinbiz.api.alarm.AlarmService alarmService) {
         this.userRepo = userRepo; this.partnerRepo = partnerRepo; this.settingRepo = settingRepo;
         this.allowanceRepo = allowanceRepo; this.payRepo = payRepo; this.toss = toss;
+        this.allowanceService = allowanceService; this.alarmService = alarmService;
     }
 
     /** 공급가(부가세 제외). 설정 회비는 부가세 포함 금액으로 간주 → MP수당 결제 시 부가세 제외액. */
@@ -460,6 +466,9 @@ public class PaymentController {
         mp.setStatus("DONE");
         payRepo.save(mp);
 
+        // 상위 조직 수당 지급(MEMBERSHIP/CP) + [회비수당지급] 알람 (docs/30) — 실패해도 결제 확정엔 영향 없음
+        try { grantMembershipAllowance(mp); } catch (Exception e) { log.warn("[payment] 회비 수당 지급 실패 {}: {}", mp.getOrderId(), e.getMessage()); }
+
         // 현금영수증은 '결제창 전달 방식' — 토스가 결제창 요청분으로 자동 발급하고 confirm/webhook 응답으로 반영.
         // mock 모드(결제창 미노출)에서는 발급 상태만 시뮬레이션.
         if (receiptEligible(mp.getMethod()) && mp.getReceiptStatus() == null && !toss.enabled()) {
@@ -469,6 +478,41 @@ public class PaymentController {
             payRepo.save(mp);
         }
     }
+
+    /** 본사 [관리비설정] 수당지급 %에 따라 소속센터/소속본부(파트너는 영업본부)에 MEMBERSHIP CP 수당 지급.
+     *  수당 = 결제 공급가액(회비 - 부가세) × % (원 미만 절사). 결제수단(카드/MP)과 무관하게 동일 기준. */
+    private void grantMembershipAllowance(MembershipPayment mp) {
+        long base = nz(mp.getBaseFee()) - nz(mp.getVat());
+        List<com.chinbiz.api.allowance.Allowance> rows;
+        if ("USER".equals(mp.getPayerType())) {
+            User u = userRepo.findById(mp.getPayerId()).orElse(null);
+            if (u == null) return;
+            long centerAmt = u.getRole() == Role.MANAGER ? pctOf(base, "fee_reward_manager_center_pct") : 0;
+            long divisionAmt = u.getRole() == Role.MANAGER ? pctOf(base, "fee_reward_manager_division_pct")
+                    : u.getRole() == Role.CENTER_ADMIN ? pctOf(base, "fee_reward_center_division_pct") : 0;
+            rows = allowanceService.createForMembership(mp.getOrderId(), u, null, centerAmt, divisionAmt, u.getUserId());
+        } else {
+            Partner p = partnerRepo.findById(mp.getPayerId()).orElse(null);
+            if (p == null) return;
+            rows = allowanceService.createForMembership(mp.getOrderId(), null, p.getSaleId(), 0,
+                    pctOf(base, "fee_reward_partner_division_pct"), p.getPartnerId());
+        }
+        alarmService.fireMembershipAllowance(mp.getPayerName(), mp.getOrderId(), rows, mp.getId());
+    }
+
+    /** 설정 %(소수 허용, 예: 10 / 2.5) 적용 금액 — BigDecimal 로 계산 후 원 미만 절사 */
+    private long pctOf(long base, String key) {
+        try {
+            java.math.BigDecimal pct = new java.math.BigDecimal(settingRepo.getStr(key, "0"));
+            if (pct.signum() <= 0 || base <= 0) return 0;
+            return java.math.BigDecimal.valueOf(base).multiply(pct)
+                    .divide(java.math.BigDecimal.valueOf(100), 0, java.math.RoundingMode.DOWN).longValue();
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private static long nz(Long v) { return v == null ? 0 : v; }
 
     private Map<String, Object> infoForPayment(MembershipPayment mp) {
         if ("USER".equals(mp.getPayerType()))

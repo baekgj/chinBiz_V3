@@ -41,6 +41,13 @@ public class CenterCode {
     @Column(name = "search_key", length = 255)
     private String searchKey;
 
+    /** 할당된 본부장/센터장 user.id (null = 미할당). [본부ᆞ센터 리스트]·[본부ᆞ센터등록]에서 지정 */
+    @Column(name = "fix_idx")
+    private Long fixIdx;
+
+    public Long getFixIdx() { return fixIdx; }
+    public void setFixIdx(Long fixIdx) { this.fixIdx = fixIdx; }
+
     public Long getIdx() { return idx; }
     public String getMatchKey() { return matchKey; }
     public String getSearchKey() { return searchKey; }

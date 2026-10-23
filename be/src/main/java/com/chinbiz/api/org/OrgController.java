@@ -1,6 +1,8 @@
 package com.chinbiz.api.org;
 
 import com.chinbiz.api.partner.PartnerRepository;
+import com.chinbiz.api.setting.AppSettingController;
+import com.chinbiz.api.setting.AppSettingRepository;
 import com.chinbiz.api.user.Role;
 import com.chinbiz.api.user.User;
 import com.chinbiz.api.user.UserRepository;
@@ -33,13 +35,26 @@ public class OrgController {
     private final PartnerRepository partnerRepository;
     private final CenterCodeRepository centerCodeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AppSettingRepository appSettingRepository;
 
     public OrgController(UserRepository userRepository, PartnerRepository partnerRepository,
-                         CenterCodeRepository centerCodeRepository, PasswordEncoder passwordEncoder) {
+                         CenterCodeRepository centerCodeRepository, PasswordEncoder passwordEncoder,
+                         AppSettingRepository appSettingRepository) {
         this.userRepository = userRepository;
         this.partnerRepository = partnerRepository;
         this.centerCodeRepository = centerCodeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.appSettingRepository = appSettingRepository;
+    }
+
+    /** 본부/센터 장 중복등록 허용 여부 (app_setting org_dup_allow = Y) */
+    private boolean dupAllowed() {
+        return "Y".equalsIgnoreCase(appSettingRepository.getStr(AppSettingController.ORG_DUP_ALLOW, "N"));
+    }
+
+    /** 등록 선택 가능 여부: 허용이면 항상, 불가면 미할당이거나 본인(selfId)에게 할당된 코드만 */
+    private boolean selectable(CenterCode c, Long selfId) {
+        return dupAllowed() || c.getFixIdx() == null || c.getFixIdx().equals(selfId);
     }
 
     private String centerName(Long idx) {
@@ -55,6 +70,7 @@ public class OrgController {
         m.put("centerName", c.getCenterName());
         m.put("centerCode", c.getCenterCode());
         m.put("headCode", c.getHeadCode());
+        m.put("fixIdx", c.getFixIdx());
         return m;
     }
 
@@ -82,20 +98,24 @@ public class OrgController {
         return Map.of("loginId", loginId, "available", !taken);
     }
 
-    /** 본부 후보 (center_code IS NULL) */
+    /** 본부 후보 (center_code IS NULL). available=true 면 중복등록 정책 적용(불가 시 본부장 미할당만, selfId 본인 할당 포함) */
     @GetMapping("/center-codes/divisions")
-    public List<Map<String, Object>> divisionCodes() {
-        return centerCodeRepository.findByCenterCodeIsNullOrderByIdxAsc().stream().map(this::code).toList();
+    public List<Map<String, Object>> divisionCodes(@RequestParam(defaultValue = "false") boolean available,
+                                                   @RequestParam(required = false) Long selfId) {
+        return centerCodeRepository.findByCenterCodeIsNullOrderByIdxAsc().stream()
+                .filter(c -> !available || selectable(c, selfId)).map(this::code).toList();
     }
 
     /** 센터 후보: 선택한 본부의 sales_center_id(=center_code idx) → head_code → center_code!=null 목록 */
     @GetMapping("/center-codes/centers")
-    public ResponseEntity<?> centerCodes(@RequestParam Long divisionIdx) {
+    public ResponseEntity<?> centerCodes(@RequestParam Long divisionIdx,
+                                         @RequestParam(defaultValue = "false") boolean available,
+                                         @RequestParam(required = false) Long selfId) {
         CenterCode head = centerCodeRepository.findById(divisionIdx).orElse(null);
         if (head == null) return ResponseEntity.ok(List.of());
         List<Map<String, Object>> list = centerCodeRepository
                 .findByCenterCodeIsNotNullAndHeadCodeOrderByIdxAsc(head.getHeadCode())
-                .stream().map(this::code).toList();
+                .stream().filter(c -> !available || selectable(c, selfId)).map(this::code).toList();
         return ResponseEntity.ok(list);
     }
 
@@ -105,6 +125,7 @@ public class OrgController {
         return userRepository.findByRole(Role.DIVISION_ADMIN).stream().map(u -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", u.getId());
+            m.put("userId", u.getUserId());
             m.put("name", u.getName());
             m.put("salesCenterId", u.getSalesCenterId());
             m.put("centerName", centerName(u.getSalesCenterId()));
@@ -238,8 +259,11 @@ public class OrgController {
         u.setUserId(req.userId());
         u.setPassword(passwordEncoder.encode(req.password()));
         u.setRole(role);
+        String taken = assignConflict(req.salesCenterId(), null);
+        if (taken != null) return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", taken));
         apply(u, req);
         userRepository.save(u);
+        bindFix(u, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(member(u));
     }
 
@@ -250,9 +274,134 @@ public class OrgController {
         if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "회원을 찾을 수 없습니다."));
         if (!isBlank(req.password())) u.setPassword(passwordEncoder.encode(req.password()));
         if (req.role() != null) { Role r = parseOrgRole(req.role()); if (r != null) u.setRole(r); }
+        String taken = assignConflict(req.salesCenterId(), u.getId());
+        if (taken != null) return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", taken));
+        Long before = u.getSalesCenterId();
         apply(u, req);
         userRepository.save(u);
+        bindFix(u, before);
         return ResponseEntity.ok(member(u));
+    }
+
+    /** 중복등록 불가 정책에서 해당 코드가 다른 계정에 이미 할당돼 있으면 메시지, 아니면 null */
+    private String assignConflict(Long codeIdx, Long selfId) {
+        if (codeIdx == null) return null;
+        CenterCode c = centerCodeRepository.findById(codeIdx).orElse(null);
+        if (c == null || selectable(c, selfId)) return null;
+        return c.getCenterCode() == null ? "이미 본부장이 할당된 본부입니다." : "이미 센터장이 할당된 센터입니다.";
+    }
+
+    /** 본부/센터 저장 후 center_code.fix_idx = user.id. 코드가 바뀌었으면 이전 코드의 본인 할당 해제 */
+    private void bindFix(User u, Long beforeCodeIdx) {
+        if (u.getRole() != Role.DIVISION_ADMIN && u.getRole() != Role.CENTER_ADMIN) return;
+        if (beforeCodeIdx != null && !beforeCodeIdx.equals(u.getSalesCenterId())) {
+            centerCodeRepository.findById(beforeCodeIdx).ifPresent(c -> {
+                if (u.getId().equals(c.getFixIdx())) { c.setFixIdx(null); centerCodeRepository.save(c); }
+            });
+        }
+        if (u.getSalesCenterId() != null) {
+            centerCodeRepository.findById(u.getSalesCenterId()).ifPresent(c -> {
+                c.setFixIdx(u.getId());
+                centerCodeRepository.save(c);
+            });
+        }
+    }
+
+    // ───────── 본부ᆞ센터 리스트 : center_code ↔ 본부장/센터장(fix_idx) 할당 관리 ─────────
+
+    /** 코드 행 + 할당 계정 정보 (ID/이름/연락처) */
+    private Map<String, Object> slot(CenterCode c) {
+        Map<String, Object> m = code(c);
+        User u = c.getFixIdx() == null ? null : userRepository.findById(c.getFixIdx()).orElse(null);
+        m.put("assigneeId", u == null ? null : u.getId());
+        m.put("assigneeUserId", u == null ? null : u.getUserId());
+        m.put("assigneeName", u == null ? null : u.getName());
+        m.put("assigneePhone", u == null ? null : u.getPhone());
+        return m;
+    }
+
+    @GetMapping("/org-list/divisions")
+    public Map<String, Object> orgListDivisions() {
+        return Map.of("dupAllowed", dupAllowed(),
+                "content", centerCodeRepository.findByCenterCodeIsNullOrderByIdxAsc().stream().map(this::slot).toList());
+    }
+
+    @GetMapping("/org-list/centers")
+    public List<Map<String, Object>> orgListCenters(@RequestParam Long divisionIdx) {
+        CenterCode head = centerCodeRepository.findById(divisionIdx).orElse(null);
+        if (head == null) return List.of();
+        return centerCodeRepository.findByCenterCodeIsNotNullAndHeadCodeOrderByIdxAsc(head.getHeadCode())
+                .stream().map(this::slot).toList();
+    }
+
+    /** [등록] 팝업 후보: 본부 코드 → 본부(DIVISION_ADMIN) 계정 전체, 센터 코드 → 해당 본부 소속(또는 소속 미지정) 센터(CENTER_ADMIN) 계정.
+     *  중복등록 불가면 어느 코드에도 할당되지 않은 계정만, 허용이면 이 코드에 이미 할당된 계정만 제외. */
+    @GetMapping("/org-list/{codeIdx}/candidates")
+    public ResponseEntity<?> orgListCandidates(@PathVariable Long codeIdx) {
+        CenterCode c = centerCodeRepository.findById(codeIdx).orElse(null);
+        if (c == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "코드를 찾을 수 없습니다."));
+        boolean isDivision = c.getCenterCode() == null;
+        boolean dup = dupAllowed();
+        List<Map<String, Object>> list = userRepository.findByRole(isDivision ? Role.DIVISION_ADMIN : Role.CENTER_ADMIN).stream()
+                .filter(u -> isDivision || belongsToHead(u.getSalesCenterId(), c.getHeadCode()))
+                .filter(u -> !u.getId().equals(c.getFixIdx()))
+                .filter(u -> dup || !centerCodeRepository.existsByFixIdx(u.getId()))
+                .map(u -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", u.getId());
+                    m.put("userId", u.getUserId());
+                    m.put("name", u.getName());
+                    m.put("phone", u.getPhone());
+                    m.put("centerName", centerName(u.getSalesCenterId()));
+                    return m;
+                }).toList();
+        return ResponseEntity.ok(list);
+    }
+
+    /** 센터 계정이 해당 본부(head_code) 소속인지 — 소속 미지정(null)도 후보로 포함 */
+    private boolean belongsToHead(Long salesCenterId, String headCode) {
+        if (salesCenterId == null) return true;
+        return centerCodeRepository.findById(salesCenterId)
+                .map(x -> headCode != null && headCode.equals(x.getHeadCode())).orElse(true);
+    }
+
+    public record AssignRequest(Long userId) {}
+
+    /** [등록]: center_code.fix_idx = user.id, user.sales_center_id = codeIdx */
+    @PostMapping("/org-list/{codeIdx}/assign")
+    public ResponseEntity<?> orgListAssign(@PathVariable Long codeIdx, @RequestBody AssignRequest req) {
+        CenterCode c = centerCodeRepository.findById(codeIdx).orElse(null);
+        if (c == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "코드를 찾을 수 없습니다."));
+        User u = req == null || req.userId() == null ? null : userRepository.findById(req.userId()).orElse(null);
+        Role need = c.getCenterCode() == null ? Role.DIVISION_ADMIN : Role.CENTER_ADMIN;
+        if (u == null || u.getRole() != need)
+            return ResponseEntity.badRequest().body(Map.of("message", need == Role.DIVISION_ADMIN ? "본부 계정을 선택해 주세요." : "센터 계정을 선택해 주세요."));
+        if (!dupAllowed()) {
+            if (c.getFixIdx() != null && !c.getFixIdx().equals(u.getId()))
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 할당된 코드입니다. 먼저 삭제해 주세요."));
+            if (centerCodeRepository.findByFixIdx(u.getId()).stream().anyMatch(x -> !x.getIdx().equals(codeIdx)))
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 다른 본부/센터에 할당된 계정입니다."));
+        }
+        c.setFixIdx(u.getId());
+        centerCodeRepository.save(c);
+        u.setSalesCenterId(codeIdx);
+        userRepository.save(u);
+        return ResponseEntity.ok(slot(c));
+    }
+
+    /** [삭제]: center_code.fix_idx 와 할당 계정의 user.sales_center_id 해제 */
+    @DeleteMapping("/org-list/{codeIdx}/assign")
+    public ResponseEntity<?> orgListUnassign(@PathVariable Long codeIdx) {
+        CenterCode c = centerCodeRepository.findById(codeIdx).orElse(null);
+        if (c == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "코드를 찾을 수 없습니다."));
+        if (c.getFixIdx() != null) {
+            userRepository.findById(c.getFixIdx()).ifPresent(u -> {
+                if (codeIdx.equals(u.getSalesCenterId())) { u.setSalesCenterId(null); userRepository.save(u); }
+            });
+            c.setFixIdx(null);
+            centerCodeRepository.save(c);
+        }
+        return ResponseEntity.ok(slot(c));
     }
 
     private void apply(User u, OrgMemberRequest req) {

@@ -38,12 +38,15 @@ public class AlarmService {
     private final PartnerRepository partnerRepo;
     private final WebPushService webPushService;
     private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo;
+    private final com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepo;
 
     public AlarmService(AlarmSettingRepository settingRepo, AlarmRepository alarmRepo,
                         UserRepository userRepo, CenterCodeRepository centerCodeRepo,
                         ProductRepository productRepo, PartnerRepository partnerRepo,
                         WebPushService webPushService,
-                        com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo) {
+                        com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo,
+                        com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepo) {
+        this.adminScopeRepo = adminScopeRepo;
         this.settingRepo = settingRepo; this.alarmRepo = alarmRepo;
         this.userRepo = userRepo; this.centerCodeRepo = centerCodeRepo;
         this.productRepo = productRepo; this.partnerRepo = partnerRepo;
@@ -239,7 +242,7 @@ public class AlarmService {
     // ───────────────────────── 영업/주문 (Sale 기반) ─────────────────────────
 
     /** 영업/주문 프로세스 공통 — Sale 로부터 모든 대상 수신자·토큰 해석 후 발송.
-     *  processCode: SALE1 / SALE2 / MANAGER_CANCEL / ORDER_CANCEL / ORDER_CONFIRM */
+     *  processCode: SALE1 / SALE2 / SALE2_AUTO / MANAGER_CANCEL / ORDER_CANCEL / ORDER_CONFIRM */
     public int fireSaleEvent(String processCode, Sale sale) {
         if (sale == null) return 0;
         User buzz = sale.getBuzzId() == null ? null : userRepo.findById(sale.getBuzzId()).orElse(null);
@@ -265,7 +268,7 @@ public class AlarmService {
         if (partner != null) map.put(AlarmTarget.PARTNER, List.of(partner));
 
         // 토큰: 행위자(member)는 프로세스별 상이(1차=버즈 / 2차·매니저취소=매니저)
-        boolean managerActor = "SALE2".equals(processCode) || "MANAGER_CANCEL".equals(processCode);
+        boolean managerActor = "SALE2".equals(processCode) || "SALE2_AUTO".equals(processCode) || "MANAGER_CANCEL".equals(processCode);
         String member = managerActor ? (manager != null ? manager.getName() : "") : (buzz != null ? buzz.getName() : "");
         long cp = cpAmount(product, managerActor ? "manager" : "buzz");
         Map<String, String> tokens = new HashMap<>();
@@ -285,6 +288,48 @@ public class AlarmService {
      * @param fixedMonth  대상월(YYYYMM)
      * @param members     (memberType 이름, memberId) 목록 — allowance/allowance_payment 의 대상 회원
      */
+    /**
+     * [회비수당지급] 알람 (docs/30) — 회비/입점비 결제로 생성된 MEMBERSHIP 수당 행마다 수취자(센터/본부)에게,
+     * 합계는 본사 수당담당자(담당영역 C)에게 발송.
+     * @param payerName 결제 회원명(파트너는 상호명)
+     */
+    public int fireMembershipAllowance(String payerName, String orderId, List<com.chinbiz.api.allowance.Allowance> rows, Long refId) {
+        if (rows == null || rows.isEmpty()) return 0;
+        int created = 0;
+        long total = 0;
+        for (com.chinbiz.api.allowance.Allowance a : rows) {
+            total += a.getAmount();
+            AlarmTarget t = a.getMemberType() == com.chinbiz.api.allowance.Allowance.MemberType.DIVISION ? AlarmTarget.DIVISION : AlarmTarget.CENTER;
+            User u = userRepo.findByUserId(a.getMemberId()).orElse(null);
+            if (u == null) continue;
+            Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
+            map.put(t, List.of(toRecipient(u)));
+            created += fire("MEMBERSHIP_ALLOWANCE", map, membershipTokens(payerName, orderId, a.getAmount()), "MEMBERSHIP", refId);
+        }
+        Map<AlarmTarget, List<Recipient>> hq = new EnumMap<>(AlarmTarget.class);
+        hq.put(AlarmTarget.HQ, financeAdmins());
+        created += fire("MEMBERSHIP_ALLOWANCE", hq, membershipTokens(payerName, orderId, total), "MEMBERSHIP", refId);
+        return created;
+    }
+
+    private Map<String, String> membershipTokens(String payerName, String orderId, long amount) {
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("member", nz(payerName));
+        tokens.put("amount", String.format("%,d", amount));
+        tokens.put("orderNo", nz(orderId));
+        return tokens;
+    }
+
+    /** 수당담당자 — 담당영역에 C(수당 및 정산 관리)가 있는 본사 관리자. 없으면 본사 관리자 전체 */
+    private List<Recipient> financeAdmins() {
+        List<Recipient> out = new ArrayList<>();
+        for (User u : userRepo.findByRole(Role.MASTER_ADMIN)) {
+            String areas = adminScopeRepo.findById(u.getUserId()).map(com.chinbiz.api.rbac.AdminScope::getAreas).orElse(null);
+            if (areas != null && java.util.Arrays.stream(areas.split(",")).anyMatch(x -> "C".equals(x.trim()))) out.add(toRecipient(u));
+        }
+        return out.isEmpty() ? hqAdmins() : out;
+    }
+
     public int fireSettlement(String processCode, String fixedMonth, java.util.Collection<String[]> members) {
         // 대상유형별 회원 중복 제거(memberId 기준)
         Map<AlarmTarget, Map<String, Recipient>> byTarget = new EnumMap<>(AlarmTarget.class);

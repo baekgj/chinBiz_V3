@@ -158,7 +158,28 @@ export default function SignupPage() {
     if (!f.zipcode || !f.address) e.address = "우편번호 검색으로 주소를 입력해 주세요.";
     if (!agree.terms || !agree.privacy) e.agree = "필수 약관에 동의해 주세요.";
     setErrors(e);
+    focusFirstError(e);
     return Object.keys(e).length === 0;
+  }
+
+  // 미입력/오류 항목 중 화면 순서상 첫 번째 입력값으로 포커스 이동
+  function focusFirstError(e: typeof errors) {
+    const order: [keyof typeof errors, string][] = [
+      ["userId", "#userId"],
+      ["password", 'input[name="password"]'],
+      ["passwordConfirm", 'input[name="passwordConfirm"]'],
+      ["name", 'input[name="name"]'],
+      ["email", 'input[name="email"]'],
+      ["phone", 'input[name="phone"]'],
+      ["address", "#postcodeBtn"],
+      ["agree", agree.terms ? "#agreePrivacy" : "#agreeTerms"],
+    ];
+    const hit = order.find(([k]) => e[k]);
+    if (!hit) return;
+    const el = document.querySelector<HTMLElement>(hit[1]);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
   }
 
   async function onSubmit(ev: React.FormEvent) {
@@ -312,6 +333,7 @@ export default function SignupPage() {
               className={`w-36 ${readonlyCls}`}
             />
             <button
+              id="postcodeBtn"
               type="button"
               onClick={openPostcode}
               className="shrink-0 rounded-xl border border-forest-600 px-4 py-2.5 text-sm font-semibold text-forest-600 transition-colors hover:bg-forest-50"
@@ -356,8 +378,8 @@ export default function SignupPage() {
             전체 약관에 동의합니다
           </label>
           <div className="mt-3 space-y-2 border-t border-line pt-3">
-            <AgreeRow label="(필수) 이용약관 동의" checked={agree.terms} onChange={(v) => toggleOne("terms", v)} onView={() => setViewTerm({ code: "BUZZ", title: "버즈회원 이용약관" })} />
-            <AgreeRow label="(필수) 개인정보 수집·이용 동의" checked={agree.privacy} onChange={(v) => toggleOne("privacy", v)} onView={() => setViewTerm({ code: "PRIVACY_CONSENT", title: "개인정보 수집·이용 동의" })} />
+            <AgreeRow id="agreeTerms" label="(필수) 이용약관 동의" checked={agree.terms} onChange={(v) => toggleOne("terms", v)} onView={() => setViewTerm({ code: "BUZZ", title: "버즈회원 이용약관" })} />
+            <AgreeRow id="agreePrivacy" label="(필수) 개인정보 수집·이용 동의" checked={agree.privacy} onChange={(v) => toggleOne("privacy", v)} onView={() => setViewTerm({ code: "PRIVACY_CONSENT", title: "개인정보 수집·이용 동의" })} />
             <AgreeRow label="(선택) 마케팅 정보 수신 동의" checked={agree.marketing} onChange={(v) => toggleOne("marketing", v)} />
           </div>
           {errors.agree && <p className="mt-2 text-xs text-danger">{errors.agree}</p>}
@@ -393,11 +415,13 @@ export default function SignupPage() {
 }
 
 function AgreeRow({
+  id,
   label,
   checked,
   onChange,
   onView,
 }: {
+  id?: string;
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
@@ -407,6 +431,7 @@ function AgreeRow({
     <label className="flex cursor-pointer items-center justify-between text-sm text-ink-soft">
       <span className="flex items-center gap-2">
         <input
+          id={id}
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}

@@ -56,6 +56,10 @@ public class Partner {
     @Column(name = "account_holder", length = 50)
     private String accountHolder;     // 예금주
 
+    // 영업본부 — 본사 파트너 등록 시 선택한 본부 계정 로그인 아이디(user.user_id). 입점비 결제 시 본부 수당 수취자
+    @Column(name = "sale_id", length = 60)
+    private String saleId;
+
     // 입점비 납부 여부/일자 (파트너 결제, docs/25_x)
     @Column(name = "entry_fee_paid", nullable = false)
     private boolean entryFeePaid = false;
@@ -104,6 +108,8 @@ public class Partner {
     public void setAccountNumber(String v) { this.accountNumber = v; }
     public String getAccountHolder() { return accountHolder; }
     public void setAccountHolder(String v) { this.accountHolder = v; }
+    public String getSaleId() { return saleId; }
+    public void setSaleId(String v) { this.saleId = v; }
     public boolean isEntryFeePaid() { return entryFeePaid; }
     public void setEntryFeePaid(boolean v) { this.entryFeePaid = v; }
     public java.time.LocalDate getEntryFeePaidDate() { return entryFeePaidDate; }

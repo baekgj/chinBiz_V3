@@ -424,6 +424,12 @@ CREATE TABLE IF NOT EXISTS `agree` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- ⚠ 기존 sale 행은 agree_check=N 이 되어 매니저 [버즈1차접수현황]에서 숨겨짐. 기존 건을 계속 노출하려면:
 --   UPDATE `sale` SET `agree_check`='Y' WHERE `manager_id` IS NULL;  (운영 판단 후 실행)
+-- [2026-10-23] docs/30 : center_code 재적재 + fix_idx / partner 영업본부 / 회비 수당
+ALTER TABLE `center_code` ADD COLUMN `fix_idx` bigint DEFAULT NULL COMMENT '할당된 본부장/센터장 user.id';
+ALTER TABLE `partner` ADD COLUMN `sale_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+ALTER TABLE `allowance` MODIFY `type` ENUM('ORDER','CANCEL','CANCEL_FEE','JOIN','MEMBERSHIP') NOT NULL;
+-- center_code 데이터 전체 삭제·재삽입(docs/center.xlsx 273행): mysql -u root -p chin4 < db\center_code_reload.sql
+--   ⚠ 재적재 후 기존 본부/센터 계정의 sales_center_id 는 새 idx 기준으로 [본부ᆞ센터 리스트]에서 재할당 필요
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
    · 센터 [1차영업관리]/[2차영업관리]에 기존 상품별 합산은 유지하고, 개별 영업 내역 리스트를 추가.
@@ -1484,3 +1490,40 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    -- (선택) 이관 확인 후: ALTER TABLE `product` DROP COLUMN `desc_guest`;
    migration_new_fields.sql / schema_chin4.sql 반영. 로컬DB 적용 완료(product 15 이관).
 ■ 검증: admin tsc 0, BE compile OK, 소스 내 descGuest/desc_guest 참조 0건.
+
+[작업] docs/30 — 본부ᆞ센터 리스트 / 파트너 영업본부 / 가입 포커스 / 수당내역 / 매니저 자동배정 / 회비 수당 (2026-10-23)
+====================================================================
+■ center_code: docs/center.xlsx → db/center_code_reload.sql (fix_idx 컬럼 추가 + TRUNCATE + 273행 INSERT).
+   엔티티 CenterCode.fixIdx(fix_idx) = 할당된 본부장/센터장 user.id.
+■ 본사 [조직망 및 영업 관리]-[본부ᆞ센터 리스트] /master/organization/list (LNB [본부·센터 등록] 삭제, 상단 버튼으로 이동)
+   - 상단 토글 중복등록불가/허용 → app_setting org_dup_allow(N/Y)
+   - 좌: 본부리스트(코드/본부명/ID/본부장명/연락처, 등록·삭제), 본부 클릭 → 우: 해당 본부 센터리스트
+   - [등록] 팝업 후보: 본부=DIVISION_ADMIN 전체 / 센터=해당 본부 소속(또는 소속 미지정) CENTER_ADMIN.
+     불가면 어떤 코드에도 미할당(fix_idx 없음)인 계정만. 선택 → center_code.fix_idx=user.id, user.sales_center_id=idx
+   - [삭제] → center_code.fix_idx=NULL, 할당 계정 user.sales_center_id=NULL(그 코드일 때만)
+   - BE OrgController: GET /api/org/org-list/divisions, /org-list/centers?divisionIdx=, /org-list/{idx}/candidates,
+     POST|DELETE /org-list/{idx}/assign
+■ [본부ᆞ센터등록] 화면: 본부 선택 = 불가 시 본부장 미할당만 / 센터 등록의 본부 목록 = 항상 전체(center_code 본부) /
+   센터 선택 = 불가 시 센터장 미할당만(GET center-codes/*?available=true). 저장 후 fix_idx=user.id(수정 시 이전 코드 해제),
+   불가 정책 위반 시 409.
+■ 파트너 등록/수정: [영업본부] 선택(본부 계정) → partner.sale_id = 본부 계정 user_id.
+■ HOME 회원가입: [가입하기] 시 첫 오류 입력값으로 포커스+스크롤(아이디→비번→비번확인→이름→이메일→휴대폰→우편번호→약관).
+■ 버즈 [상품마켓] 상세: 타이틀 '수당내역', 항목 '버즈회원'/'피추천 버즈회원', 하단 안내문구 삭제.
+   매니저 [관리마켓] 상세: 타이틀 '수당내역', 부제 삭제, '관리매니저' 1항목만, 안내문구 삭제.
+■ 매니저 자동배정: 1차영업 등록자가 MANAGER 이고 고객 주소 센터(customer_center_id)가 본인 승인 활동영역(manager_center Y)
+   이며 해당 상품 교육 이수·승인 시 → manager_id=본인, 매니저/관리센터 수당 생성, 알람 SALE2_AUTO(2차영업자동배정).
+■ 회비 수당: [관리비설정]에 수당지급 입력(fee_reward_manager_center / fee_reward_manager_division /
+   fee_reward_center_division / fee_reward_partner_division). 결제 확정(finalizePayment, 카드·가상계좌·MP 공통)시
+   allowance type=MEMBERSHIP, status=CP 로 소속센터(BUZZ_CENTER)/소속본부(DIVISION) 지급(파트너는 sale_id 본부),
+   알람 MEMBERSHIP_ALLOWANCE(회비수당지급): 수취 센터/본부 + 본사 수당담당자(admin_scope 담당영역 C, 없으면 본사 전체).
+■ DB: fix_idx / partner.sale_id / allowance.type ENUM MEMBERSHIP → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+
+[수정] docs/30-11 — 회비/입점비 결제 수당을 금액 → % 로 변경 (2026-10-23)
+====================================================================
+■ 본사 [시스템설정]-[관리비설정]: 수당지급 입력을 % 로 변경(소수 둘째자리, 0~100).
+   키 변경: fee_reward_manager_center_pct / fee_reward_manager_division_pct /
+            fee_reward_center_division_pct / fee_reward_partner_division_pct (기존 원 단위 fee_reward_* 키는 미사용)
+■ BE PaymentController.grantMembershipAllowance: 수당 = 결제 공급가액(base_fee − vat) × % (BigDecimal, 원 미만 절사).
+   카드/가상계좌/MP수당 결제 모두 동일 기준. allowance MEMBERSHIP/CP + 알람 MEMBERSHIP_ALLOWANCE 는 기존과 동일.
+■ 검증: 센터 월회비 220,000(공급가 200,000) × 12.5% → 본부 CP 25,000 생성 확인. admin tsc 0, BE compile OK.
+■ DB: 스키마 변경 없음(app_setting 키만 추가, BE 기동 시 시더가 기본 0 생성).

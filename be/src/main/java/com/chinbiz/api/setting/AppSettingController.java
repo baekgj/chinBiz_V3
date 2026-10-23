@@ -29,7 +29,14 @@ public class AppSettingController {
         "fee_manager_monthly", "fee_manager_yearly",
         "fee_center_monthly", "fee_center_yearly",
         "fee_partner_entry",
+        // 회비/입점비 결제 시 상위 조직 수당 (%, 소수 허용) — 결제 공급가액 × % → allowance type=MEMBERSHIP, status=CP
+        "fee_reward_manager_center_pct", "fee_reward_manager_division_pct",
+        "fee_reward_center_division_pct",
+        "fee_reward_partner_division_pct",
     };
+
+    /** 본부/센터 장 중복등록 허용 여부 (Y=허용, N=불가) — [본부ᆞ센터 리스트] 상단 토글 */
+    public static final String ORG_DUP_ALLOW = "org_dup_allow";
 
     private final AppSettingRepository repo;
 
@@ -44,6 +51,7 @@ public class AppSettingController {
         m.putIfAbsent(JOIN_CP_REFERRER, "500");
         m.putIfAbsent(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
         for (String k : FEE_KEYS) m.putIfAbsent(k, "0");   // 관리비 기본 0원
+        m.putIfAbsent(ORG_DUP_ALLOW, "N");
         return m;
     }
 
@@ -64,6 +72,7 @@ public class AppSettingController {
             if (repo.findById(JOIN_CP_REFERRER).isEmpty()) repo.put(JOIN_CP_REFERRER, "500");
             if (repo.findById(JOIN_FALLBACK_REF).isEmpty()) repo.put(JOIN_FALLBACK_REF, JOIN_FALLBACK_DEFAULT);
             for (String k : FEE_KEYS) if (repo.findById(k).isEmpty()) repo.put(k, "0");
+            if (repo.findById(ORG_DUP_ALLOW).isEmpty()) repo.put(ORG_DUP_ALLOW, "N");
         }
     }
 }

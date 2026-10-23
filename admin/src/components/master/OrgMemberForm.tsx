@@ -53,9 +53,9 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
   const [saving, setSaving] = useState(false);
 
   // 본부/센터 선택용 데이터
-  const [divisionCodes, setDivisionCodes] = useState<Code[]>([]); // 본부 후보(center_code null)
-  const [divisions, setDivisions] = useState<Division[]>([]);     // 본부 계정(user)
-  const [selDivision, setSelDivision] = useState<number | "">(""); // 선택한 본부 user id
+  const [divisionCodes, setDivisionCodes] = useState<Code[]>([]); // 본부 등록용 본부 후보(중복등록 정책 적용)
+  const [allDivisionCodes, setAllDivisionCodes] = useState<Code[]>([]); // 센터 등록용 본부 목록(항상 전체)
+  const [selDivision, setSelDivision] = useState<number | "">(""); // 선택한 본부 center_code idx
   const [centerCodes, setCenterCodes] = useState<Code[]>([]);      // 센터 후보
 
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -95,20 +95,20 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
 
   useEffect(() => {
     if (isEdit) return; // 수정 모드는 소속(center) 재선택 없이 기본정보만
-    apiGet<Code[]>("/api/org/center-codes/divisions").then((r) => { if (r.data) setDivisionCodes(r.data); });
-    apiGet<Division[]>("/api/org/divisions").then((r) => { if (r.data) setDivisions(r.data); });
+    // 본부 등록: 중복등록 불가면 본부장 미할당 본부만 / 센터 등록: 본부는 모두 노출
+    apiGet<Code[]>("/api/org/center-codes/divisions?available=true").then((r) => { if (r.data) setDivisionCodes(r.data); });
+    apiGet<Code[]>("/api/org/center-codes/divisions").then((r) => { if (r.data) setAllDivisionCodes(r.data); });
   }, [isEdit]);
 
   // 센터 모드: 본부 선택 시 산하 센터 후보 로드
   useEffect(() => {
     if (isEdit || role !== "CENTER_ADMIN" || selDivision === "") { return; }
-    const div = divisions.find((d) => d.id === selDivision);
-    if (!div?.salesCenterId) { setCenterCodes([]); return; }
-    apiGet<Code[]>(`/api/org/center-codes/centers?divisionIdx=${div.salesCenterId}`).then((r) => {
+    // 중복등록 불가면 센터장 미할당 센터만
+    apiGet<Code[]>(`/api/org/center-codes/centers?divisionIdx=${selDivision}&available=true`).then((r) => {
       setCenterCodes(r.data ?? []);
       setSalesCenterId("");
     });
-  }, [selDivision, role, divisions, isEdit]);
+  }, [selDivision, role, isEdit]);
 
   function onRole(r: "DIVISION_ADMIN" | "CENTER_ADMIN") {
     setRole(r); setSalesCenterId(""); setSelDivision(""); setCenterCodes([]);
@@ -150,7 +150,11 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
     const res = isEdit ? await apiPut(`/api/org/members/${initial?.id}`, payload) : await apiPost(`/api/org/members`, payload);
     setSaving(false);
     if (res.ok) router.push("/master/organization/members");
-    else if (res.status === 409) { setIdStatus("dup"); setNotice(res.message ?? "이미 사용 중인 아이디입니다."); }
+    else if (res.status === 409) {
+      // 409: 아이디 중복 또는 본부장/센터장 중복할당(중복등록 불가)
+      if (!res.message || res.message.includes("아이디")) setIdStatus("dup");
+      setNotice(res.message ?? "이미 사용 중인 아이디입니다.");
+    }
     else setNotice(res.message ?? "저장에 실패했습니다.");
   }
 
@@ -188,7 +192,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
               </div>
             </Field>
           ) : role === "DIVISION_ADMIN" ? (
-            <Field label="본부 선택" required error={errors.salesCenterId} hint="center_code 미지정(본부) 목록">
+            <Field label="본부 선택" required error={errors.salesCenterId} hint="중복등록 불가 설정 시 본부장 미할당 본부만 표시">
               <select className={inputCls} value={salesCenterId} onChange={(e) => setSalesCenterId(e.target.value ? Number(e.target.value) : "")}>
                 <option value="">본부 선택</option>
                 {divisionCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
@@ -196,13 +200,13 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
             </Field>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 sm:col-span-1">
-              <Field label="광역 본부" required hint="등록된 본부 계정">
+              <Field label="광역 본부" required>
                 <select className={inputCls} value={selDivision} onChange={(e) => setSelDivision(e.target.value ? Number(e.target.value) : "")}>
                   <option value="">본부 선택</option>
-                  {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}{d.centerName ? ` (${d.centerName})` : ""}</option>)}
+                  {allDivisionCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
                 </select>
               </Field>
-              <Field label="센터 선택" required error={errors.salesCenterId}>
+              <Field label="센터 선택" required error={errors.salesCenterId} hint="중복등록 불가 설정 시 센터장 미할당 센터만 표시">
                 <select className={inputCls} value={salesCenterId} disabled={centerCodes.length === 0} onChange={(e) => setSalesCenterId(e.target.value ? Number(e.target.value) : "")}>
                   <option value="">{centerCodes.length ? "센터 선택" : "본부 먼저 선택"}</option>
                   {centerCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
@@ -225,7 +229,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
             {!isEdit && idStatus === "ok" && <p className="mt-1 text-xs text-pos">사용 가능한 아이디입니다.</p>}
             {!isEdit && idStatus === "dup" && <p className="mt-1 text-xs text-danger">이미 사용 중인 아이디입니다.</p>}
           </Field>
-          <Field label="비밀번호" required={!isEdit} error={errors.password} hint={isEdit ? "변경 시에만 입력 (8자 이상)" : "8자 이상"}>
+          <Field label="비밀번호" required={!isEdit} error={errors.password} hint={isEdit ? "변경 시에만 입력 (10자 이상)" : "10자 이상"}>
             <input type="password" className={inputCls} value={f.password} onChange={(e) => set("password")(e.target.value)} placeholder={isEdit ? "변경 시 입력" : "비밀번호"} />
           </Field>
           <Field label="이름" required error={errors.name}><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>

@@ -71,8 +71,8 @@ export default function ProductDetail({ id }: { id: string }) {
 
   // 역할별 노출 수당 항목 (금액 = RATE: 총수당×비율, FIXED: 저장금액)
   const rewardRows: { label: string; key: "buzzReward" | "chinkuReward" | "managerReward"; pct?: number }[] = isManager
-    ? [{ label: "2차 관리매니저", key: "managerReward", pct: p.managerReward }, { label: "1차 버즈회원", key: "buzzReward", pct: p.buzzReward }, { label: "상위 추천회원(친쿠)", key: "chinkuReward", pct: p.chinkuReward }]
-    : [{ label: "1차 버즈회원", key: "buzzReward", pct: p.buzzReward }, { label: "상위 추천회원(친쿠)", key: "chinkuReward", pct: p.chinkuReward }];
+    ? [{ label: "관리매니저", key: "managerReward", pct: p.managerReward }]
+    : [{ label: "버즈회원", key: "buzzReward", pct: p.buzzReward }, { label: "피추천 버즈회원", key: "chinkuReward", pct: p.chinkuReward }];
 
   return (
     <div className="space-y-5">
@@ -118,7 +118,7 @@ export default function ProductDetail({ id }: { id: string }) {
         </Card>
       )}
 
-      <Card title="내 수당 내역" sub={isManager ? "관리매니저 기준 (매니저·버즈·추천인)" : "버즈회원 기준 (버즈·추천인)"}>
+      <Card title="수당내역" sub={isManager ? undefined : "버즈회원 기준 (버즈·추천인)"}>
         <div className="space-y-2">
           {rewardRows.map((r) => (
             <div key={r.label} className={`flex items-center justify-between rounded-lg border px-4 py-3 ${theme.tableWrap}`}>
@@ -127,7 +127,6 @@ export default function ProductDetail({ id }: { id: string }) {
             </div>
           ))}
         </div>
-        <p className={`mt-3 text-xs ${theme.note}`}>※ 센터·본부·본사 등 그 외 분배 항목은 표시되지 않습니다.</p>
       </Card>
 
       {(p.description || p.installPolicy || p.returnPolicy || p.installProduct || p.simpleDelivery || p.monthlyCare || p.asSupport || p.cancelFeeFlag) && (

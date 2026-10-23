@@ -114,6 +114,7 @@ public class PartnerController {
         p.setBankName(req.bankName());
         p.setAccountNumber(req.accountNumber());
         p.setAccountHolder(req.accountHolder());
+        p.setSaleId(isBlank(req.saleId()) ? null : req.saleId().trim());
     }
 
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }

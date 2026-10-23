@@ -244,4 +244,52 @@ public class AllowanceService {
             }
         }
     }
+
+    /**
+     * 회비/입점비 결제 완료 시 상위 조직 수당 (docs/30). type=MEMBERSHIP, status=CP, order_no=결제 주문번호.
+     *  - 매니저 회비 : 소속센터(BUZZ_CENTER) centerAmt + 소속본부(DIVISION) divisionAmt
+     *  - 센터 회비   : 소속본부(DIVISION) divisionAmt
+     *  - 파트너 입점비: 영업본부(partner.sale_id) divisionAmt
+     * 수취 계정이 없거나 금액이 0 이면 생략. 결제 1건당 1회만 호출(멱등은 호출측 DONE 체크).
+     * @param payer          회원 결제자(매니저/센터) — 파트너면 null
+     * @param partnerSaleId  파트너 영업본부 로그인 아이디 — 회원 결제면 null
+     * @return 생성된 수당 행
+     */
+    @Transactional
+    public java.util.List<Allowance> createForMembership(String orderId, User payer, String partnerSaleId,
+                                                         long centerAmt, long divisionAmt, String handlerId) {
+        java.util.List<Allowance> out = new java.util.ArrayList<>();
+        User center = null, division = null;
+        if (payer != null && payer.getRole() == Role.MANAGER) {
+            center = centerAdmin(payer.getSalesCenterId());
+            division = divisionAdmin(payer.getSalesCenterId());
+        } else if (payer != null && payer.getRole() == Role.CENTER_ADMIN) {
+            division = divisionAdmin(payer.getSalesCenterId());
+        } else if (partnerSaleId != null && !partnerSaleId.isBlank()) {
+            division = userRepo.findByUserId(partnerSaleId.trim())
+                    .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);
+        }
+        if (center != null && centerAmt > 0)
+            out.add(addMembership(orderId, Allowance.MemberType.BUZZ_CENTER, center, centerAmt, handlerId));
+        if (division != null && divisionAmt > 0)
+            out.add(addMembership(orderId, Allowance.MemberType.DIVISION, division, divisionAmt, handlerId));
+        return out;
+    }
+
+    private Allowance addMembership(String orderId, Allowance.MemberType mt, User payee, long amt, String handlerId) {
+        Allowance a = new Allowance();
+        a.setType(Allowance.Type.MEMBERSHIP);
+        a.setOrderNo(orderId);
+        a.setMemberType(mt);
+        a.setMemberId(payee.getUserId());
+        a.setStatus(Allowance.Status.CP);
+        a.setAmount(amt);
+        a.setContractDate(java.time.LocalDate.now());
+        a.setPaid(false);
+        a.setAccountNumber(payee.getAccountNumber());
+        a.setBankName(payee.getBankName());
+        a.setAccountHolder(payee.getAccountHolder());
+        a.setHandlerId(handlerId);
+        return allowanceRepo.save(a);
+    }
 }

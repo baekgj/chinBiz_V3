@@ -283,6 +283,9 @@ public class BuzzSalesController {
         // [1차영업신청] 알람 (버즈/센터/본부/본사/추천인/파트너) — docs/16
         try { alarmService.fireSaleEvent("SALE1", s); } catch (Exception ignore) {}
 
+        // 매니저 자동배정 (docs/30) — 등록자가 관리매니저이고 고객 주소(지역센터)가 본인 승인 활동영역이면 2차영업 자동 배정
+        autoAssignSelf(s, me);
+
         // 가입 추천마일리지(JOIN/CP) → MP 전환 (docs/18): 첫 1차영업 등록 시 확정
         try {
             var joinRows = allowanceRepo.findByMemberIdAndTypeAndStatus(me.getUserId(),
@@ -306,6 +309,23 @@ public class BuzzSalesController {
         if (!"Y".equals(s.getAgreeCheck())) consentService.syncProvideAgree(s);
         saleRepo.save(s);
         return ResponseEntity.ok(detail(s, me));
+    }
+
+    /** 1차영업 접수 시 본인 활동영역(manager_center Y)에 해당하면 본인을 2차 매니저로 배정 + 수당 원장 + [2차영업자동배정] 알람.
+     *  수동 [우선할당]과 동일하게 해당 상품 교육 이수·승인이 있어야 배정. */
+    private void autoAssignSelf(Sale s, User me) {
+        if (me.getRole() != Role.MANAGER || s.getManagerId() != null || s.getCustomerCenterId() == null || s.getProductId() == null) return;
+        boolean inArea = managerCenterRepo.findByBuzzIdAndStatus(me.getId(), "Y").stream()
+                .anyMatch(mc -> s.getCustomerCenterId().equals(mc.getCenterId()));
+        if (!inArea) return;
+        boolean eduApproved = eduRepo.findByProductIdAndManagerId(s.getProductId(), me.getId())
+                .map(e -> e.isCompleted() && e.isApproved()).orElse(false);
+        if (!eduApproved) return;
+        s.setManagerId(me.getId());
+        s.setManagerDatedAt(java.time.LocalDateTime.now());
+        saleRepo.save(s);
+        allowanceService.createForAssign(s, me);
+        try { alarmService.fireSaleEvent("SALE2_AUTO", s); } catch (Exception ignore) {}
     }
 
     public record AssignRequest(String status, String memo, Long categoryId, Long productId, String installPhotos) {}

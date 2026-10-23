@@ -64,6 +64,10 @@ public final class AlarmDefs {
             msg("OOO 매니저회원이 @@@ 고객을 2차영업 신청하였습니다. CP수당 $$$$$원이 적립됩니다.\n[주문번호 : ______]", MANAGER, MGMT_CENTER),
             msg("OOO 매니저회원이 @@@ 고객을 2차영업 신청하였습니다. [상품명 : *******]\n[주문번호 : ______]", PARTNER))),
 
+        new Def("SALE2_AUTO", "2차영업자동배정", "버즈ADMIN - [1차영업등록] 접수 시 고객 주소가 등록자 본인의 매니저 활동영역인 경우", merge(
+            msg("@@@ 고객 주소가 매니저 활동영역으로 확인되어 OOO 매니저회원에게 2차영업이 자동 배정되었습니다. CP수당 $$$$$원이 적립됩니다.\n[주문번호 : ______]", MANAGER, MGMT_CENTER, HQ),
+            msg("OOO 매니저회원에게 @@@ 고객 2차영업이 자동 배정되었습니다. [상품명 : *******]\n[주문번호 : ______]", PARTNER))),
+
         new Def("MANAGER_CANCEL", "매니저취소", "본사admin - [조직망 및 영업관리]/[영업관리] 메뉴의 [매니저취소] 버튼 클릭시", merge(
             msg("OOO 매니저회원의 @@@ 고객의 2차 영업활동을 취소합니다. CP수당 $$$$원을 차감합니다.\n[주문번호 : ______]", MANAGER, MGMT_CENTER),
             msg("OOO 매니저회원의 @@@ 고객의 2차 영업활동을 취소합니다.\n[주문번호 : ______]", BUZZ, CENTER))),
@@ -86,6 +90,10 @@ public final class AlarmDefs {
 
         new Def("PAY", "지급완료", "본사admin - [수당및정산관리]/[정산내역] 메뉴에서 [지급완료] 버튼 클릭시",
             msg("0000년 00월 영업 활동에 대한 수당이 지급되었습니다.", BUZZ, MANAGER, CENTER, DIVISION)),
+
+        new Def("MEMBERSHIP_ALLOWANCE", "회비수당지급", "매니저/센터/파트너 ADMIN - 회비·입점비 결제 완료 시 (본사 [관리비설정] 수당지급 금액)", merge(
+            msg("OOO 회원의 회비/입점비 결제로 수당 $$$$$원이 지급(CP 적립)되었습니다.\n[주문번호 : ______]", CENTER, DIVISION),
+            msg("OOO 회원의 회비/입점비 결제에 따라 상위 조직 수당 $$$$$원이 지급되었습니다.\n[주문번호 : ______]", HQ))),
 
         new Def("RESIDENT_NUMBER_REQUEST", "주민번호요청", "본사admin - [정산내역] 주민번호 미등록 회원 [알람발송] 버튼",
             msg("활동수당 지급에 대한 세금신고용으로 주민등록번호가 입력되어야 합니다. ADMIN의 내정보관리에서 주민등록번호를 등록해 주세요.",

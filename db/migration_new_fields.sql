@@ -238,7 +238,7 @@ ALTER TABLE `user`
   DROP COLUMN `manager_status`,
   DROP COLUMN `manager_sdate`,
   DROP COLUMN `manager_edate`;
--- 완료.
+
 
 
 -- ── [신규 테이블] 웹푸시 구독 push_subscription (2026-08-01 모바일 PWA) ─────
@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS `push_subscription` (
   UNIQUE KEY `uk_push_endpoint` (`endpoint`),
   KEY `idx_push_account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
--- 완료.
+
 
 
 -- ── [신규 테이블] 본사 RBAC 담당자 지정 admin_scope (2026-08-07 docs/20 Task4) ─────
@@ -267,13 +267,13 @@ CREATE TABLE IF NOT EXISTS `admin_scope` (
   `areas` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`login_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
--- 완료.
+
 
 
 -- ── [컬럼 추가] user.resident_number 주민등록번호(세금신고용) (2026-08-12 docs/22) ─────
 --   활동수당 지급 세금신고용. 유효성 검증 후 숫자만 저장(평문·요구사항). ddl-auto=update 자동 반영되나 배포용 기재.
 ALTER TABLE `user` ADD COLUMN `resident_number` varchar(20) DEFAULT NULL;
--- 완료.
+
 
 
 -- ── [컬럼 추가] product 상세 확장 (2026-08-21 docs/25) ─────────────────────────
@@ -324,7 +324,7 @@ ALTER TABLE `membership_payment` ADD COLUMN `receipt_status` varchar(20) DEFAULT
 ALTER TABLE `membership_payment` ADD COLUMN `receipt_key` varchar(300) DEFAULT NULL;    -- 발행 참조(현금영수증키)
 -- [2026-09-10] 본사 회비결제내역 조회용 회원명 저장
 ALTER TABLE `membership_payment` ADD COLUMN `payer_name` varchar(120) DEFAULT NULL;
--- 완료.
+
 
 
 -- ── [2026-10-04] docs/27 — 1차영업 대표자 핸드폰 + 고객 동의(agree) ─────────
@@ -365,4 +365,26 @@ CREATE TABLE IF NOT EXISTS `agree` (
   PRIMARY KEY (`id`),
   KEY `idx_agree_lookup` (`agree_type`,`name`,`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ── [2026-10-23] docs/30 : 본부ᆞ센터 리스트(fix_idx) / 파트너 영업본부 / 회비 수당 ──
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+DELIMITER $$
+CREATE PROCEDURE chinbiz_add_col(IN p_tbl VARCHAR(64), IN p_col VARCHAR(64), IN p_ddl TEXT)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_tbl AND COLUMN_NAME = p_col) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `', p_tbl, '` ADD COLUMN ', p_ddl);
+    PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+  END IF;
+END$$
+DELIMITER ;
+-- center_code.fix_idx : 할당된 본부장/센터장 user.id (데이터 전체 재적재는 db/center_code_reload.sql)
+CALL chinbiz_add_col('center_code','fix_idx', "`fix_idx` bigint DEFAULT NULL COMMENT '할당된 본부장/센터장 user.id'");
+-- partner.sale_id : 영업본부(본부 계정 user.user_id)
+CALL chinbiz_add_col('partner','sale_id', "`sale_id` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+-- allowance.type 에 MEMBERSHIP 포함 보장(회비 결제 차감/회비 수당). 이미 포함돼 있어도 재실행 안전.
+ALTER TABLE `allowance` MODIFY `type` ENUM('ORDER','CANCEL','CANCEL_FEE','JOIN','MEMBERSHIP') NOT NULL;
+-- app_setting 신규 키(org_dup_allow, fee_reward_*)는 BE 기동 시 시더가 기본값으로 자동 생성.
 -- 완료.
