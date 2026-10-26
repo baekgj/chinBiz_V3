@@ -53,7 +53,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
   const [saving, setSaving] = useState(false);
 
   // 본부/센터 선택용 데이터
-  const [divisionCodes, setDivisionCodes] = useState<Code[]>([]); // 본부 등록용 본부 후보(중복등록 정책 적용)
+  const [divisionCodes, setDivisionCodes] = useState<Code[]>([]); // 본부 등록용 본부 후보(본부장 미할당만)
   const [allDivisionCodes, setAllDivisionCodes] = useState<Code[]>([]); // 센터 등록용 본부 목록(항상 전체)
   const [selDivision, setSelDivision] = useState<number | "">(""); // 선택한 본부 center_code idx
   const [centerCodes, setCenterCodes] = useState<Code[]>([]);      // 센터 후보
@@ -95,7 +95,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
 
   useEffect(() => {
     if (isEdit) return; // 수정 모드는 소속(center) 재선택 없이 기본정보만
-    // 본부 등록: 중복등록 불가면 본부장 미할당 본부만 / 센터 등록: 본부는 모두 노출
+    // 본부 등록: 본부장 미할당 본부만 / 센터 등록: 광역 본부는 모두 노출
     apiGet<Code[]>("/api/org/center-codes/divisions?available=true").then((r) => { if (r.data) setDivisionCodes(r.data); });
     apiGet<Code[]>("/api/org/center-codes/divisions").then((r) => { if (r.data) setAllDivisionCodes(r.data); });
   }, [isEdit]);
@@ -103,7 +103,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
   // 센터 모드: 본부 선택 시 산하 센터 후보 로드
   useEffect(() => {
     if (isEdit || role !== "CENTER_ADMIN" || selDivision === "") { return; }
-    // 중복등록 불가면 센터장 미할당 센터만
+    // 센터장 미할당 센터만
     apiGet<Code[]>(`/api/org/center-codes/centers?divisionIdx=${selDivision}&available=true`).then((r) => {
       setCenterCodes(r.data ?? []);
       setSalesCenterId("");
@@ -192,7 +192,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
               </div>
             </Field>
           ) : role === "DIVISION_ADMIN" ? (
-            <Field label="본부 선택" required error={errors.salesCenterId} hint="중복등록 불가 설정 시 본부장 미할당 본부만 표시">
+            <Field label="본부 선택" required error={errors.salesCenterId} hint="본부장이 이미 설정된 본부는 표시되지 않습니다">
               <select className={inputCls} value={salesCenterId} onChange={(e) => setSalesCenterId(e.target.value ? Number(e.target.value) : "")}>
                 <option value="">본부 선택</option>
                 {divisionCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
@@ -206,7 +206,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
                   {allDivisionCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}
                 </select>
               </Field>
-              <Field label="센터 선택" required error={errors.salesCenterId} hint="중복등록 불가 설정 시 센터장 미할당 센터만 표시">
+              <Field label="센터 선택" required error={errors.salesCenterId} hint="센터장이 이미 설정된 센터는 표시되지 않습니다">
                 <select className={inputCls} value={salesCenterId} disabled={centerCodes.length === 0} onChange={(e) => setSalesCenterId(e.target.value ? Number(e.target.value) : "")}>
                   <option value="">{centerCodes.length ? "센터 선택" : "본부 먼저 선택"}</option>
                   {centerCodes.map((c) => <option key={c.idx} value={c.idx}>{c.name}</option>)}

@@ -60,7 +60,7 @@ LNB 상품 관리 아래 하위메뉴: **카테고리 관리 / 상품 등록 / �
 ## ★ 조직망 관리 (하위메뉴 · docs/04.txt B · 일부 실 BE 연동)
 LNB 조직망 관리 하위: **본부ᆞ센터 리스트 / 회원 리스트 / 매니저신청 / 조직 관리 / 영업 관리** (본부·센터 등록은 LNB에서 빠지고 리스트 상단 버튼으로 진입, docs/30).
 - **center_code 테이블(원본 chin4 재사용)**: `idx`·`head_code`·`head_name`(본부명)·`center_code`(null=본부/not null=센터)·`center_name`(센터명)·**`fix_idx`(할당된 본부장/센터장 user.id)**. 본부/센터 계정은 **user 테이블**에 저장, `user.sales_center_id = center_code.idx`. 데이터 재적재: `db/center_code_reload.sql`(docs/center.xlsx 273행).
-- **본부ᆞ센터 리스트** `/master/organization/list` — 상단 중복등록불가/허용 토글(app_setting `org_dup_allow`), 좌 본부리스트·우 선택 본부의 센터리스트, 행별 [등록](후보 팝업 → fix_idx·sales_center_id 설정)/[삭제](둘 다 해제). API `GET org-list/divisions`·`org-list/centers?divisionIdx=`·`org-list/{idx}/candidates`, `POST|DELETE org-list/{idx}/assign`.
+- **본부ᆞ센터 리스트** `/master/organization/list` — 정책 **중복등록불가 고정**(2026-10-26 상단 토글 제거, `OrgController.dupAllowed()`=false, app_setting `org_dup_allow` 무시. 본부ᆞ센터등록 selectbox도 본부장/센터장 기할당 코드 미노출), 좌 본부리스트·우 선택 본부의 센터리스트, 행별 [등록](후보 팝업 → fix_idx·sales_center_id 설정)/[삭제](둘 다 해제). API `GET org-list/divisions`·`org-list/centers?divisionIdx=`·`org-list/{idx}/candidates`, `POST|DELETE org-list/{idx}/assign`.
 - **본부·센터 등록** `/master/organization/register` — 역할(본부/센터)·아이디+중복확인(user+partner)·비번·이름·전화·이메일·계좌(은행/번호/예금주). 저장 후 `center_code.fix_idx = user.id`(불가 정책 위반 시 409).
   - 본부: `GET /api/org/center-codes/divisions?available=true`(불가 시 본부장 미할당만) 선택 → role=DIVISION_ADMIN.
   - 센터: 본부 목록은 항상 전체(`center-codes/divisions`) → `GET /api/org/center-codes/centers?divisionIdx=&available=true`(불가 시 센터장 미할당만) 선택 → role=CENTER_ADMIN.

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Card, SectionTitle, Badge } from "@/components/ui";
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiDelete, apiGet, apiPost } from "@/lib/api";
 
 // center_code 행 + 할당된 본부장/센터장(fix_idx)
 type Slot = {
@@ -17,7 +17,6 @@ const td = "px-3 py-2 text-sm text-slate-200";
 
 /** 본사 [조직망 및 영업 관리]-[본부ᆞ센터 리스트]: 본부/센터 코드별 본부장·센터장 할당 관리 */
 export default function OrgListPage() {
-  const [dupAllowed, setDupAllowed] = useState(false);
   const [divisions, setDivisions] = useState<Slot[]>([]);
   const [selDiv, setSelDiv] = useState<Slot | null>(null);
   const [centers, setCenters] = useState<Slot[]>([]);
@@ -30,8 +29,8 @@ export default function OrgListPage() {
   const [busy, setBusy] = useState(false);
 
   const loadDivisions = useCallback(async () => {
-    const r = await apiGet<{ dupAllowed: boolean; content: Slot[] }>("/api/org/org-list/divisions");
-    if (r.data) { setDupAllowed(r.data.dupAllowed); setDivisions(r.data.content); }
+    const r = await apiGet<{ content: Slot[] }>("/api/org/org-list/divisions");
+    if (r.data) setDivisions(r.data.content);
     setLoading(false);
   }, []);
 
@@ -42,11 +41,6 @@ export default function OrgListPage() {
 
   useEffect(() => { loadDivisions(); }, [loadDivisions]);
   useEffect(() => { if (selDiv) loadCenters(selDiv); else setCenters([]); }, [selDiv, loadCenters]);
-
-  async function changeDup(allow: boolean) {
-    const r = await apiPut("/api/org/app-settings", { org_dup_allow: allow ? "Y" : "N" });
-    if (r.ok) setDupAllowed(allow); else setMsg(r.message ?? "설정 저장에 실패했습니다.");
-  }
 
   async function openPick(s: Slot) {
     setMsg(null); setPick(s); setCands(null);
@@ -87,13 +81,7 @@ export default function OrgListPage() {
 
   return (
     <div className="space-y-4 animate-float-up">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl border border-line p-1">
-          {([[false, "중복등록불가"], [true, "중복등록허용"]] as const).map(([v, l]) => (
-            <button key={l} onClick={() => changeDup(v)}
-              className={`rounded-lg px-4 py-1.5 text-sm font-semibold ${dupAllowed === v ? "bg-brand-600 text-white" : "text-slate-400 hover:bg-navy-800"}`}>{l}</button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <Link href="/master/organization/register" className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-500">본부ᆞ센터등록</Link>
       </div>
 
@@ -161,10 +149,8 @@ export default function OrgListPage() {
               [{pick.name}] {pick.centerCode == null ? "본부장" : "센터장"} 등록
             </h3>
             <p className="mt-1 text-xs text-slate-400">
-              <Badge tone={dupAllowed ? "warn" : "brand"}>{dupAllowed ? "중복등록허용" : "중복등록불가"}</Badge>{" "}
-              {pick.centerCode == null
-                ? (dupAllowed ? "가입된 모든 본부 계정" : "본부장으로 미할당된 본부 계정만")
-                : (dupAllowed ? "본부 소속 모든 센터 계정" : "센터장으로 미할당된 센터 계정만")} 표시됩니다.
+              <Badge tone="brand">중복등록불가</Badge>{" "}
+              {pick.centerCode == null ? "본부장으로 미할당된 본부 계정만" : "센터장으로 미할당된 센터 계정만"} 표시됩니다.
             </p>
             <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-line">
               {cands == null ? <p className="py-8 text-center text-sm text-slate-500">불러오는 중…</p> : cands.length === 0 ? (

@@ -1,8 +1,6 @@
 package com.chinbiz.api.org;
 
 import com.chinbiz.api.partner.PartnerRepository;
-import com.chinbiz.api.setting.AppSettingController;
-import com.chinbiz.api.setting.AppSettingRepository;
 import com.chinbiz.api.user.Role;
 import com.chinbiz.api.user.User;
 import com.chinbiz.api.user.UserRepository;
@@ -35,21 +33,18 @@ public class OrgController {
     private final PartnerRepository partnerRepository;
     private final CenterCodeRepository centerCodeRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AppSettingRepository appSettingRepository;
 
     public OrgController(UserRepository userRepository, PartnerRepository partnerRepository,
-                         CenterCodeRepository centerCodeRepository, PasswordEncoder passwordEncoder,
-                         AppSettingRepository appSettingRepository) {
+                         CenterCodeRepository centerCodeRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.partnerRepository = partnerRepository;
         this.centerCodeRepository = centerCodeRepository;
         this.passwordEncoder = passwordEncoder;
-        this.appSettingRepository = appSettingRepository;
     }
 
-    /** 본부/센터 장 중복등록 허용 여부 (app_setting org_dup_allow = Y) */
+    /** 본부/센터 장 중복등록 허용 여부 — 정책 고정: 중복등록 불가 (리스트 상단 토글 제거, app_setting org_dup_allow 무시) */
     private boolean dupAllowed() {
-        return "Y".equalsIgnoreCase(appSettingRepository.getStr(AppSettingController.ORG_DUP_ALLOW, "N"));
+        return false;
     }
 
     /** 등록 선택 가능 여부: 허용이면 항상, 불가면 미할당이거나 본인(selfId)에게 할당된 코드만 */
@@ -322,8 +317,7 @@ public class OrgController {
 
     @GetMapping("/org-list/divisions")
     public Map<String, Object> orgListDivisions() {
-        return Map.of("dupAllowed", dupAllowed(),
-                "content", centerCodeRepository.findByCenterCodeIsNullOrderByIdxAsc().stream().map(this::slot).toList());
+        return Map.of("content", centerCodeRepository.findByCenterCodeIsNullOrderByIdxAsc().stream().map(this::slot).toList());
     }
 
     @GetMapping("/org-list/centers")
