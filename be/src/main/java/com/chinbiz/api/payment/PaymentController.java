@@ -79,15 +79,14 @@ public class PaymentController {
         allowanceRepo.save(a);
     }
 
+    /** 회비 종류 (매니저·센터). 연회비가 0원(미설정)이면 회비 종류에서 제외 */
     private List<Map<String, Object>> feeOptions(Role role) {
         List<Map<String, Object>> list = new ArrayList<>();
-        if (role == Role.MANAGER) {
-            list.add(opt("monthly", "월회비", settingRepo.getLong("fee_manager_monthly", 0)));
-            list.add(opt("yearly", "연회비", settingRepo.getLong("fee_manager_yearly", 0)));
-        } else if (role == Role.CENTER_ADMIN) {
-            list.add(opt("monthly", "월회비", settingRepo.getLong("fee_center_monthly", 0)));
-            list.add(opt("yearly", "연회비", settingRepo.getLong("fee_center_yearly", 0)));
-        }
+        String prefix = role == Role.MANAGER ? "fee_manager_" : role == Role.CENTER_ADMIN ? "fee_center_" : null;
+        if (prefix == null) return list;
+        list.add(opt("monthly", "월회비", settingRepo.getLong(prefix + "monthly", 0)));
+        long yearly = settingRepo.getLong(prefix + "yearly", 0);
+        if (yearly > 0) list.add(opt("yearly", "연회비", yearly));
         return list;
     }
 
