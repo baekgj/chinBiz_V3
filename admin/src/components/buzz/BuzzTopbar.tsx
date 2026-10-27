@@ -62,7 +62,7 @@ export default function BuzzTopbar() {
     <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${theme.header}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href="/buzz" className="flex items-center gap-2.5">
-          <BrandMark />
+          <BrandMark light={!isManager} />
           <div className="leading-tight">
             <p className={`text-sm font-black ${theme.brand}`}>친비즈 <span className={theme.accent}>{isManager ? "MANAGER" : "BUZZ"}</span></p>
             <p className="text-[10px] font-semibold tracking-wider text-slate-400">{isManager ? "관리매니저 워크스페이스" : "버즈 워크스페이스"}</p>

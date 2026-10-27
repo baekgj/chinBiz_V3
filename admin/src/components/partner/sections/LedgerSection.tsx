@@ -7,7 +7,7 @@ import { apiGet } from "@/lib/api";
 
 type Row = {
   saleId: number; orderNo?: string; productName?: string; customerName?: string;
-  salePrice: number; totalAllowance: number; status: string; confirmedAt?: string; createdAt?: string;
+  salePrice: number; monthlyCare?: boolean; totalAllowance: number; status: string; confirmedAt?: string; createdAt?: string;
 };
 type Resp = { content: Row[]; totalAllowance: number; count: number };
 
@@ -45,7 +45,7 @@ export default function LedgerSection() {
                 <th className="px-3 py-3 text-left font-semibold">주문번호</th>
                 <th className="px-3 py-3 text-left font-semibold">상품명</th>
                 <th className="px-3 py-3 text-left font-semibold">고객(상호명)</th>
-                <th className="px-3 py-3 text-right font-semibold">판매가</th>
+                <th className="px-3 py-3 text-right font-semibold">판매가 / 월회비</th>
                 <th className="px-3 py-3 text-center font-semibold">상태</th>
                 <th className="px-3 py-3 text-right font-semibold">총수당(위탁비)</th>
               </tr>
@@ -61,7 +61,7 @@ export default function LedgerSection() {
                   <td className="px-3 py-3 font-mono text-xs text-slate-500">{r.orderNo ?? "-"}</td>
                   <td className="px-3 py-3 font-semibold text-slate-800">{r.productName ?? "-"}</td>
                   <td className="px-3 py-3 text-slate-600">{r.customerName ?? "-"}</td>
-                  <td className="px-3 py-3 text-right text-slate-600">{krw(r.salePrice)}</td>
+                  <td className="px-3 py-3 text-right text-slate-600">{r.monthlyCare && <span className="mr-1 text-xs font-semibold text-sky-600">월회비</span>}{krw(r.salePrice)}</td>
                   <td className="px-3 py-3 text-center">
                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">{r.status}</span>
                   </td>

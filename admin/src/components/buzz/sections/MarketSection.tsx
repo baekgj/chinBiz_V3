@@ -9,7 +9,7 @@ import { apiGet, apiPost, mediaUrl } from "@/lib/api";
 import { myReward } from "@/lib/reward";
 import { computeDday, canApplySale } from "@/lib/dday";
 
-type Item = { id: number; name: string; salePrice: number; totalAllowance: number; rewardType?: string; buzzReward?: number; managerReward?: number; image1?: string; partnerName?: string; categoryName?: string; categoryId?: number | null; contractEndDate?: string | null; popular?: boolean; recommended?: boolean; autoAssign?: boolean };
+type Item = { id: number; name: string; salePrice: number; monthlyCare?: boolean; totalAllowance: number; rewardType?: string; buzzReward?: number; managerReward?: number; image1?: string; partnerName?: string; categoryName?: string; categoryId?: number | null; contractEndDate?: string | null; popular?: boolean; recommended?: boolean; autoAssign?: boolean };
 type PageResp = { content: Item[]; page: number; totalPages: number; totalElements: number };
 const SIZE = 9; // 3 x 3
 
@@ -98,7 +98,7 @@ export default function MarketSection() {
                 {dd?.closingSoon && <p className="mb-1 text-xs font-bold text-red-500">[{dd.message}]</p>}
                 <p className={`text-xs ${theme.cardSub}`}>{it.partnerName ?? "-"}{it.categoryName ? ` · ${it.categoryName}` : ""}</p>
                 <div className="mt-3 flex items-end justify-between">
-                  <span className={`text-sm ${theme.cellSub}`}>{krw(it.salePrice)}</span>
+                  <span className={`text-sm ${theme.cellSub}`}>{it.monthlyCare && <span className="mr-1 text-xs font-semibold">월회비</span>}{krw(it.salePrice)}</span>
                   <GoldBadge>내 수당 {krw(myReward(it, isManager))}</GoldBadge>
                 </div>
                 <div className="mt-3 flex gap-2">

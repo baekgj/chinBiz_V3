@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiGet, apiPost } from "@/lib/api";
+import { priceLabel } from "@/lib/price";
 import { krw } from "@/components/ui";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -51,7 +52,7 @@ function ProductModal({ id, onClose }: { id: number; onClose: () => void }) {
       {err ? <p className="text-sm text-danger">{err}</p> : !p ? <p className="text-sm text-slate-500">불러오는 중…</p> : (
         <div>
           <Row label="수당 유형" value={isRate ? "비율(RATE)" : "고정(FIXED)"} />
-          <Row label="판매가" value={krw(Number(g("salePrice") ?? 0))} />
+          <Row label={priceLabel(Boolean(p.monthlyCare))} value={krw(Number(g("salePrice") ?? 0))} />
           <Row label="총수당(위탁비)" value={krw(Number(g("totalAllowance") ?? 0))} />
           <Row label="1차 버즈회원" value={isRate ? `${g("buzzReward") ?? 0}%` : krw(Number(g("buzzReward") ?? 0))} />
           <Row label="상위 추천(친쿠)" value={isRate ? `${g("chinkuReward") ?? 0}%` : krw(Number(g("chinkuReward") ?? 0))} />

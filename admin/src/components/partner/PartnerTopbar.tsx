@@ -45,7 +45,7 @@ export default function PartnerTopbar() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href="/partner" className="flex items-center gap-2.5">
-          <BrandMark />
+          <BrandMark light />
           <div className="leading-tight">
             <p className="text-sm font-black text-slate-900">친비즈 <span className="text-sky-600">PARTNER</span></p>
             <p className="text-[10px] font-semibold tracking-wider text-slate-400">파트너 마스터 오피스</p>

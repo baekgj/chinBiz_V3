@@ -62,9 +62,8 @@ export default function AdminLoginPage() {
     <main className="grid min-h-screen place-items-center bg-navy-950 px-5 py-10 text-slate-100">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-600 to-cyan-500 text-2xl font-black text-amber-300 shadow-lg">
-            친
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/login_icon.png" alt="친비즈" className="mx-auto mb-4 h-16 w-16 rounded-2xl shadow-lg" />
           <h1 className="text-xl font-black tracking-tight">친비즈 워크스페이스</h1>
           <p className="mt-1 text-sm text-slate-400">계정으로 로그인하세요</p>
         </div>

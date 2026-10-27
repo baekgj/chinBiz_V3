@@ -7,6 +7,7 @@ import { Card, GoldBadge } from "@/components/buzz/BuzzUI";
 import { useBuzz } from "@/components/buzz/theme";
 import { apiGet, mediaUrl } from "@/lib/api";
 import { rewardAmount } from "@/lib/reward";
+import { priceLabel } from "@/lib/price";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { computeDday, canApplySale } from "@/lib/dday";
 import Link from "next/link";
@@ -104,7 +105,7 @@ export default function ProductDetail({ id }: { id: string }) {
           </div>
         )}
         <div className={`rounded-xl border p-4 ${theme.tableWrap}`}>
-          <p className={`text-xs ${theme.cardSub}`}>판매가</p>
+          <p className={`text-xs ${theme.cardSub}`}>{priceLabel(p.monthlyCare)}</p>
           <p className={`mt-1 text-xl font-black ${theme.cellMain}`}>{krw(p.salePrice)}</p>
         </div>
       </Card>

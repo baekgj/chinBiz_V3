@@ -14,7 +14,7 @@ type Detail = {
   popular?: boolean; recommended?: boolean; role?: string | null; description?: string | null;
   specEffect?: string | null; salesTarget?: string | null; productFeature?: string | null; processFlow?: string | null;
   buzzRewardWon?: number; managerRewardWon?: number;
-  partnerProducts?: { id: number; name: string; image1?: string | null; salePrice?: number | null }[];
+  partnerProducts?: { id: number; name: string; image1?: string | null; salePrice?: number | null; monthlyCare?: boolean }[];
 };
 
 type ManagedSale = { id: number; createdAt?: string | null; customerName?: string | null; buzzName?: string | null; centerName?: string | null; status?: string | null };
@@ -69,7 +69,7 @@ function RichBlock({ title, html }: { title: string; html?: string | null }) {
   );
 }
 
-type OtherProduct = { id: number; name: string; image1?: string | null; salePrice?: number | null };
+type OtherProduct = { id: number; name: string; image1?: string | null; salePrice?: number | null; monthlyCare?: boolean };
 
 /** 파트너사 다른 상품 — 데스크톱 4개·모바일 2개씩 페이징 + 좌우 화살표 + 슬라이드 효과 */
 function PartnerProductsCarousel({ partnerName, products }: { partnerName: string; products: OtherProduct[] }) {
@@ -113,7 +113,7 @@ function PartnerProductsCarousel({ partnerName, products }: { partnerName: strin
                 </div>
                 <div className="p-2.5">
                   <p className="truncate text-xs font-bold text-ink">{o.name}</p>
-                  <p className="mt-0.5 text-sm font-black text-forest-700">{won(o.salePrice ?? 0)}</p>
+                  <p className="mt-0.5 text-sm font-black text-forest-700">{o.monthlyCare && <span className="mr-1 text-[10px] font-bold text-muted">월회비</span>}{won(o.salePrice ?? 0)}</p>
                 </div>
               </Link>
             </div>

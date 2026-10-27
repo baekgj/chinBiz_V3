@@ -82,6 +82,7 @@ public class BuzzMarketController {
         m.put("id", p.getId());
         m.put("name", p.getName());
         m.put("salePrice", p.getSalePrice());
+        m.put("monthlyCare", p.isMonthlyCare()); // 월관리상품 → 금액을 월회비로 표시
         m.put("totalAllowance", p.getTotalAllowance());
         m.put("rewardType", p.getRewardType().name());
         m.put("buzzReward", p.getBuzzReward());

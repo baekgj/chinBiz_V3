@@ -1,9 +1,7 @@
-// 각 admin 상단 로고 아이콘 — CIB 심볼(흰 타일 위, 다크/라이트 테마 공용)
-export default function BrandMark({ className = "" }: { className?: string }) {
+// 각 admin 상단 로고 아이콘 — 배경 타일 없이 CIB 심볼만. 밝은 헤더는 컬러(cib.png), 어두운 헤더는 흰색(cib_white.png)
+export default function BrandMark({ light = false }: { light?: boolean }) {
   return (
-    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5 ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/cib.png" alt="" aria-hidden className="h-6 w-auto" />
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={light ? "/brand/cib.png" : "/brand/cib_white.png"} alt="" aria-hidden className="h-7 w-auto shrink-0" />
   );
 }

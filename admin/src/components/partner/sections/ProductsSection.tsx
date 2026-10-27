@@ -7,7 +7,7 @@ import { Card, Stat } from "@/components/partner/PartnerUI";
 import { apiGet } from "@/lib/api";
 
 type Product = {
-  id: number; name: string; rewardType: string; salePrice: number; totalAllowance: number;
+  id: number; name: string; rewardType: string; salePrice: number; totalAllowance: number; monthlyCare?: boolean;
   categoryId: number | null; onSale: boolean;
 };
 type Cat = { id: number; name: string };
@@ -47,7 +47,7 @@ export default function ProductsSection() {
               <th className="px-4 py-3 text-left font-semibold">상품명</th>
               <th className="px-4 py-3 text-left font-semibold">카테고리</th>
               <th className="px-4 py-3 text-center font-semibold">수당유형</th>
-              <th className="px-4 py-3 text-right font-semibold">판매가</th>
+              <th className="px-4 py-3 text-right font-semibold">판매가 / 월회비</th>
               <th className="px-4 py-3 text-right font-semibold">총수당(위탁비)</th>
               <th className="px-4 py-3 text-center font-semibold">상태</th>
             </tr>
@@ -64,7 +64,7 @@ export default function ProductsSection() {
                 </td>
                 <td className="px-4 py-3 text-slate-600">{p.categoryId ? (cats[p.categoryId] ?? "-") : "-"}</td>
                 <td className="px-4 py-3 text-center text-xs font-semibold text-slate-500">{p.rewardType === "RATE" ? "비율" : "고정"}</td>
-                <td className="px-4 py-3 text-right text-slate-700">{krw(p.salePrice)}</td>
+                <td className="px-4 py-3 text-right text-slate-700">{p.monthlyCare && <span className="mr-1 text-xs font-semibold text-sky-600">월회비</span>}{krw(p.salePrice)}</td>
                 <td className="px-4 py-3 text-right font-black text-sky-600">{krw(p.totalAllowance)}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.onSale ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>

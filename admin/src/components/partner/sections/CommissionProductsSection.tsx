@@ -8,7 +8,7 @@ import { Card, Stat } from "@/components/partner/PartnerUI";
 
 /** 파트너 대시보드 · 위탁 영업대행 상품 및 총수당 관리 (partner.docx p.2) — 실데이터 */
 
-type Product = { id: number; name: string; salePrice?: number; totalAllowance?: number; categoryId?: number | null; onSale?: boolean };
+type Product = { id: number; name: string; salePrice?: number; monthlyCare?: boolean; totalAllowance?: number; categoryId?: number | null; onSale?: boolean };
 type Cat = { id: number; name: string };
 
 export default function CommissionProductsSection() {
@@ -51,7 +51,7 @@ export default function CommissionProductsSection() {
                 <th className="px-3 py-2.5">상품 코드</th>
                 <th className="px-3 py-2.5">상품명</th>
                 <th className="px-3 py-2.5">카테고리</th>
-                <th className="px-3 py-2.5 text-right">공급가 / 판매가</th>
+                <th className="px-3 py-2.5 text-right">공급가 / 판매가(월회비)</th>
                 <th className="px-3 py-2.5 text-right">설정된 총수당 (위탁비)</th>
                 <th className="px-3 py-2.5 text-center">상품 관리</th>
               </tr>
@@ -74,7 +74,7 @@ export default function CommissionProductsSection() {
                       ? <span className="rounded-md bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">{cats[p.categoryId]}</span>
                       : <span className="text-xs text-slate-400">-</span>}
                   </td>
-                  <td className="px-3 py-3.5 text-right font-bold text-slate-900">{krw(p.salePrice ?? 0)}</td>
+                  <td className="px-3 py-3.5 text-right font-bold text-slate-900">{p.monthlyCare && <span className="mr-1 text-xs font-semibold text-sky-600">월회비</span>}{krw(p.salePrice ?? 0)}</td>
                   <td className="px-3 py-3.5 text-right">
                     <span className="font-black text-sky-700">{krw(p.totalAllowance ?? 0)}</span>
                     <span className="ml-1 text-[11px] text-slate-400">총액</span>

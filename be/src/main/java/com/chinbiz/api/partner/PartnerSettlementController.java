@@ -58,6 +58,7 @@ public class PartnerSettlementController {
             m.put("productName", p.getName());
             m.put("customerName", s.getCompanyName());
             m.put("salePrice", p.getSalePrice());
+            m.put("monthlyCare", p.isMonthlyCare()); // 월관리상품 → 월회비 표시
             m.put("totalAllowance", allowance);
             m.put("status", s.getStatus());
             m.put("confirmedAt", s.getUpdatedAt() == null ? null : s.getUpdatedAt().toLocalDate().toString());

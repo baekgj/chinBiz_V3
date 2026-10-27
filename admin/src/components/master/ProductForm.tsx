@@ -202,7 +202,7 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
             </div>
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-slate-400">판매가 (원)</span>
+            <span className="text-xs font-semibold text-slate-400">{monthlyCare ? "월회비" : "판매가"} (원)</span>
             <input type="number" className={`mt-1 ${inputCls}`} value={f.salePrice} onChange={(e) => set("salePrice")(e.target.value)} />
           </label>
           <label className="block">

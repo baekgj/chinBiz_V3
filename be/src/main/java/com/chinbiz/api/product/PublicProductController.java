@@ -111,6 +111,7 @@ public class PublicProductController {
                 Map<String, Object> om = new LinkedHashMap<>();
                 om.put("id", o.getId()); om.put("name", o.getName()); om.put("image1", o.getImage1());
                 om.put("salePrice", o.getSalePrice());   // 판매가 노출(docs/25 후속 요청)
+                om.put("monthlyCare", o.isMonthlyCare()); // 월관리상품 → 월회비 표시
                 others.add(om);
             }
         }
