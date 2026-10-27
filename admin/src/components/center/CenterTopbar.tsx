@@ -9,6 +9,7 @@ import AlarmBell from "@/components/AlarmBell";
 import AdminHomeLink from "@/components/AdminHomeLink";
 import { apiGet } from "@/lib/api";
 import { ct } from "@/components/center/CenterUI";
+import BrandMark from "../BrandMark";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
@@ -57,7 +58,7 @@ export default function CenterTopbar() {
     <header className={ct.header}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href="/center" className="flex items-center gap-2.5">
-          <span className={`grid h-9 w-9 place-items-center rounded-xl shadow-sm ${ct.logoBox}`}><Icon name="box" className="h-5 w-5" /></span>
+          <BrandMark />
           <div className="leading-tight">
             <p className={`text-sm font-black ${ct.brand}`}>친비즈 <span className={ct.accent}>CENTER</span></p>
             <p className="text-[10px] font-semibold tracking-wider text-amber-200/40">센추럴 마스터 오피스</p>

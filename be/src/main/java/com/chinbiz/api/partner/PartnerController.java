@@ -115,6 +115,10 @@ public class PartnerController {
         p.setAccountNumber(req.accountNumber());
         p.setAccountHolder(req.accountHolder());
         p.setSaleId(isBlank(req.saleId()) ? null : req.saleId().trim());
+        // 입점비 납부일자 — 날짜 지정 시 납부완료, 비우면 미납
+        java.time.LocalDate paid = isBlank(req.entryFeePaidDate()) ? null : java.time.LocalDate.parse(req.entryFeePaidDate().trim());
+        p.setEntryFeePaidDate(paid);
+        p.setEntryFeePaid(paid != null);
     }
 
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }

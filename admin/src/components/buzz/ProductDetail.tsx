@@ -70,9 +70,9 @@ export default function ProductDetail({ id }: { id: string }) {
   const applyHref = `/buzz/pipeline/new?productId=${p.id}${p.categoryId ? `&categoryId=${p.categoryId}` : ""}`;
 
   // 역할별 노출 수당 항목 (금액 = RATE: 총수당×비율, FIXED: 저장금액)
-  const rewardRows: { label: string; key: "buzzReward" | "chinkuReward" | "managerReward"; pct?: number }[] = isManager
-    ? [{ label: "관리매니저", key: "managerReward", pct: p.managerReward }]
-    : [{ label: "버즈회원", key: "buzzReward", pct: p.buzzReward }, { label: "피추천 버즈회원", key: "chinkuReward", pct: p.chinkuReward }];
+  const rewardRows: { label: string; key: "buzzReward" | "chinkuReward" | "managerReward" }[] = isManager
+    ? [{ label: "관리매니저", key: "managerReward" }]
+    : [{ label: "버즈회원", key: "buzzReward" }, { label: "피추천 버즈회원", key: "chinkuReward" }];
 
   return (
     <div className="space-y-5">
@@ -122,7 +122,7 @@ export default function ProductDetail({ id }: { id: string }) {
         <div className="space-y-2">
           {rewardRows.map((r) => (
             <div key={r.label} className={`flex items-center justify-between rounded-lg border px-4 py-3 ${theme.tableWrap}`}>
-              <span className={`text-sm font-semibold ${theme.cellMain}`}>{r.label}{isRate ? <span className={`ml-1 text-xs font-normal ${theme.note}`}>({r.pct ?? 0}%)</span> : null}</span>
+              <span className={`text-sm font-semibold ${theme.cellMain}`}>{r.label}</span>
               <span className={`text-sm font-black ${theme.statTone.green}`}>{krw(rewardAmount(p, r.key))}</span>
             </div>
           ))}

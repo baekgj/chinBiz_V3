@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { visibleNav, DASHBOARD_HREF } from "./nav";
 import { useAdminScopes } from "./MeContext";
 import Icon from "./Icon";
+import BrandMark from "./BrandMark";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -17,9 +18,7 @@ export default function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-line bg-navy-900">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-cyan-500 shadow-lg shadow-brand-600/20">
-          <Icon name="shield" className="h-5 w-5 text-white" />
-        </span>
+        <BrandMark />
         <div className="leading-tight">
           <p className="text-sm font-black text-white">
             친비즈 <span className="text-brand-400">HQ</span>

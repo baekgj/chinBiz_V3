@@ -9,6 +9,7 @@ import AlarmBell from "@/components/AlarmBell";
 import AdminHomeLink from "@/components/AdminHomeLink";
 import { apiGet } from "@/lib/api";
 import { dv } from "@/components/division/DivisionUI";
+import BrandMark from "../BrandMark";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
@@ -47,7 +48,7 @@ export default function DivisionTopbar() {
     <header className={dv.header}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href="/division" className="flex items-center gap-2.5">
-          <span className={`grid h-9 w-9 place-items-center rounded-xl shadow-sm ${dv.logoBox}`}><Icon name="box" className="h-5 w-5" /></span>
+          <BrandMark />
           <div className="leading-tight">
             <p className={`text-sm font-black ${dv.brand}`}>친비즈 <span className={dv.accent}>DIVISION</span></p>
             <p className="text-[10px] font-semibold tracking-wider text-violet-400/60">총괄본부 마스터 오피스</p>

@@ -82,6 +82,7 @@ public class OrgController {
         m.put("accountHolder", u.getAccountHolder());
         m.put("salesCenterId", u.getSalesCenterId());
         m.put("centerName", centerName(u.getSalesCenterId()));
+        m.put("membershipExpiry", u.getMembershipExpiry() == null ? null : u.getMembershipExpiry().toString());
         m.put("createdAt", u.getCreatedAt() == null ? null : u.getCreatedAt().toString());
         return m;
     }
@@ -238,7 +239,8 @@ public class OrgController {
 
     public record OrgMemberRequest(
             String role, String userId, String password, String name, String phone, String email,
-            String bankName, String accountNumber, String accountHolder, Long salesCenterId) {}
+            String bankName, String accountNumber, String accountHolder, Long salesCenterId,
+            String membershipExpiry) {}  // 센터·매니저 서비스종료일자(yyyy-MM-dd)
 
     /** 본부/센터 계정 등록 */
     @PostMapping("/members")
@@ -406,6 +408,9 @@ public class OrgController {
         u.setAccountNumber(req.accountNumber());
         u.setAccountHolder(req.accountHolder());
         if (req.salesCenterId() != null) u.setSalesCenterId(req.salesCenterId());
+        // 서비스종료일자 — 센터·매니저만 대상 (비우면 미설정)
+        if (u.getRole() == Role.CENTER_ADMIN || u.getRole() == Role.MANAGER)
+            u.setMembershipExpiry(isBlank(req.membershipExpiry()) ? null : java.time.LocalDate.parse(req.membershipExpiry().trim()));
     }
 
     private Role parseOrgRole(String s) {

@@ -19,5 +19,6 @@ public record PartnerRequest(
         String bankName,
         String accountNumber,
         String accountHolder,
-        String saleId             // 영업본부(본부 계정 로그인 아이디)
+        String saleId,            // 영업본부(본부 계정 로그인 아이디)
+        String entryFeePaidDate   // 입점비 납부일자(yyyy-MM-dd, 비우면 미납)
 ) {}

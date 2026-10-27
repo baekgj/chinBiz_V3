@@ -24,11 +24,12 @@ export type PartnerData = {
   accountNumber?: string;
   accountHolder?: string;
   saleId?: string | null; // 영업본부(본부 계정 로그인 아이디)
+  entryFeePaidDate?: string | null; // 입점비 납부일자(yyyy-MM-dd)
 };
 
 type DivisionAccount = { id: number; userId: string; name: string; centerName: string | null };
 
-type Form = Required<Omit<PartnerData, "id" | "saleId">> & { password: string; saleId: string };
+type Form = Required<Omit<PartnerData, "id" | "saleId" | "entryFeePaidDate">> & { password: string; saleId: string; entryFeePaidDate: string };
 
 function loadDaumPostcode(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -83,6 +84,7 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
     accountNumber: initial?.accountNumber ?? "",
     accountHolder: initial?.accountHolder ?? "",
     saleId: initial?.saleId ?? "",
+    entryFeePaidDate: initial?.entryFeePaidDate ?? "",
   });
   const [divisions, setDivisions] = useState<DivisionAccount[]>([]);
 
@@ -207,6 +209,10 @@ export default function PartnerForm({ mode, initial }: { mode: "new" | "edit"; i
                 <option key={d.id} value={d.userId}>{d.centerName ? `${d.centerName} · ` : ""}{d.name} ({d.userId})</option>
               ))}
             </select>
+          </Field>
+          <Field label="입점비 납부일자" hint="날짜 지정 시 입점비 납부 완료로 처리 (비우면 미납)">
+            <input type="date" className={`${inputCls} [color-scheme:dark]`} value={f.entryFeePaidDate}
+              onChange={(e) => set("entryFeePaidDate")(e.target.value)} />
           </Field>
           <div className="sm:col-span-2">
             <Field label="사업자 주소">

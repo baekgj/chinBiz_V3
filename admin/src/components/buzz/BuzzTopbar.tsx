@@ -8,6 +8,7 @@ import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
 import AdminHomeLink from "@/components/AdminHomeLink";
 import { useBuzz } from "@/components/buzz/theme";
+import BrandMark from "../BrandMark";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
@@ -61,9 +62,7 @@ export default function BuzzTopbar() {
     <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${theme.header}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href="/buzz" className="flex items-center gap-2.5">
-          <span className={`grid h-9 w-9 place-items-center rounded-xl shadow-sm ${theme.logoBox}`}>
-            <Icon name="box" className="h-5 w-5" />
-          </span>
+          <BrandMark />
           <div className="leading-tight">
             <p className={`text-sm font-black ${theme.brand}`}>친비즈 <span className={theme.accent}>{isManager ? "MANAGER" : "BUZZ"}</span></p>
             <p className="text-[10px] font-semibold tracking-wider text-slate-400">{isManager ? "관리매니저 워크스페이스" : "버즈 워크스페이스"}</p>

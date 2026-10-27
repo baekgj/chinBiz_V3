@@ -25,6 +25,7 @@ type Division = { id: number; name: string; salesCenterId: number | null; center
 export type OrgMember = {
   id?: number; userId?: string; name?: string; role?: string; phone?: string; email?: string;
   bankName?: string; accountNumber?: string; accountHolder?: string; salesCenterId?: number | null; centerName?: string | null;
+  membershipExpiry?: string | null; // 서비스종료일자(yyyy-MM-dd) — 센터·매니저
 };
 
 function Field({ label, required, children, hint, error }: { label: string; required?: boolean; children: React.ReactNode; hint?: string; error?: string }) {
@@ -45,6 +46,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
     userId: initial?.userId ?? "", password: "", name: initial?.name ?? "",
     phone: initial?.phone ?? "", email: initial?.email ?? "",
     bankName: initial?.bankName ?? "", accountNumber: initial?.accountNumber ?? "", accountHolder: initial?.accountHolder ?? "",
+    membershipExpiry: initial?.membershipExpiry ?? "",
   });
   const [salesCenterId, setSalesCenterId] = useState<number | "">(initial?.salesCenterId ?? "");
   const [idStatus, setIdStatus] = useState<"idle" | "checking" | "ok" | "dup">(isEdit ? "ok" : "idle");
@@ -62,6 +64,8 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
 
   // 하위추천회원 소속센터 전체변경 버튼 노출 여부 (수정 모드 · 버즈/매니저/센터)
   const canCascade = isEdit && CASCADE_ROLES.includes(initial?.role ?? "");
+  // 서비스종료일자 입력 노출: 센터 등록/수정, 매니저 수정
+  const showExpiry = isEdit ? ["CENTER_ADMIN", "MANAGER"].includes(initial?.role ?? "") : role === "CENTER_ADMIN";
 
   // 하위추천회원 소속센터 일괄변경 모달
   const [cascadeOpen, setCascadeOpen] = useState(false);
@@ -146,6 +150,7 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
       role, userId: f.userId, password: f.password, name: f.name, phone: f.phone, email: f.email,
       bankName: f.bankName, accountNumber: f.accountNumber, accountHolder: f.accountHolder,
       salesCenterId: salesCenterId === "" ? null : Number(salesCenterId),
+      membershipExpiry: showExpiry ? f.membershipExpiry : null,
     };
     const res = isEdit ? await apiPut(`/api/org/members/${initial?.id}`, payload) : await apiPost(`/api/org/members`, payload);
     setSaving(false);
@@ -235,6 +240,11 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
           <Field label="이름" required error={errors.name}><input className={inputCls} value={f.name} onChange={(e) => set("name")(e.target.value)} placeholder="이름" /></Field>
           <Field label="전화번호"><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(formatPhone(e.target.value))} placeholder="010-1234-5678" /></Field>
           <Field label="이메일"><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@chinbiz.com" /></Field>
+          {showExpiry && (
+            <Field label="서비스종료일자" hint="비우면 미설정">
+              <input type="date" className={`${inputCls} [color-scheme:dark]`} value={f.membershipExpiry} onChange={(e) => set("membershipExpiry")(e.target.value)} />
+            </Field>
+          )}
         </div>
       </section>
 
