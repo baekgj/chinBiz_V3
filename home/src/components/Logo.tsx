@@ -16,17 +16,15 @@ export default function Logo({
       </Link>
     );
   }
-  // 어두운 배경: 로고 글자가 검정이라 CIB 심볼 + 흰 워드마크로 표시
+  // 어두운 배경(하단 푸터·로그인 좌측 패널): 흰색 CIB 심볼(cib_white.png, docs/32) + 흰 워드마크
   return (
     <Link
       href="/"
       className={`inline-flex items-center gap-2.5 ${className}`}
       aria-label="친비즈 홈으로"
     >
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/cib.png" alt="" className="h-6 w-auto" aria-hidden />
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/cib_white.png" alt="" className="h-8 w-auto" aria-hidden />
       <span className="flex flex-col leading-none">
         <span className="text-lg font-black tracking-tight text-white">
           친비즈<span className="text-gold-500">.</span>

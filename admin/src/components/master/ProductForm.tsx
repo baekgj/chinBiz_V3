@@ -53,6 +53,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     specEffect: String(g("specEffect")), salesTarget: String(g("salesTarget")),
     productFeature: String(g("productFeature")), processFlow: String(g("processFlow")),
     contractEndDate: initial?.contractEndDate ? String(initial.contractEndDate) : "",
+    // docs/32 상품정보 · 검색노출(SEO)
+    ...Object.fromEntries(SEO_FIELDS.map((s) => [s.key, initial?.[s.key] != null ? String(initial[s.key]) : ""])),
   });
   const [onSale, setOnSale] = useState<boolean>(initial?.onSale != null ? Boolean(initial.onSale) : true);
   const [installProduct, setInstallProduct] = useState<boolean>(Boolean(initial?.installProduct));
@@ -164,6 +166,8 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       // docs/25 확장
       monthlyCare, asSupport, videoUrl: f.videoUrl,
       specEffect: f.specEffect, salesTarget: f.salesTarget, productFeature: f.productFeature, processFlow: f.processFlow,
+      // docs/32 상품정보 · SEO
+      ...Object.fromEntries(SEO_FIELDS.map((s) => [s.key, f[s.key] ?? ""])),
     };
     const res = mode === "new" ? await apiPost("/api/products", payload) : await apiPut(`/api/products/${initial?.id}`, payload);
     setSaving(false);
@@ -402,6 +406,24 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
         </div>
       </section>
 
+      {/* 상품정보 · 검색노출(SEO) — HOME 상품상세 [상품 정보] 표 + 메타태그/구조화 데이터 (docs/32) */}
+      <section className="card p-5">
+        <h3 className="text-sm font-black text-white">상품정보 · 검색노출(SEO)</h3>
+        <p className="mb-3 mt-1 text-xs text-slate-500">입력한 정보는 HOME 상품상세 화면의 [상품 정보]와 네이버·구글 검색 노출(메타태그·구조화 데이터)에 사용됩니다. 미입력 항목은 노출되지 않습니다.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {SEO_FIELDS.map((s) => (
+            <label key={s.key} className={`block ${s.wide ? "sm:col-span-2" : ""}`}>
+              <span className="text-xs font-semibold text-slate-400">{s.label}{s.note && <span className="font-normal text-slate-500"> ({s.note})</span>}</span>
+              {s.wide ? (
+                <textarea rows={2} maxLength={s.max} className={`mt-1 ${inputCls}`} value={f[s.key] ?? ""} onChange={(e) => set(s.key)(e.target.value)} placeholder={s.placeholder} />
+              ) : (
+                <input maxLength={s.max} className={`mt-1 ${inputCls}`} value={f[s.key] ?? ""} onChange={(e) => set(s.key)(e.target.value)} placeholder={s.placeholder} />
+              )}
+            </label>
+          ))}
+        </div>
+      </section>
+
       {notice && <div className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">{notice}</div>}
 
       <div className="flex justify-end gap-2">
@@ -413,6 +435,18 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
     </form>
   );
 }
+
+// 상품정보 고시 + SEO 입력 항목 (docs/32) — BE product 컬럼과 1:1
+const SEO_FIELDS: { key: string; label: string; placeholder: string; max: number; note?: string; wide?: boolean }[] = [
+  { key: "brand", label: "브랜드", placeholder: "예: KYC", max: 100 },
+  { key: "modelName", label: "모델명", placeholder: "예: KYC-450", max: 100 },
+  { key: "manufacturer", label: "제조사", placeholder: "예: (주)케이와이씨테크", max: 100 },
+  { key: "origin", label: "원산지", placeholder: "예: 대한민국", max: 100 },
+  { key: "specSize", label: "규격 / 크기 · 용량", placeholder: "예: 600×700×1,450mm / 220V", max: 255, wide: true },
+  { key: "seoTitle", label: "검색 노출 제목", note: "미입력 시 상품명", placeholder: "예: 즉석 자동제면기 KYC-450 | 친비즈", max: 150, wide: true },
+  { key: "seoDescription", label: "검색 노출 설명", note: "80~160자 권장 · 미입력 시 상품설명 요약", placeholder: "검색 결과에 표시될 상품 소개 문구", max: 500, wide: true },
+  { key: "seoKeywords", label: "검색 키워드", note: "콤마(,) 구분", placeholder: "예: 제면기, 자동제면기, 업소용 제면기", max: 500, wide: true },
+];
 
 const DESC_TABS: { key: string; label: string; note: string }[] = [
   { key: "description", label: "비로그인 전용", note: "홈(비로그인) 상품 상세·목록 요약에 노출" },

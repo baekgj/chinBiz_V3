@@ -160,6 +160,48 @@ export default function ProductDetail({ id }: { id: string }) {
         </Card>
       ))}
 
+      {/* ★ 이 상품으로 수익을 만드는 2가지 방법 — HOME 상품상세 하단 영역과 동일(docs/32) */}
+      <section>
+        <h2 className={`text-xl font-black sm:text-2xl ${theme.cellMain}`}>이 상품으로 수익을 만드는 2가지 방법</h2>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {/* OPTION A · CP — 버즈회원 */}
+          <div className="relative overflow-hidden rounded-2xl bg-[#f4511e] p-6 text-white shadow-sm sm:p-7">
+            <div className="flex items-start justify-between">
+              <span className="text-xs font-bold tracking-widest text-white/70">OPTION A · CP</span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-black/80 text-sm">↗</span>
+            </div>
+            <p className="mt-6 text-lg font-black">■ 버즈회원</p>
+            <p className="mt-2 text-xl font-black leading-snug sm:text-2xl">주변 사장님께 추천만 하세요!</p>
+            <div className="mt-6 flex flex-wrap items-end gap-2 border-t border-white/25 pt-5">
+              <span className="pb-1 text-xs text-white/80">추천 성공 시</span>
+              <span className="text-sm font-bold text-white/90">건당 최대</span>
+              <span className="text-2xl font-black sm:text-3xl">{krw(rewardAmount(p, "buzzReward"))}</span>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-white/85">
+              실사·계약·시공은 친비즈 매니저가 모두 전담합니다. 추천만 하면 수수료(CP)가 적립됩니다.
+            </p>
+          </div>
+          {/* OPTION B · MP — 관리매니저 */}
+          <div className="relative overflow-hidden rounded-2xl bg-[#0b46c3] p-6 text-white shadow-sm sm:p-7">
+            <div className="flex items-start justify-between">
+              <span className="text-xs font-bold tracking-widest text-white/70">OPTION B · MP</span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/15 text-sm">↗</span>
+            </div>
+            <p className="mt-6 text-lg font-black">■ 관리매니저</p>
+            <p className="mt-2 text-xl font-black leading-snug sm:text-2xl">현장 방문 및 실사·계약을 전담하세요!</p>
+            <div className="mt-6 flex flex-wrap items-end gap-2 border-t border-white/25 pt-5">
+              <span className="pb-1 text-xs text-white/80">이행 완료 시</span>
+              <span className="text-sm font-bold text-white/90">건당</span>
+              <span className="text-2xl font-black sm:text-3xl">{krw(rewardAmount(p, "managerReward"))}</span>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-white/85">
+              관할 구역 리드 인계 + 이행 완료 시 수수료(MP) 적립. 전문 매니저로 활동하세요.
+            </p>
+          </div>
+        </div>
+        <p className={`mt-3 text-xs ${theme.cellSub}`}>* CP · MP 포인트는 친비즈 정책에 따라 적립됩니다.</p>
+      </section>
+
       {/* 우측 하단 1차영업신청 */}
       {showApply && (
         <div className="flex justify-end">

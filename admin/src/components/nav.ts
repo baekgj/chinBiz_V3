@@ -25,6 +25,12 @@ export const RBAC_AREAS: { code: NavArea; label: string; menus: string }[] = [
 export const NAV: NavItem[] = [
   { href: "/master", label: "대시보드", desc: "종합 지표 현황", icon: "grid" },
   {
+    href: "/master/ads", label: "광고관리", desc: "HOME 광고(슬라이드·배너·팝업)", icon: "megaphone", area: "SUPER",
+    children: [
+      { href: "/master/ads", label: "광고리스트" },
+    ],
+  },
+  {
     href: "/master/partners", label: "파트너사 관리", desc: "입점 심사·계약·예치금/빌링", icon: "handshake", area: "A",
     children: [
       { href: "/master/partners", label: "파트너관리" },
@@ -52,6 +58,7 @@ export const NAV: NavItem[] = [
   {
     href: "/master/education", label: "교육 관리", desc: "매니저 상품 교육 신청·승인", icon: "book", area: "A",
     children: [
+      { href: "/master/education/materials", label: "교육자료 등록" },
       { href: "/master/education/apply", label: "교육이수 신청" },
       { href: "/master/education/approve", label: "교육이수 승인" },
     ],

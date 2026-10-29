@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, SectionTitle } from "@/components/ui";
 import { apiGet, apiPut } from "@/lib/api";
 import RbacManager from "@/components/master/RbacManager";
+import SeoSettings from "@/components/master/SeoSettings";
 
 const TOGGLES = [
   { key: "fcfs", label: "지역기반 선착순 배정", desc: "법정동 코드 기반 매니저 자동 매칭", on: true },
@@ -80,6 +81,9 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs text-slate-500">* 추천인 id 미입력·미존재 시 추천인은 위 <b className="text-slate-300">[미입력/미존재 시]</b> 대상으로 지정되어 양쪽 모두 CP가 지급됩니다. (allowance type=JOIN·status=CP)</p>
         </div>
       </Card>
+
+      {/* 검색엔진 최적화 메타태그 → HOME (docs/32) */}
+      <SeoSettings />
 
       {/* RBAC — 담당자 지정 (docs/20 Task4) */}
       <RbacManager />

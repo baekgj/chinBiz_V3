@@ -95,6 +95,9 @@ public final class AlarmDefs {
             msg("OOO 회원의 회비/입점비 결제로 수당 $$$$$원이 지급(CP 적립)되었습니다.\n[주문번호 : ______]", CENTER, DIVISION),
             msg("OOO 회원의 회비/입점비 결제에 따라 상위 조직 수당 $$$$$원이 지급되었습니다.\n[주문번호 : ______]", HQ))),
 
+        new Def("NOTICE", "공지사항", "본사admin - [공지사항] 공지 등록(게시) 시 — 버즈대상 공지는 매니저에게도 발송",
+            msg("[공지] TTTT 공지사항이 등록되었습니다.", BUZZ, MANAGER, CENTER, DIVISION)),
+
         new Def("RESIDENT_NUMBER_REQUEST", "주민번호요청", "본사admin - [정산내역] 주민번호 미등록 회원 [알람발송] 버튼",
             msg("활동수당 지급에 대한 세금신고용으로 주민등록번호가 입력되어야 합니다. ADMIN의 내정보관리에서 주민등록번호를 등록해 주세요.",
                 BUZZ, MANAGER, CENTER, DIVISION))

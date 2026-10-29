@@ -68,6 +68,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/partner/**").hasRole("PARTNER")
                         // 버즈/매니저 워크스페이스(네트워크·마켓·1차영업·교육) 전용
                         .requestMatchers("/api/buzz/**").hasAnyRole("BUZZ", "MANAGER")
+                        // 광고관리(HOME 광고 등록·이미지 업로드)는 본사 전용 (docs/32). 노출은 /api/public/ads
+                        .requestMatchers("/api/ads", "/api/ads/**").hasRole("MASTER_ADMIN")
+                        // 교육자료 등록/삭제는 본사 전용 (docs/32)
+                        .requestMatchers("/api/education/materials", "/api/education/materials/**").hasRole("MASTER_ADMIN")
                         // 교육관리(신청/승인)는 본사·센터 전용
                         .requestMatchers("/api/education/**").hasAnyRole("MASTER_ADMIN", "CENTER_ADMIN")
                         // 센터 관리(매니저 신청/승인 등)는 센터 전용

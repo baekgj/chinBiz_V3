@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
 
@@ -46,10 +47,11 @@ export default function NoticeTicker() {
       <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-gold-300">공지</span>
       <div key={idx} className="min-w-0 flex-1 animate-float-up">
         {n ? (
-          <p className="truncate text-sm text-white">
+          // 클릭 시 공지사항 상세로 이동 (docs/32)
+          <Link href={`/notices/${n.id}`} className="block truncate text-sm text-white hover:text-gold-200 hover:underline">
             {n.targetLabel && <span className="mr-1.5 font-semibold text-gold-200">[{n.targetLabel}]</span>}
             {n.title}
-          </p>
+          </Link>
         ) : (
           <p className="truncate text-sm text-forest-200/70">등록된 공지사항이 없습니다.</p>
         )}

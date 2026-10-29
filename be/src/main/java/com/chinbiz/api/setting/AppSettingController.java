@@ -35,6 +35,12 @@ public class AppSettingController {
         "fee_reward_partner_division_pct",
     };
 
+    /** 검색엔진최적화 메타태그 (본사 [시스템설정]-[환경설정] → HOME <head>, docs/32). 공개 API /api/public/seo 로 노출 */
+    public static final String[] SEO_KEYS = {
+        "seo_title", "seo_description", "seo_keywords", "seo_author",
+        "seo_og_image", "seo_site_url", "seo_naver_verification", "seo_google_verification",
+    };
+
     /** 본부/센터 장 중복등록 허용 여부 (Y=허용, N=불가) — [본부ᆞ센터 리스트] 상단 토글 */
     public static final String ORG_DUP_ALLOW = "org_dup_allow";
 

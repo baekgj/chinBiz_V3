@@ -2,7 +2,7 @@ package com.chinbiz.api.notice;
 
 import com.chinbiz.api.org.CenterCode;
 import com.chinbiz.api.org.CenterCodeRepository;
-import com.chinbiz.api.push.WebPushService;
+import com.chinbiz.api.alarm.AlarmService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -30,14 +30,14 @@ public class NoticeController {
     private final NoticeRepository repo;
     private final CenterCodeRepository centerCodeRepository;
     private final NoticeRecipientResolver recipientResolver;
-    private final WebPushService webPushService;
+    private final AlarmService alarmService;
 
     public NoticeController(NoticeRepository repo, CenterCodeRepository centerCodeRepository,
-                            NoticeRecipientResolver recipientResolver, WebPushService webPushService) {
+                            NoticeRecipientResolver recipientResolver, AlarmService alarmService) {
         this.repo = repo;
         this.centerCodeRepository = centerCodeRepository;
         this.recipientResolver = recipientResolver;
-        this.webPushService = webPushService;
+        this.alarmService = alarmService;
     }
 
     private String targetName(Long idx) {
@@ -144,27 +144,18 @@ public class NoticeController {
         try { return Notice.Target.valueOf(s.trim().toUpperCase()); } catch (Exception e) { return null; }
     }
 
-    /** 발행된 공지면 대상 회원 해석 → 웹푸시 발송. 예외는 격리(공지 저장 트랜잭션과 분리). */
+    /** 발행된 공지면 대상 회원 해석 → 인앱 알람 + 웹푸시 발송. 예외는 격리(공지 저장 트랜잭션과 분리). */
     private void pushIfPublished(Notice n) {
         if (!n.isPublished()) return;
         try {
-            List<String> accounts = recipientResolver.resolveAccounts(n);
-            if (accounts.isEmpty()) return;
-            String body = excerpt(n.getContent(), 80);
-            String url = recipientResolver.workspacePath(n.getTargetType());
-            webPushService.sendToAccounts(accounts, n.getTitle(), body, url);
+            // 인앱 알람(alram) 저장 + 웹푸시 — 기존엔 웹푸시만 발송해 구독 기기 외엔 알람이 없었음(docs/32).
+            // 버즈대상 공지는 매니저에게도 발송.
+            int sent = alarmService.fireNotice(n.getTitle(), n.getTargetType().name(),
+                    recipientResolver.resolveUsers(n), recipientResolver.resolveBuzzNoticeManagers(n), n.getId());
+            log.info("[notice] 공지 알람 발송 noticeId={} target={} 수신 {}건", n.getId(), n.getTargetType(), sent);
         } catch (Exception e) {
             log.warn("[notice] 공지 푸시 발송 실패 noticeId={} : {}", n.getId(), e.getMessage());
         }
     }
 
-    /** HTML 태그 제거 후 앞부분 발췌(푸시 본문용) */
-    private String excerpt(String html, int max) {
-        if (html == null) return "";
-        String text = html.replaceAll("<[^>]*>", " ")
-                .replace("&nbsp;", " ").replace("&amp;", "&")
-                .replace("&lt;", "<").replace("&gt;", ">")
-                .replaceAll("\\s+", " ").trim();
-        return text.length() <= max ? text : text.substring(0, max) + "…";
-    }
 }

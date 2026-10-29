@@ -12,7 +12,18 @@ type Product = {
   buzzReward: number; chinkuReward: number; managerReward: number; salesCenterReward: number;
   mgmtCenterReward: number; divisionReward: number; hqReward: number;
 };
-type Cat = { id: number; level: string; name: string };
+type Cat = { id: number; level: string; name: string; parentId?: number | null };
+
+/** 카테고리를 대 → 중 → 소 트리 순서로 정렬(필터 옵션 들여쓰기용) */
+function catTree(cats: Cat[]): { cat: Cat; depth: number }[] {
+  const out: { cat: Cat; depth: number }[] = [];
+  const walk = (parentId: number | null, depth: number) => {
+    cats.filter((c) => (c.parentId ?? null) === parentId).forEach((c) => { out.push({ cat: c, depth }); walk(c.id, depth + 1); });
+  };
+  walk(null, 0);
+  cats.forEach((c) => { if (!out.some((o) => o.cat.id === c.id)) out.push({ cat: c, depth: 0 }); }); // 부모 누락 고아
+  return out;
+}
 type Partner = { id: number; companyName: string };
 type PageResp = { content: Product[]; page: number; totalElements: number; totalPages: number };
 
@@ -80,7 +91,7 @@ export default function ProductsPage() {
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <select value={categoryId} onChange={(e) => onFilter(setCategoryId, e.target.value)} className="rounded-lg border border-line bg-navy-950 px-2 py-1.5 text-xs text-white outline-none focus:border-brand-500">
             <option value="">전체 카테고리</option>
-            {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {catTree(cats).map(({ cat, depth }) => <option key={cat.id} value={cat.id}>{"  ".repeat(depth)}{depth ? "└ " : ""}{cat.name}</option>)}
           </select>
           <select value={partnerId} onChange={(e) => onFilter(setPartnerId, e.target.value)} className="rounded-lg border border-line bg-navy-950 px-2 py-1.5 text-xs text-white outline-none focus:border-brand-500">
             <option value="">전체 파트너사</option>

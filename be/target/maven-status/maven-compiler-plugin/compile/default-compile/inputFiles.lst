@@ -1,3 +1,10 @@
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\Ad.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\AdController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\AdImage.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\AdImageRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\AdImageResizer.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\AdRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\ad\PublicAdController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\agree\Agree.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\agree\AgreeRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\agree\PublicSaleConsentController.java
@@ -51,6 +58,12 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\BuzzEducationC
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\Education.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EducationAdminController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EducationRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterial.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterialController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterialDownload.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterialDownloadRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterialRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\edu\EduMaterialStorage.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\MyNoticeController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\Notice.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\NoticeController.java

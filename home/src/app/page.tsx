@@ -3,6 +3,7 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import NoticeTicker from "@/components/landing/NoticeTicker";
 import Stats from "@/components/landing/Stats";
+import MainAds from "@/components/landing/MainAds";
 import PartnerInquiry from "@/components/landing/PartnerInquiry";
 import ProductShowcase from "@/components/landing/ProductShowcase";
 import PartnerStats from "@/components/landing/PartnerStats";
@@ -128,6 +129,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* ── 광고 영역 (본사 [광고관리] 슬라이드·배너 / 레이어팝업, docs/32) ── */}
+        <MainAds />
 
         {/* ── Stats band (누적 매칭 100건 이상일 때만 노출, docs/21) ── */}
         <Stats />

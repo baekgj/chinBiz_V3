@@ -61,12 +61,38 @@ export const apiPost = <T = unknown>(p: string, b: unknown) => send<T>(p, "POST"
 export const apiPut = <T = unknown>(p: string, b: unknown) => send<T>(p, "PUT", b);
 export const apiDelete = <T = unknown>(p: string) => send<T>(p, "DELETE", null);
 
-/** 멀티파트 파일 업로드 (Content-Type 미지정 → 브라우저가 boundary 설정) */
-export async function apiUpload<T = unknown>(path: string, file: File): Promise<ApiResult<T>> {
+/** 멀티파트 파일 업로드 (Content-Type 미지정 → 브라우저가 boundary 설정). fields: 추가 폼 필드 */
+export async function apiUpload<T = unknown>(path: string, file: File, fields?: Record<string, string>): Promise<ApiResult<T>> {
   const fd = new FormData();
   fd.append("file", file);
+  Object.entries(fields ?? {}).forEach(([k, v]) => fd.append(k, v));
   try {
     const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers: { ...authHeaders() }, body: fd });
     return handle<T>(res);
   } catch { return NET_FAIL as ApiResult<T>; }
+}
+
+/**
+ * 인증 파일 다운로드 — 응답 본문을 끝까지 받은 뒤(완료 시점) 브라우저 저장을 실행하고 true 반환.
+ * 파일명은 Content-Disposition(filename*=UTF-8) 우선, 없으면 fallbackName.
+ */
+export async function apiDownload(path: string, fallbackName: string): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { headers: { ...authHeaders() } });
+    if (!res.ok) {
+      const r = await handle<{ message?: string }>(res);
+      return { ok: false, message: r.message || "다운로드에 실패했습니다." };
+    }
+    const blob = await res.blob(); // 전체 수신 완료
+    const cd = res.headers.get("Content-Disposition") ?? "";
+    const star = cd.match(/filename\*=UTF-8''([^;]+)/i);
+    const plain = cd.match(/filename="?([^";]+)"?/i);
+    const name = star ? decodeURIComponent(star[1]) : plain ? plain[1] : fallbackName;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    return { ok: true };
+  } catch { return { ok: false, message: NET_FAIL.message }; }
 }

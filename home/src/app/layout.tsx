@@ -1,22 +1,43 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import HashScroll from "@/components/site/HashScroll";
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, absoluteMedia, getSeo, siteUrl, splitKeywords } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "친비즈(ChinBiz) · 영업대행 ERP 플랫폼",
-  description:
-    "계약부터 정산까지, 영업의 모든 흐름을 한 곳에서. 친비즈는 영업 파트너와 기업을 연결하고 실시간 성과·수당 정산을 자동화하는 영업대행 ERP입니다.",
-  // 홈 화면 추가/바로가기 시에도 친비즈 로고(친)가 아이콘으로 쓰이도록 매니페스트·아이콘 지정
-  manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "친비즈" },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
-  },
-};
+/** 공통 메타데이터 — 본사 [환경설정] 검색엔진 메타태그(app_setting seo_*)를 적용(docs/32). 미등록 시 기본값 */
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeo();
+  const base = siteUrl(seo);
+  const title = seo.seo_title || DEFAULT_TITLE;
+  const description = seo.seo_description || DEFAULT_DESCRIPTION;
+  const ogImage = absoluteMedia(base, seo.seo_og_image);
+  return {
+    metadataBase: new URL(base),
+    title,
+    description,
+    keywords: splitKeywords(seo.seo_keywords),
+    authors: seo.seo_author ? [{ name: seo.seo_author }] : undefined,
+    openGraph: {
+      type: "website", locale: "ko_KR", siteName: "친비즈(ChinBiz)", title, description,
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: { card: ogImage ? "summary_large_image" : "summary", title, description, images: ogImage ? [ogImage] : undefined },
+    robots: { index: true, follow: true },
+    verification: {
+      google: seo.seo_google_verification || undefined,
+      other: seo.seo_naver_verification ? { "naver-site-verification": seo.seo_naver_verification } : undefined,
+    },
+    // 홈 화면 추가/바로가기 시에도 친비즈 로고(친)가 아이콘으로 쓰이도록 매니페스트·아이콘 지정
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, title: "친비즈" },
+    icons: {
+      icon: [
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
+    },
+  };
+}
 
 export default function RootLayout({
   children,

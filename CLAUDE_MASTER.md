@@ -82,3 +82,11 @@ LNB 조직망 관리 하위: **본부ᆞ센터 리스트 / 회원 리스트 / �
 - 대시보드/정산/민원/설정 실 BE 연동, OTP, RBAC 메뉴 분기, admin_audit_log. (상품 이미지 업로드·상품설명 WYSIWYG 완료)
 - 대시보드/조직망/정산/민원/설정 실 BE 연동, 상품 이미지 파일 업로드(스토리지 고도화). (상품설명 WYSIWYG 에디터 완료)
 - OTP 실제 2차 인증, RBAC 4담당자 실제 메뉴 권한 분기, admin_audit_log.
+
+## docs/32 (2026-10-29)
+- **광고관리**(LNB 대시보드 아래, area SUPER): `/master/ads`(광고리스트·우측상단 [광고등록]) · `/master/ads/new` · `/master/ads/[id]`. `components/master/AdForm` — 게시여부·광고영역ID(unique)·광고위치(MAIN)·광고유형(SLIDE/BANNER/LAYER_POPUP)·등록이미지 수 +/−(최대 10, 칸 증감). BE `ad/*` — `ad_chinbiz` + `ad_chinbiz_image`, `POST /api/ads/upload?adType=` 리사이징(PC 1200/모바일 750, 팝업 600). HOME 노출 `GET /api/public/ads`.
+- **교육관리 > 교육자료 등록** `/master/education/materials`: 상품 선택 + 파일 업로드(최대 100MB), 목록·다운로드수·삭제. BE `edu/EduMaterialController` (`/api/education/materials`, MASTER_ADMIN), 파일은 `app.edu-dir`(비공개).
+- **시스템설정 > 환경설정**: [검색엔진 최적화(메타태그)] 카드(`SeoSettings`, app_setting `seo_*`) → HOME `<head>`·robots·sitemap.
+- **상품등록/수정**: [상품정보 · 검색노출(SEO)] — brand/modelName/manufacturer/origin/specSize/seoTitle/seoDescription/seoKeywords → HOME 상품상세 [상품 정보]·메타·JSON-LD.
+- **상품리스트 카테고리 필터**: 하위(중/소) 포함 검색으로 수정, 셀렉트 트리 들여쓰기.
+- **공지 알람**: 등록(게시) 시 인앱 알람+푸시(`NOTICE`) — 기존엔 웹푸시만이라 알람 미발생. 버즈대상 → 매니저 동시 발송.

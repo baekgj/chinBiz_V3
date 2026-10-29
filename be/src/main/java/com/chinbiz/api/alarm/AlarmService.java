@@ -120,6 +120,8 @@ public class AlarmService {
             if (amount != null) out = out.replace("$$$$$", amount).replace("$$$$", amount);
             if (product != null) out = out.replaceAll("\\*{3,}", product);
             if (orderNo != null) out = out.replace("______", orderNo);
+            String title = tokens.get("title");
+            if (title != null) out = out.replace("TTTT", title);       // 공지 제목
             String period = tokens.get("period");
             if (period != null) out = out.replace("0000년 00월", period);
         }
@@ -219,6 +221,29 @@ public class AlarmService {
         map.put(AlarmTarget.MANAGER, recipientsByRole(Role.MANAGER));
         map.put(AlarmTarget.CENTER, recipientsByRole(Role.CENTER_ADMIN));
         return fire("PRODUCT_REGISTER", map, Map.of("product", nz(product.getName())), "PRODUCT", product.getId());
+    }
+
+    // ───────────────────────── 공지사항 ─────────────────────────
+
+    /**
+     * [공지사항] 알람 — 공지 대상 회원(본부/센터/매니저/버즈)에게 인앱 알람 + 웹푸시(docs/32).
+     * extraManagers: 버즈대상 공지 시 함께 받는 매니저.
+     */
+    public int fireNotice(String title, String targetType, List<User> users, List<User> extraManagers, Long noticeId) {
+        AlarmTarget target = switch (targetType) {
+            case "DIVISION" -> AlarmTarget.DIVISION;
+            case "CENTER" -> AlarmTarget.CENTER;
+            case "MANAGER" -> AlarmTarget.MANAGER;
+            default -> AlarmTarget.BUZZ;
+        };
+        Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
+        map.put(target, users.stream().map(this::toRecipient).toList());
+        if (extraManagers != null && !extraManagers.isEmpty()) {
+            List<Recipient> mgr = new ArrayList<>(map.getOrDefault(AlarmTarget.MANAGER, List.of()));
+            extraManagers.forEach(u -> mgr.add(toRecipient(u)));
+            map.put(AlarmTarget.MANAGER, mgr);
+        }
+        return fire("NOTICE", map, Map.of("title", nz(title)), "NOTICE", noticeId);
     }
 
     // ───────────────────────── 교육 신청/승인 ─────────────────────────

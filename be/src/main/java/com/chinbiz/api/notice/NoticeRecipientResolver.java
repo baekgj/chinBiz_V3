@@ -34,6 +34,21 @@ public class NoticeRecipientResolver {
 
     /** 수신 대상 회원의 로그인 아이디(account) 목록 */
     public List<String> resolveAccounts(Notice notice) {
+        return resolveUsers(notice).stream().map(User::getUserId).filter(java.util.Objects::nonNull).toList();
+    }
+
+    /**
+     * 버즈대상(BUZZ) 공지의 추가 수신 매니저(docs/32) — 매니저도 버즈 뷰에서 BUZZ 공지를 열람하므로 알람 동시 발송.
+     * 전체공지 → MANAGER 전원, 센터지정 → 소속센터(salesCenterId)가 같은 매니저(MyNoticeController 버즈뷰 기준과 동일).
+     */
+    public List<User> resolveBuzzNoticeManagers(Notice notice) {
+        if (notice == null || notice.getTargetType() != Notice.Target.BUZZ) return Collections.emptyList();
+        if (notice.isAllFlag() || notice.getTargetId() == null) return userRepo.findByRole(Role.MANAGER);
+        return userRepo.findByRoleAndSalesCenterId(Role.MANAGER, notice.getTargetId());
+    }
+
+    /** 수신 대상 회원 목록 */
+    public List<User> resolveUsers(Notice notice) {
         if (notice == null || notice.getTargetType() == null) return Collections.emptyList();
         Role role = roleOf(notice.getTargetType());
         if (role == null) return Collections.emptyList();
@@ -49,7 +64,7 @@ public class NoticeRecipientResolver {
         } else {
             users = userRepo.findByRoleAndSalesCenterId(role, notice.getTargetId());
         }
-        return users.stream().map(User::getUserId).filter(java.util.Objects::nonNull).toList();
+        return users;
     }
 
     /** 대상 role → 알림 클릭 시 이동할 워크스페이스 경로 */

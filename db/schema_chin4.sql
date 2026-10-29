@@ -365,3 +365,62 @@ CREATE TABLE IF NOT EXISTS `agree` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;
+
+
+-- ── [2026-10-29] docs/32 신규 테이블 (product 상품정보·SEO 컬럼 8종 / app_setting.value 1000 은 migration_new_fields.sql 참조) ──
+-- 교육자료 (본사 [교육관리]-[교육자료 등록]) — 파일은 BE app.edu-dir(기본 ./edu-materials) 에 저장
+CREATE TABLE IF NOT EXISTS `edu_material` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `product_id` bigint NOT NULL,
+  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `stored_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `original_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content_type` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_size` bigint DEFAULT NULL,
+  `created_by` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_edu_material_product` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 교육자료 다운로드 이력 (Insert-Only) — 상품 자료 전체 다운로드 시 매니저 [교육완료] 활성화
+CREATE TABLE IF NOT EXISTS `edu_material_download` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `material_id` bigint NOT NULL,
+  `product_id` bigint NOT NULL,
+  `manager_id` bigint NOT NULL,
+  `downloaded_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_edu_dl_manager_product` (`manager_id`,`product_id`),
+  KEY `idx_edu_dl_material` (`material_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- HOME 광고 (본사 [광고관리]) — 이미지는 ad_chinbiz_image (리사이징 PC/모바일 URL)
+CREATE TABLE IF NOT EXISTS `ad_chinbiz` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `area_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `position` enum('MAIN') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ad_type` enum('BANNER','LAYER_POPUP','SLIDE') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `published` bit(1) NOT NULL,
+  `image_count` int NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ad_area_id` (`area_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ad_chinbiz_image` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `ad_id` bigint NOT NULL,
+  `sort_order` int NOT NULL,
+  `image_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mobile_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `link_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alt_text` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `width` int DEFAULT NULL,
+  `height` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ad_image_ad` (`ad_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -74,3 +74,11 @@
 - **1차영업 중복 신청 차단**: `POST/PUT /api/buzz/sales` 저장 전 `isDuplicate` — 사업자등록번호 있으면 (사업자번호+상품), 없으면 (대표자 핸드폰+상품). 숫자만 비교(하이픈 무시), `취소/반품` 건 제외. 중복 시 **409** `{code:DUPLICATE_SALE, message:"동일한 상품에 대한 신청내역이 존재합니다."}` → `SaleForm` 이 `alert`.
 - **home 상품상세 수당 노출**: CP/MP 요약 박스 + `04 / REVENUE` 섹션은 로그인 회원만 표시. BE `PublicProductController` 도 비로그인 시 `buzzRewardWon/managerRewardWon=null`(Guardrail).
 - **앱설치 배너**(`components/pwa/InstallAppButton`): 모바일 + BUZZ/MANAGER(JWT role 클레임)면 로그인 즉시 [앱설치하기] 노출. 네이티브 프롬프트(`beforeinstallprompt`)로 바로 설치(docs/29: 메뉴 경유 안내 제거). 이벤트는 `app/layout` 인라인 스크립트가 하이드레이션 전에 `window.__chinbizBIP`로 선캡처, 미도착 시 최대 4초 대기 후 실행. iOS만 '홈 화면에 추가' 안내(설치 API 없음). 아이콘: favicon.ico·apple-touch-icon도 '친' 로고(home도 동일 manifest/아이콘). ⚠ 네이티브 설치 프롬프트는 **HTTPS**에서만 동작(HTTP 서버IP 접속 시 안내 모드).
+
+### docs/32 (2026-10-29)
+- **앱설치 버튼**(`components/pwa/InstallAppButton`): 대시보드(`/buzz`) 하단 좌측 **고정** 노출 — 이미 설치(standalone)여도 노출, 다른 페이지는 비노출(docs/28 배너·닫기 방식 대체). 대시보드 `main` 은 `pb-24` 여백.
+- **모바일 상단(BuzzTopbar)**: 56px 한 줄 — 로고 + `BUZZ/MANAGER` 라벨만(부제 숨김), 계정명 말줄임, 아이콘 간격 축소, 메뉴 스크롤바 숨김.
+- **상품상세(ProductDetail)**: HOME 하단 [이 상품으로 수익을 만드는 2가지 방법](OPTION A·CP / B·MP) 동일 적용.
+- **교육관리(EducationSection)**: 본사 등록 교육자료 다운로드 버튼(✅ 완료 표시) — 상품 자료 **전체 다운로드 후** [교육완료] 활성화(미등록=“교육자료 준비중”). API `GET /api/buzz/education/materials/{id}/download`, `POST .../{id}/downloaded`, `/complete` 서버 검증.
+- **공지 알람**: 버즈대상 공지 등록 시 매니저에게도 인앱 알람+푸시(`AlarmService.fireNotice`, 프로세스 `NOTICE`).
+- **결제 게이트 루프 수정**: 회비 만기 매니저가 [B] 뷰여도 `/buzz/payment` 에선 `BuzzShell` 이 대시보드로 되돌리지 않고 매니저 뷰로 전환(기존 `PaymentGate` ↔ `BuzzShell` 무한 리다이렉트 해소).

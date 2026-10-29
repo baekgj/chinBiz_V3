@@ -60,12 +60,13 @@ export default function BuzzTopbar() {
 
   return (
     <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${theme.header}`}>
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <Link href="/buzz" className="flex items-center gap-2.5">
+      {/* 모바일(docs/32): 높이 축소 · 로고 옆은 역할 라벨 한 줄만 · 계정명 말줄임 — 줄바꿈 없이 한 줄 정렬 */}
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-5">
+        <Link href="/buzz" className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <BrandMark light={!isManager} />
-          <div className="leading-tight">
-            <p className={`text-sm font-black ${theme.brand}`}>친비즈 <span className={theme.accent}>{isManager ? "MANAGER" : "BUZZ"}</span></p>
-            <p className="text-[10px] font-semibold tracking-wider text-slate-400">{isManager ? "관리매니저 워크스페이스" : "버즈 워크스페이스"}</p>
+          <div className="whitespace-nowrap leading-tight">
+            <p className={`text-xs font-black sm:text-sm ${theme.brand}`}><span className="hidden sm:inline">친비즈 </span><span className={theme.accent}>{isManager ? "MANAGER" : "BUZZ"}</span></p>
+            <p className="hidden text-[10px] font-semibold tracking-wider text-slate-400 sm:block">{isManager ? "관리매니저 워크스페이스" : "버즈 워크스페이스"}</p>
           </div>
         </Link>
 
@@ -97,12 +98,12 @@ export default function BuzzTopbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-0.5 sm:gap-2">
           {/* MANAGER 전용: 버즈↔매니저 admin 뷰 전환 (모바일=아이콘 [M]/[B], docs/22) */}
           {canToggle && (
             <button
               onClick={toggleView}
-              className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold ${theme.outlineBtn}`}
+              className={`mr-1 shrink-0 whitespace-nowrap rounded-lg px-2 py-1 text-[11px] font-bold sm:mr-0 sm:px-2.5 sm:py-1.5 sm:text-xs ${theme.outlineBtn}`}
               title={isManager ? "버즈회원 화면으로 전환" : "관리매니저 화면으로 전환"}>
               <span className="sm:hidden">[{isManager ? "B" : "M"}]</span>
               <span className="hidden sm:inline">{isManager ? "버즈admin 보기" : "매니저admin 보기"}</span>
@@ -112,17 +113,17 @@ export default function BuzzTopbar() {
           <AlarmBell tone={isManager ? "dark" : "light"} />
           {/* 계정명 클릭 → 내정보 수정 */}
           <Link href="/buzz/profile"
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/buzz/profile") ? theme.acctActive : theme.acctIdle}`}>
+            className={`min-w-0 max-w-[5.5rem] truncate whitespace-nowrap rounded-lg px-1.5 py-1.5 text-xs font-semibold sm:max-w-none sm:px-3 sm:text-sm ${pathname.startsWith("/buzz/profile") ? theme.acctActive : theme.acctIdle}`}>
             {name ? `${name}님` : "내 정보"}
           </Link>
-          <button onClick={() => { clearToken(); goToLogin(); }} className={`grid h-9 w-9 place-items-center rounded-lg ${theme.iconBtn}`} aria-label="로그아웃">
+          <button onClick={() => { clearToken(); goToLogin(); }} className={`grid h-9 w-8 shrink-0 place-items-center rounded-lg sm:w-9 ${theme.iconBtn}`} aria-label="로그아웃">
             <Icon name="logout" className="h-5 w-5" />
           </button>
         </div>
       </div>
 
       {/* 모바일 메뉴 */}
-      <nav className={`flex gap-1 overflow-x-auto border-t px-3 py-2 lg:hidden ${theme.mobileBorder}`}>
+      <nav className={`no-scrollbar flex gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden ${theme.mobileBorder}`}>
         {nav.flatMap((n) => n.children ?? [n]).map((n) => (
           <Link key={n.href} href={n.href} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${active(n.href) ? theme.navActive : theme.navIdle}`}>{n.label}</Link>
         ))}

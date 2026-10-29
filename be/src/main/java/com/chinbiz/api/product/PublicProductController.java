@@ -87,6 +87,7 @@ public class PublicProductController {
                 .stream().filter(s -> s != null && !s.isBlank()).toList());
         m.put("videoUrl", p.getVideoUrl());
         m.put("monthlyCare", p.isMonthlyCare());
+        m.put("salePrice", p.getSalePrice());          // 판매가(월관리상품은 월회비) — 상세 상단 노출(docs/32)
         m.put("asSupport", p.isAsSupport());
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
@@ -96,6 +97,16 @@ public class PublicProductController {
         m.put("salesTarget", p.getSalesTarget());
         m.put("productFeature", p.getProductFeature());
         m.put("processFlow", p.getProcessFlow());
+        // 상품정보·SEO (docs/32) — 공개 정보(단가·수당 아님)
+        m.put("brand", p.getBrand());
+        m.put("modelName", p.getModelName());
+        m.put("manufacturer", p.getManufacturer());
+        m.put("origin", p.getOrigin());
+        m.put("specSize", p.getSpecSize());
+        m.put("seoTitle", p.getSeoTitle());
+        m.put("seoDescription", p.getSeoDescription());
+        m.put("seoKeywords", p.getSeoKeywords());
+        m.put("updatedAt", p.getUpdatedAt() == null ? null : p.getUpdatedAt().toString());
         // 수당(CP/MP) 금액은 로그인 회원에게만 노출 (docs/28 · Guardrail) — 비로그인은 null
         m.put("buzzRewardWon", role == null ? null : rewardWon(p, p.getBuzzReward() == null ? 0 : p.getBuzzReward()));
         m.put("managerRewardWon", role == null ? null : rewardWon(p, p.getManagerReward() == null ? 0 : p.getManagerReward()));
@@ -124,6 +135,19 @@ public class PublicProductController {
         if (html == null) return "";
         String s = html.replaceAll("<[^>]*>", " ").replaceAll("&nbsp;", " ").replaceAll("\\s+", " ").trim();
         return s.length() > max ? s.substring(0, max) + "…" : s;
+    }
+
+    /** 사이트맵용 판매중 상품 id·수정일 (HOME /sitemap.xml, docs/32) */
+    @GetMapping("/products/sitemap")
+    public List<Map<String, Object>> sitemap() {
+        Specification<Product> spec = (r, q, cb) -> cb.isTrue(r.get("onSale"));
+        return productRepo.findAll(spec, Sort.by(Sort.Direction.DESC, "id")).stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", p.getId());
+            var at = p.getUpdatedAt() != null ? p.getUpdatedAt() : p.getCreatedAt();
+            m.put("updatedAt", at == null ? null : at.toString());
+            return m;
+        }).toList();
     }
 
     /** 대표 상품 목록 (판매중, 인기·추천 우선, 최신순). 민감정보 제외. */

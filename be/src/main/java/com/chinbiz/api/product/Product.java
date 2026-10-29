@@ -91,6 +91,16 @@ public class Product {
     @Column(name = "product_feature", columnDefinition = "LONGTEXT") private String productFeature; // 상품특성
     @Column(name = "process_flow", columnDefinition = "LONGTEXT") private String processFlow;     // 처리프로세스
 
+    // 상품정보 고시 + 검색엔진 최적화(SEO) (docs/32) — HOME 상품상세 [상품 정보]·메타태그·구조화 데이터(JSON-LD)
+    @Column(length = 100) private String brand;                                   // 브랜드
+    @Column(name = "model_name", length = 100) private String modelName;          // 모델명
+    @Column(length = 100) private String manufacturer;                            // 제조사
+    @Column(length = 100) private String origin;                                  // 원산지
+    @Column(name = "spec_size", length = 255) private String specSize;            // 규격/크기·용량
+    @Column(name = "seo_title", length = 150) private String seoTitle;            // 검색 노출 제목(미입력 시 상품명)
+    @Column(name = "seo_description", length = 500) private String seoDescription; // 검색 노출 설명(미입력 시 상품설명 요약)
+    @Column(name = "seo_keywords", length = 500) private String seoKeywords;      // 검색 키워드(콤마 구분)
+
     // 키워드 태그 (마켓 배지). 상품등록 시 선택
     @Column(name = "kw_popular", nullable = false) private boolean popular = false;      // 인기
     @Column(name = "kw_recommended", nullable = false) private boolean recommended = false; // 추천
@@ -148,6 +158,14 @@ public class Product {
     public String getSalesTarget() { return salesTarget; } public void setSalesTarget(String v) { salesTarget = v; }
     public String getProductFeature() { return productFeature; } public void setProductFeature(String v) { productFeature = v; }
     public String getProcessFlow() { return processFlow; } public void setProcessFlow(String v) { processFlow = v; }
+    public String getBrand() { return brand; } public void setBrand(String v) { brand = v; }
+    public String getModelName() { return modelName; } public void setModelName(String v) { modelName = v; }
+    public String getManufacturer() { return manufacturer; } public void setManufacturer(String v) { manufacturer = v; }
+    public String getOrigin() { return origin; } public void setOrigin(String v) { origin = v; }
+    public String getSpecSize() { return specSize; } public void setSpecSize(String v) { specSize = v; }
+    public String getSeoTitle() { return seoTitle; } public void setSeoTitle(String v) { seoTitle = v; }
+    public String getSeoDescription() { return seoDescription; } public void setSeoDescription(String v) { seoDescription = v; }
+    public String getSeoKeywords() { return seoKeywords; } public void setSeoKeywords(String v) { seoKeywords = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

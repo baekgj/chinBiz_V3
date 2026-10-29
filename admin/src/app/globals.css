@@ -53,6 +53,9 @@ html {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+/* 가로 스크롤 메뉴 등 스크롤바 숨김(모바일 상단 메뉴) */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 @keyframes float-up {
   from { opacity: 0; transform: translateY(12px); }

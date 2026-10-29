@@ -388,3 +388,88 @@ DROP PROCEDURE IF EXISTS chinbiz_add_col;
 ALTER TABLE `allowance` MODIFY `type` ENUM('ORDER','CANCEL','CANCEL_FEE','JOIN','MEMBERSHIP') NOT NULL;
 -- app_setting 신규 키(org_dup_allow, fee_reward_*)는 BE 기동 시 시더가 기본값으로 자동 생성.
 -- 완료.
+
+
+-- ── [2026-10-29] docs/32 : 상품정보·SEO / SEO 메타(app_setting) / 교육자료 / HOME 광고(ad_chinbiz) ──
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+DELIMITER $$
+CREATE PROCEDURE chinbiz_add_col(IN p_tbl VARCHAR(64), IN p_col VARCHAR(64), IN p_ddl TEXT)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_tbl AND COLUMN_NAME = p_col) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `', p_tbl, '` ADD COLUMN ', p_ddl);
+    PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+  END IF;
+END$$
+DELIMITER ;
+-- product : 상품정보 고시 + 검색노출(SEO) → HOME 상품상세 [상품 정보] · 메타태그 · JSON-LD
+CALL chinbiz_add_col('product','brand',           "`brand` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','model_name',      "`model_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','manufacturer',    "`manufacturer` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','origin',          "`origin` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','spec_size',       "`spec_size` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','seo_title',       "`seo_title` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','seo_description', "`seo_description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('product','seo_keywords',    "`seo_keywords` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+-- app_setting.value 255 → 1000 (SEO 설명·키워드 수용. ddl-auto 는 길이 변경을 반영하지 않으므로 필수). 재실행 안전.
+ALTER TABLE `app_setting` MODIFY `value` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+
+-- 교육자료 (본사 [교육관리]-[교육자료 등록]) — 파일은 BE app.edu-dir(기본 ./edu-materials) 에 저장
+CREATE TABLE IF NOT EXISTS `edu_material` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `product_id` bigint NOT NULL,
+  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `stored_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `original_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content_type` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_size` bigint DEFAULT NULL,
+  `created_by` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_edu_material_product` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 교육자료 다운로드 이력 (Insert-Only) — 상품 자료 전체 다운로드 시 매니저 [교육완료] 활성화
+CREATE TABLE IF NOT EXISTS `edu_material_download` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `material_id` bigint NOT NULL,
+  `product_id` bigint NOT NULL,
+  `manager_id` bigint NOT NULL,
+  `downloaded_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_edu_dl_manager_product` (`manager_id`,`product_id`),
+  KEY `idx_edu_dl_material` (`material_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- HOME 광고 (본사 [광고관리]) — 이미지는 ad_chinbiz_image (리사이징 PC/모바일 URL)
+CREATE TABLE IF NOT EXISTS `ad_chinbiz` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `area_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `position` enum('MAIN') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ad_type` enum('BANNER','LAYER_POPUP','SLIDE') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `published` bit(1) NOT NULL,
+  `image_count` int NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ad_area_id` (`area_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ad_chinbiz_image` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `ad_id` bigint NOT NULL,
+  `sort_order` int NOT NULL,
+  `image_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mobile_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `link_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alt_text` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `width` int DEFAULT NULL,
+  `height` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ad_image_ad` (`ad_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- alarm_setting 의 NOTICE(공지사항) 프로세스 행은 BE 기동 시 시더가 자동 생성.
+-- 완료.

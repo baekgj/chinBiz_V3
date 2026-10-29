@@ -15,6 +15,7 @@ export default function Icon({ name, className = "h-5 w-5" }: { name: string; cl
     shield: (<path d="M12 3 5 6v5c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z" {...p} />),
     trend: (<path d="M4 17l6-6 4 4 6-8M14 7h6v6" {...p} />),
     check: (<path d="M5 12.5 10 17.5 19 6.5" {...p} />),
+    megaphone: (<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Zm14-2a5 5 0 0 1 0 8m2.5-10.5a8.5 8.5 0 0 1 0 13" {...p} />),
     home: (<path d="M4 11 12 4l8 7M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5" {...p} />),
   };
   return (

@@ -24,12 +24,14 @@ export const API_BASE = resolveServiceUrl(process.env.NEXT_PUBLIC_API_URL, 9001,
 
 /**
  * 업로드 이미지 URL 정규화. 상대(/uploads/..) · 레거시 절대(http://host:9001/uploads/..) 모두
- * 현재 API_BASE 기준으로 재구성 → 리버스 프록시(HTTPS same-origin)/localhost 자동 대응 + mixed-content 방지.
+ * 같은 오리진 /uploads/.. 로 → 리버스 프록시(HTTPS)/localhost 자동 대응 + mixed-content 방지.
  */
 export function mediaUrl(p?: string | null): string {
   if (!p) return "";
   const i = p.indexOf("/uploads/");
-  if (i >= 0) return `${API_BASE}${p.slice(i)}`;      // /uploads 이후만 취해 현재 호스트로 재구성
+  // /uploads 이후만 취해 같은 오리진 상대경로로 — HOME 이 /uploads 를 BE 로 넘김(개발: next.config rewrite,
+  // 운영: 리버스 프록시). 서버(SSR)·클라이언트 결과가 같아야 하이드레이션 불일치가 없다(docs/32 상품상세 SSR).
+  if (i >= 0) return p.slice(i);
   if (/^https?:\/\//i.test(p)) return p;               // uploads 외 외부 절대 URL 은 그대로
   return p.startsWith("/") ? `${API_BASE}${p}` : p;
 }

@@ -6,14 +6,14 @@ spring:
     name: chinbiz-api
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 20MB
+      max-file-size: 100MB      # 교육자료(PDF/PPT/동영상) 업로드 수용 (docs/32)
+      max-request-size: 110MB
   datasource:
     # 로컬 개발 기본값 — 로컬 MySQL localhost, 계정 chin4_test/1234.
     # (.env DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD 로 override 가능. 서버 배포 시 DB_HOST=175.125.94.198, DB_USER=chin4)
     # nullCatalogMeansCurrent=true : ddl-auto 가 현재 DB 스키마만 인식하도록(타 스키마 테이블 오인 방지)
-    url: jdbc:mysql://${DB_HOST:175.125.94.198}:${DB_PORT:3306}/${DB_NAME:chin4}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&nullCatalogMeansCurrent=true
-    username: ${DB_USER:chin4}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:chin4}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&nullCatalogMeansCurrent=true
+    username: ${DB_USER:chin4_test}
     password: "${DB_PASSWORD:1234}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     # HikariCP 커넥션 풀 — 유휴 커넥션을 MySQL(wait_timeout)이 먼저 끊어 "No operations allowed after
@@ -47,6 +47,8 @@ app:
   cors:
     allowed-origin-patterns: ${CORS_ORIGINS:http://localhost,http://localhost:*,http://127.0.0.1,http://127.0.0.1:*,http://175.125.94.198,http://175.125.94.198:*,http://chinbiz.kr,https://chinbiz.kr,http://chinbiz.kr:*,https://chinbiz.kr:*,http://*.chinbiz.kr,https://*.chinbiz.kr,http://*.chinbiz.kr:*,https://*.chinbiz.kr:*}
   upload-dir: uploads
+  # 교육자료 파일 폴더 — 공개 /uploads 와 분리, 인증 다운로드 API 로만 제공 (docs/32)
+  edu-dir: ${EDU_DIR:edu-materials}
   # 홈페이지 주소 — 1차영업 대표자 카카오톡 상품 URL 생성용 (docs/27). 서버: HOME_URL=https://chinbiz.kr
   home-url: ${HOME_URL:http://localhost:8001}
   # 웹푸시(Web Push · VAPID) — Firebase 불필요. 키쌍은 최초 1회 생성 후 고정(시크릿).

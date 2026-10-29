@@ -22,9 +22,11 @@ public class ProductController {
 
     private final ProductRepository repo;
     private final com.chinbiz.api.alarm.AlarmService alarmService;
+    private final com.chinbiz.api.category.CategoryRepository categoryRepo;
 
-    public ProductController(ProductRepository repo, com.chinbiz.api.alarm.AlarmService alarmService) {
-        this.repo = repo; this.alarmService = alarmService;
+    public ProductController(ProductRepository repo, com.chinbiz.api.alarm.AlarmService alarmService,
+                             com.chinbiz.api.category.CategoryRepository categoryRepo) {
+        this.repo = repo; this.alarmService = alarmService; this.categoryRepo = categoryRepo;
     }
 
     public record ProductRequest(
@@ -40,7 +42,10 @@ public class ProductController {
             String descBuzz, String descManager, String descPartner, String descAdmin,
             // docs/25 확장 항목
             Boolean monthlyCare, Boolean asSupport, String videoUrl,
-            String specEffect, String salesTarget, String productFeature, String processFlow
+            String specEffect, String salesTarget, String productFeature, String processFlow,
+            // docs/32 상품정보·SEO
+            String brand, String modelName, String manufacturer, String origin, String specSize,
+            String seoTitle, String seoDescription, String seoKeywords
     ) {}
 
     private Map<String, Object> dto(Product p) {
@@ -83,8 +88,27 @@ public class ProductController {
         m.put("salesTarget", p.getSalesTarget());
         m.put("productFeature", p.getProductFeature());
         m.put("processFlow", p.getProcessFlow());
+        m.put("brand", p.getBrand());
+        m.put("modelName", p.getModelName());
+        m.put("manufacturer", p.getManufacturer());
+        m.put("origin", p.getOrigin());
+        m.put("specSize", p.getSpecSize());
+        m.put("seoTitle", p.getSeoTitle());
+        m.put("seoDescription", p.getSeoDescription());
+        m.put("seoKeywords", p.getSeoKeywords());
         m.put("createdAt", p.getCreatedAt() == null ? null : p.getCreatedAt().toString());
         return m;
+    }
+
+    /** 카테고리 id + 모든 하위(중/소분류) id */
+    private List<Long> withDescendants(Long rootId) {
+        List<com.chinbiz.api.category.Category> all = categoryRepo.findAll();
+        List<Long> ids = new ArrayList<>(List.of(rootId));
+        for (int i = 0; i < ids.size(); i++) {
+            Long parent = ids.get(i);
+            for (var c : all) if (parent.equals(c.getParentId()) && !ids.contains(c.getId())) ids.add(c.getId());
+        }
+        return ids;
     }
 
     /** 목록 (필터 + 페이징) */
@@ -98,7 +122,11 @@ public class ProductController {
             @RequestParam(required = false) String keyword) {
 
         List<Specification<Product>> specs = new ArrayList<>();
-        if (categoryId != null) specs.add((r, q, cb) -> cb.equal(r.get("categoryId"), categoryId));
+        // 대/중분류 선택 시 하위 카테고리 상품까지 포함(상품은 주로 중/소분류에 연결 — docs/32 카테고리 검색 오류)
+        if (categoryId != null) {
+            List<Long> ids = withDescendants(categoryId);
+            specs.add((r, q, cb) -> r.get("categoryId").in(ids));
+        }
         if (partnerId != null) specs.add((r, q, cb) -> cb.equal(r.get("partnerId"), partnerId));
         if (onSale != null) specs.add((r, q, cb) -> cb.equal(r.get("onSale"), onSale));
         if (keyword != null && !keyword.isBlank())
@@ -180,7 +208,17 @@ public class ProductController {
         p.setSalesTarget(req.salesTarget());
         p.setProductFeature(req.productFeature());
         p.setProcessFlow(req.processFlow());
+        p.setBrand(trimOrNull(req.brand()));
+        p.setModelName(trimOrNull(req.modelName()));
+        p.setManufacturer(trimOrNull(req.manufacturer()));
+        p.setOrigin(trimOrNull(req.origin()));
+        p.setSpecSize(trimOrNull(req.specSize()));
+        p.setSeoTitle(trimOrNull(req.seoTitle()));
+        p.setSeoDescription(trimOrNull(req.seoDescription()));
+        p.setSeoKeywords(trimOrNull(req.seoKeywords()));
     }
+
+    private String trimOrNull(String s) { return s == null || s.isBlank() ? null : s.trim(); }
 
     /** "YYYY-MM-DD" 문자열 → LocalDate (빈값/파싱실패 → null) */
     private java.time.LocalDate parseDate(String s) {

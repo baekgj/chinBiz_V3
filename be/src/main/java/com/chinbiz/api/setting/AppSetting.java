@@ -16,7 +16,7 @@ public class AppSetting {
     @Column(name = "code", length = 60)
     private String code;
 
-    @Column(name = "value", length = 255)
+    @Column(name = "value", length = 1000)   // SEO 메타(설명·키워드) 수용 위해 255 → 1000 (docs/32)
     private String value;
 
     @Column(name = "updated_at")
