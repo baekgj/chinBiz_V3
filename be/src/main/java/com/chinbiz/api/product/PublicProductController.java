@@ -89,9 +89,10 @@ public class PublicProductController {
         m.put("monthlyCare", p.isMonthlyCare());
         m.put("salePrice", p.getSalePrice());          // 판매가(월관리상품은 월회비) — 상세 상단 노출(docs/32)
         m.put("asSupport", p.isAsSupport());
+        m.put("simpleDelivery", p.isSimpleDelivery()); // 단순배송상품 → 카카오 링크 진입 시 [구매하기] (docs/33)
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
-        m.put("role", role);                          // null=비로그인
+        m.put("role", role);                         // null=비로그인
         m.put("description", desc);                    // 역할별 HTML
         m.put("specEffect", p.getSpecEffect());
         m.put("salesTarget", p.getSalesTarget());

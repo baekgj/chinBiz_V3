@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   ] },
   { href: "/partner/products", label: "상품 관리" },
   { href: "/partner/pipeline", label: "영업 현황" },
+  { href: "/partner/orders", label: "주문 관리" },
   { href: "/partner/voc", label: "민원 센터" },
   { href: "/partner/payment", label: "결제" },
 ];

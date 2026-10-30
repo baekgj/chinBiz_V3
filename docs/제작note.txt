@@ -442,6 +442,8 @@ ALTER TABLE `product` ADD COLUMN `seo_keywords` varchar(500) COLLATE utf8mb4_uni
 ALTER TABLE `app_setting` MODIFY `value` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL;   -- ★필수(ddl-auto 미반영)
 -- 신규 테이블 edu_material / edu_material_download / ad_chinbiz / ad_chinbiz_image :
 --   db/migration_new_fields.sql 의 [2026-10-29] docs/32 구간 CREATE TABLE 참조 (그 구간만 단독 실행해도 멱등)
+-- [2026-10-30] docs/33 신규 테이블 partner_order(단순배송 주문) / order_delivery(배송지) :
+--   db/migration_new_fields.sql 의 [partner_order / order_delivery] 구간 CREATE TABLE 참조
 
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
@@ -1585,3 +1587,27 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    → BuzzShell: /buzz/payment 는 MANAGER 면 대시보드로 되돌리지 않고 매니저 뷰로 전환. 검증: [B] 진입·[B] 토글 모두 결제화면에서 정지.
 ■ ⚠ 기존 이슈(미수정): migration_new_fields.sql 중간의 allowance.type ENUM(…'JOIN') 축소 구문이 MEMBERSHIP 행이 있는 DB 에서 실패 → 전체 재실행 중단.
 ■ DB: 위 [DB 마이그레이션] 섹션 + migration_new_fields.sql / schema_chin4.sql 반영.
+
+====================================================================
+[추가] docs/33 작업 — 단순배송상품 구매/주문관리 (2026-10-30)
+====================================================================
+■ HOME 상품상세: refId·ordNo(카카오 링크) 진입 + 상품 단순배송(simple_delivery)이면 동의 패널(3자제공/마케팅) 숨김 → [구매하기].
+   공개 상세 API 에 simpleDelivery 추가. [구매하기] → /order?refId=&ordNo=&productId=
+■ HOME 주문서(/order): 상품이미지·상품명·판매가·수량(+/−)·결제금액, 주문자정보(주문자명·연락처·핸드폰·이메일·우편번호검색·기본/상세주소 — 영업건 대표자 정보로 기본값),
+   수령인정보: 배송지는 구매수량만큼 [+ 배송지 추가], 배송지별 수량 선택(다른 배송지 합계 제외 최대치) — 합계는 구매수량 초과 불가, 결제 시 합계=구매수량 필수.
+   결제방식: 신용카드 비활성 / 무통장. [결제하기] → POST /api/public/orders (permitAll, refId+ordNo 일치·단순배송·판매중 검증, 1영업건 1주문, 409 중복).
+■ HOME 주문완료(/order/complete?refId=&ordNo=): 주문내역·배송지, 무통장이면 파트너사 계좌(은행명·계좌번호·예금주) 안내. GET /api/public/orders/complete
+■ 파트너 admin 상단 [주문관리] /partner/orders, 본사 [조직망 및 영업관리]-[주문관리] /master/organization/orders — 공용 components/OrderManager.
+   리스트: 주문번호·주문일자·구매자명·상품명·판매가격·수량·결제금액·주문상태(접수/입금/배송완료/취소), 주문번호 클릭 → 상세 + 상태변경.
+   BE order/OrderAdminController: /api/partner/orders(본인 partner_id) · /api/org/orders(전체).
+■ 본사 [영업관리]: 단순배송상품 영업 건 제외.
+■ DB: 신규 테이블 partner_order + order_delivery → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+■ 검증(로컬 DB): BE compile, home/admin tsc 0. 공개 API — form 200 / 오답 ordNo·비단순배송 404 / 합계불일치·카드 400 / 생성 201 / 중복 409 / 완료조회 200(계좌 포함).
+   파트너 목록 200, 본사 API 파트너토큰 403, 영업관리에서 단순배송 상품(5·12·15) 건 제외 확인. 브라우저: 상세 [구매하기] 노출, 주문서 수량·배송지 분배,
+   주문완료, 본사 주문관리 리스트·상세·상태변경(접수→입금) DB 반영. 테스트 주문은 삭제함.
+   ⚠ 로컬 partner(삼화정공사) 계좌정보 미입력 → 주문완료 계좌가 "-" 로 표시. 로컬 partner 계정은 회비 만료로 결제화면 게이트(기존 동작).
+■ [변경] 파트너 입점비 결제 게이트: 입점비는 1회 납부 — partner.entry_fee_paid_date(납부일자)가 있으면 납부로 간주해 결제화면 통과.
+   Partner.isEntryFeePaid() = entry_fee_paid || entry_fee_paid_date != null → /api/payment/info·/api/auth/me·결제요청(이미 납부 시 done) 모두 동일 적용.
+   (기존: entry_fee_paid 비트만 확인 → 본사가 DB/일자만 넣은 경우 게이트에 막힘) 검증: 로컬 partner(일자 2026-09-10, 비트 0) → entryFeePaid=true, /partner/orders 진입 확인.
+■ [변경] 본사 [주문관리] 메뉴 위치: [조직망 및 영업관리] → [파트너사 관리]의 소메뉴(상담신청 아래). 경로 /master/organization/orders → /master/partners/orders.
+   BE API(/api/org/orders, MASTER_ADMIN)는 그대로. 주문상세는 전체화면 레이어(헤더·하단 상태변경 바 고정, 수령인 표, Esc 닫기).

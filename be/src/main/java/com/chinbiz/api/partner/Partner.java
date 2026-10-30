@@ -110,7 +110,8 @@ public class Partner {
     public void setAccountHolder(String v) { this.accountHolder = v; }
     public String getSaleId() { return saleId; }
     public void setSaleId(String v) { this.saleId = v; }
-    public boolean isEntryFeePaid() { return entryFeePaid; }
+    /** 입점비는 1회 납부 — 납부일자(entry_fee_paid_date)가 있으면 납부로 간주(결제 게이트 통과, docs/33 후속) */
+    public boolean isEntryFeePaid() { return entryFeePaid || entryFeePaidDate != null; }
     public void setEntryFeePaid(boolean v) { this.entryFeePaid = v; }
     public java.time.LocalDate getEntryFeePaidDate() { return entryFeePaidDate; }
     public void setEntryFeePaidDate(java.time.LocalDate v) { this.entryFeePaidDate = v; }

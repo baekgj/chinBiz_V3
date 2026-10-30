@@ -10,7 +10,7 @@ import { API_BASE, mediaUrl, resolveAdminUrl } from "@/lib/api";
 
 export type Detail = {
   id: number; name: string; partnerId?: number | null; partnerName?: string | null; categoryId?: number | null; categoryName?: string | null;
-  images: string[]; videoUrl?: string | null; monthlyCare?: boolean; salePrice?: number | null; asSupport?: boolean;
+  images: string[]; videoUrl?: string | null; monthlyCare?: boolean; salePrice?: number | null; asSupport?: boolean; simpleDelivery?: boolean;
   popular?: boolean; recommended?: boolean; role?: string | null; description?: string | null;
   specEffect?: string | null; salesTarget?: string | null; productFeature?: string | null; processFlow?: string | null;
   buzzRewardWon?: number; managerRewardWon?: number;
@@ -299,7 +299,12 @@ export default function ProductDetailView({ initial = null }: { initial?: Detail
                   </>)}
 
                   {/* 고객(대표자) 동의 / 매니저 배정 현황 — 카카오톡 상품링크(refId·ordNo) 진입 시 (docs/27) */}
-                  {consent && <SaleConsentPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} />}
+                  {/* 단순배송상품은 동의 패널 대신 [구매하기] → 주문서 입력 (docs/33) */}
+                  {consent && !d.simpleDelivery && <SaleConsentPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} />}
+                  {consent && d.simpleDelivery && (
+                    <Link href={`/order?${new URLSearchParams({ refId: consent.refId, ordNo: consent.ordNo, productId: String(d.id) })}`}
+                      className="mt-5 block rounded-xl bg-forest-800 px-5 py-4 text-center text-base font-black text-white hover:bg-forest-700">구매하기</Link>
+                  )}
                 </div>
               </div>
 

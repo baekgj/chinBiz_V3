@@ -90,3 +90,8 @@ LNB 조직망 관리 하위: **본부ᆞ센터 리스트 / 회원 리스트 / �
 - **상품등록/수정**: [상품정보 · 검색노출(SEO)] — brand/modelName/manufacturer/origin/specSize/seoTitle/seoDescription/seoKeywords → HOME 상품상세 [상품 정보]·메타·JSON-LD.
 - **상품리스트 카테고리 필터**: 하위(중/소) 포함 검색으로 수정, 셀렉트 트리 들여쓰기.
 - **공지 알람**: 등록(게시) 시 인앱 알람+푸시(`NOTICE`) — 기존엔 웹푸시만이라 알람 미발생. 버즈대상 → 매니저 동시 발송.
+
+## docs/33 (2026-10-30) 단순배송상품 주문
+- **조직망 및 영업관리 > 영업 관리**: 단순배송상품(`product.simple_delivery`) 영업 건은 리스트에서 제외(`AdminSalesController.list`).
+- **파트너사 관리 > 주문 관리** `/master/partners/orders` (상담신청 아래, RBAC 담당자 A — 2026-10-30 조직망→파트너사 관리로 이동): `components/OrderManager`(tone=dark, 파트너사 컬럼) — 주문번호·주문일자·구매자명·상품명·판매가격·수량·결제금액·주문상태, 주문번호 클릭→상세(주문자·수령인 배송지별 수량)+상태변경(접수/입금/배송완료/취소). BE `order/OrderAdminController` `GET /api/org/orders`, `GET/PUT /api/org/orders/{id}[/status]`.
+- 테이블 `partner_order`(엔티티 `ShopOrder`) + `order_delivery`. 생성은 HOME `PublicOrderController`(아래 CLAUDE.md 참고).

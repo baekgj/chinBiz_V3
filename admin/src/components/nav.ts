@@ -35,6 +35,7 @@ export const NAV: NavItem[] = [
     children: [
       { href: "/master/partners", label: "파트너관리" },
       { href: "/master/partners/inquiries", label: "상담신청" },
+      { href: "/master/partners/orders", label: "주문 관리" },
     ],
   },
   {

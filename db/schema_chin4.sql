@@ -424,3 +424,44 @@ CREATE TABLE IF NOT EXISTS `ad_chinbiz_image` (
   PRIMARY KEY (`id`),
   KEY `idx_ad_image_ad` (`ad_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── [partner_order / order_delivery] 단순배송상품 주문 (docs/33) ─────────
+-- HOME 상품상세(카카오 링크 refId·ordNo) [구매하기] → 주문서 → 결제하기(무통장). 주문상태: 접수/입금/배송완료/취소
+CREATE TABLE IF NOT EXISTS `partner_order` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `order_no` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sale_id` bigint DEFAULT NULL,
+  `product_id` bigint DEFAULT NULL,
+  `partner_id` bigint DEFAULT NULL,
+  `product_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sale_price` bigint DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `total_amount` bigint DEFAULT NULL,
+  `pay_method` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_tel` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_mobile` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_zipcode` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_address` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `orderer_address_detail` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_order_partner` (`partner_id`),
+  KEY `idx_order_sale` (`sale_id`, `order_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `order_delivery` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `order_id` bigint NOT NULL,
+  `receiver_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receiver_mobile` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `zipcode` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address_detail` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quantity` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_order_delivery_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

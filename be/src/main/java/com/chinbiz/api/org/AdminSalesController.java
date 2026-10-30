@@ -121,6 +121,10 @@ public class AdminSalesController {
                                   @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "10") int size) {
         List<Specification<Sale>> specs = new ArrayList<>();
+        // 단순배송상품 영업 건은 영업관리에서 제외 → [주문관리]에서 관리 (docs/33)
+        List<Long> simpleIds = productRepo.findAll((Specification<Product>) (r, q, cb) -> cb.isTrue(r.get("simpleDelivery"))).stream().map(Product::getId).toList();
+        if (!simpleIds.isEmpty())
+            specs.add((r, q, cb) -> cb.or(cb.isNull(r.get("productId")), cb.not(r.get("productId").in(simpleIds))));
         if (keyword != null && !keyword.isBlank())
             specs.add((r, q, cb) -> cb.like(r.get("companyName"), "%" + keyword.trim() + "%"));
         Specification<Sale> spec = specs.stream().reduce(Specification::and).orElse(null);

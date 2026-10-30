@@ -63,7 +63,7 @@ HOME의 상품정보화면에서 마케팅활용동의 영역은 다음과 같�
 HOME의 상품정보화면에서 개인정보 3자제공의 미동의 버튼 클릭시 알림창만 나타나고, agree테이블에 저장하지 말아줘
 
 
-http://localhost/products/9?refId=58&ordNo=OD20260820-000058
+http://localhost:8001/products/5?refId=70&ordNo=OD20261023-000070
 https://chinbiz.kr/products/2?refId=3&ordNo=OD20260820-000003
 
 HOME의 상품상세화면 조회에서 refId, ordNo값이 있을 경우,

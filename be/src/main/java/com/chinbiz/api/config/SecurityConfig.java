@@ -57,6 +57,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/public/partner-inquiry").permitAll()
                         // 홈 상품화면 고객 동의 저장 (공개 POST, refId+ordNo 일치 필요) — docs/27
                         .requestMatchers(HttpMethod.POST, "/api/public/sale-consent").permitAll()
+                        // 홈 단순배송상품 주문서 저장 (공개 POST, refId+ordNo 일치 필요) — docs/33
+                        .requestMatchers(HttpMethod.POST, "/api/public/orders").permitAll()
                         // 업로드된 이미지 정적 서빙은 공개 (img 태그가 토큰 못 보냄)
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // 웹푸시 VAPID 공개키는 공개(구독 전 클라이언트가 조회), 나머지 push는 인증 필요

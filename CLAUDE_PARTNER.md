@@ -26,6 +26,12 @@
 - BE `partner/PartnerProductController`: `GET categories`·`GET/POST/PUT products`. **partnerId는 로그인 파트너로 서버 강제**, 타 파트너 상품은 404. 이미지 업로드는 PARTNER도 허용.
 - 검증(2026-07-11): categories 7건, POST 등록(partnerId 강제=1), 본인 상품만 목록(2건), 화면 렌더(7수당 필드·합계 배지·카테고리 select·드롭존) 실증.
 
+## 주문 관리 (`/partner/orders`, docs/33)
+- 상단 [영업 현황] 옆 메뉴. 본인 상품의 단순배송 주문 리스트(주문번호·주문일자·구매자명·상품명·판매가격·수량·결제금액·주문상태) + 주문번호 클릭→상세·상태변경(접수/입금/배송완료/취소).
+- 공용 `components/OrderManager`(tone=light). BE `GET /api/partner/orders`, `GET/PUT /api/partner/orders/{id}[/status]` (partner_id 일치 건만).
+- 입점비 결제 게이트: `entry_fee_paid_date`(납부일자)가 있으면 1회 납부 완료로 간주 → 결제화면 통과(`Partner.isEntryFeePaid()`).
+- 무통장 주문완료 화면에 **파트너 계좌정보(은행명/계좌번호/예금주)** 노출 → 내 정보 수정에서 계좌 입력 필수.
+
 ## 내 정보 수정 (`/partner/profile`)
 - 업체명 클릭 진입. 수정 가능: **담당자명·전화번호·이메일·계좌정보(은행명/계좌번호/예금주)·비밀번호**(8자↑, 비우면 유지). 상호명/아이디는 읽기전용.
 - BE: `partner/PartnerSelfController` — `GET /api/partner/me`, `PUT /api/partner/me`(PARTNER 전용, `SecurityConfig` `/api/partner/**` hasRole PARTNER). 비밀번호는 입력 시 BCrypt 해시.
