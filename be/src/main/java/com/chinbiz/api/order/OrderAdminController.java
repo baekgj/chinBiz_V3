@@ -50,6 +50,24 @@ public class OrderAdminController {
         return orderService.changeStatus(orderService.find(id, myPartnerId(auth)), req.status());
     }
 
+    // 송장/화물추적 (docs/33-1)
+    public record InvoiceRequest(String courierCode, String invoiceNo) {}
+
+    @GetMapping("/api/partner/orders/couriers")
+    public java.util.List<CourierTracker.Courier> couriers() { return CourierTracker.COURIERS; }
+
+    /** 송장정보 저장 */
+    @PutMapping("/api/partner/orders/{id}/deliveries/{deliveryId}/invoice")
+    public ResponseEntity<?> partnerInvoice(Authentication auth, @PathVariable Long id, @PathVariable Long deliveryId, @RequestBody InvoiceRequest req) {
+        return orderService.saveInvoice(orderService.find(id, myPartnerId(auth)), deliveryId, req.courierCode(), req.invoiceNo(), false);
+    }
+
+    /** [화물추적] — 입력한 택배사·송장번호 저장 + 택배사 조회 → 배송상태 갱신 */
+    @PostMapping("/api/partner/orders/{id}/deliveries/{deliveryId}/track")
+    public ResponseEntity<?> partnerTrack(Authentication auth, @PathVariable Long id, @PathVariable Long deliveryId, @RequestBody InvoiceRequest req) {
+        return orderService.saveInvoice(orderService.find(id, myPartnerId(auth)), deliveryId, req.courierCode(), req.invoiceNo(), true);
+    }
+
     // ── 본사 ──
     @GetMapping("/api/org/orders")
     public Map<String, Object> masterList(@RequestParam(required = false) String keyword,

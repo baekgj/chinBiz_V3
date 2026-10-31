@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,9 +25,10 @@ public class OrderService {
     private final ShopOrderRepository orderRepo;
     private final OrderDeliveryRepository deliveryRepo;
     private final PartnerRepository partnerRepo;
+    private final CourierTracker tracker;
 
-    public OrderService(ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, PartnerRepository partnerRepo) {
-        this.orderRepo = orderRepo; this.deliveryRepo = deliveryRepo; this.partnerRepo = partnerRepo;
+    public OrderService(ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, PartnerRepository partnerRepo, CourierTracker tracker) {
+        this.orderRepo = orderRepo; this.deliveryRepo = deliveryRepo; this.partnerRepo = partnerRepo; this.tracker = tracker;
     }
 
     public Map<String, Object> row(ShopOrder o) {
@@ -63,7 +65,15 @@ public class OrderService {
             dm.put("zipcode", d.getZipcode());
             dm.put("address", d.getAddress());
             dm.put("addressDetail", d.getAddressDetail());
+            dm.put("id", d.getId());
             dm.put("quantity", d.getQuantity());
+            dm.put("courierCode", d.getCourierCode());
+            dm.put("courierName", CourierTracker.courier(d.getCourierCode()).map(CourierTracker.Courier::name).orElse(null));
+            dm.put("invoiceNo", d.getInvoiceNo());
+            dm.put("deliveryStatus", d.getDeliveryStatus());
+            dm.put("trackingDetail", d.getTrackingDetail());
+            dm.put("trackedAt", d.getTrackedAt() == null ? null : d.getTrackedAt().toString().replace('T', ' ').substring(0, 16));
+            dm.put("trackUrl", CourierTracker.trackUrl(d.getCourierCode(), d.getInvoiceNo()));
             ds.add(dm);
         }
         m.put("deliveries", ds);
@@ -101,5 +111,42 @@ public class OrderService {
         o.setStatus(status.trim());
         orderRepo.save(o);
         return ResponseEntity.ok(detail(o));
+    }
+
+    /**
+     * 배송지 송장정보 저장 (docs/33-1). track=true 면 저장 후 택배사 화물추적 결과로 배송상태 갱신.
+     * 택배사·송장번호가 바뀌면 이전 추적결과는 초기화.
+     */
+    public ResponseEntity<?> saveInvoice(ShopOrder o, Long deliveryId, String courierCode, String invoiceNo, boolean track) {
+        if (o == null) return ResponseEntity.status(404).body(Map.of("message", "주문을 찾을 수 없습니다."));
+        OrderDelivery d = deliveryRepo.findById(deliveryId).filter(x -> o.getId().equals(x.getOrderId())).orElse(null);
+        if (d == null) return ResponseEntity.status(404).body(Map.of("message", "배송지를 찾을 수 없습니다."));
+        String code = courierCode == null || courierCode.isBlank() ? null : courierCode.trim();
+        String no = invoiceNo == null || invoiceNo.isBlank() ? null : invoiceNo.trim();
+        if (code != null && CourierTracker.courier(code).isEmpty())
+            return ResponseEntity.badRequest().body(Map.of("message", "택배사를 확인해 주세요."));
+        if (no != null && !no.matches("[0-9A-Za-z\\-]{6,30}"))
+            return ResponseEntity.badRequest().body(Map.of("message", "송장번호는 영문/숫자 6~30자로 입력해 주세요."));
+        if (!java.util.Objects.equals(code, d.getCourierCode()) || !java.util.Objects.equals(no, d.getInvoiceNo())) {
+            d.setDeliveryStatus(null); d.setTrackingDetail(null); d.setTrackedAt(null);
+        }
+        d.setCourierCode(code);
+        d.setInvoiceNo(no);
+        String trackMsg = null;
+        if (track) {
+            if (code == null || no == null) return ResponseEntity.badRequest().body(Map.of("message", "택배사와 송장번호를 입력해 주세요."));
+            try {
+                CourierTracker.Result r = tracker.track(code, no);
+                d.setDeliveryStatus(r.status());
+                d.setTrackingDetail(r.detail());
+                d.setTrackedAt(LocalDateTime.now());
+            } catch (Exception e) {
+                trackMsg = "택배사 화물추적 조회에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+            }
+        }
+        deliveryRepo.save(d);
+        Map<String, Object> m = detail(o);
+        if (trackMsg != null) m.put("trackMessage", trackMsg);
+        return ResponseEntity.ok(m);
     }
 }

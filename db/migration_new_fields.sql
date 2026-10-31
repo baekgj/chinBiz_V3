@@ -515,3 +515,31 @@ CREATE TABLE IF NOT EXISTS `ad_chinbiz_image` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- alarm_setting 의 NOTICE(공지사항) 프로세스 행은 BE 기동 시 시더가 자동 생성.
 -- 완료.
+
+-- ── [2026-10-31] docs/33-1 : order_delivery 송장/화물추적 ─────────────────
+-- 파트너 admin 주문상세 수령인별 택배사·송장번호 입력 + [화물추적] 결과(배송상태/최근이력/조회일시)
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+DELIMITER $$
+CREATE PROCEDURE chinbiz_add_col(IN p_tbl VARCHAR(64), IN p_col VARCHAR(64), IN p_ddl TEXT)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_tbl AND COLUMN_NAME = p_col) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `', p_tbl, '` ADD COLUMN ', p_ddl);
+    PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+  END IF;
+END$$
+DELIMITER ;
+CALL chinbiz_add_col('order_delivery','courier_code',    "`courier_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('order_delivery','invoice_no',      "`invoice_no` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('order_delivery','delivery_status', "`delivery_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('order_delivery','tracking_detail', "`tracking_detail` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+CALL chinbiz_add_col('order_delivery','tracked_at',      "`tracked_at` datetime(6) DEFAULT NULL");
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+-- 완료.
+
+
+ALTER TABLE `order_delivery` ADD COLUMN `courier_code` varchar(20)  NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `invoice_no` varchar(40)  NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `delivery_status` varchar(20)  NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `tracking_detail` varchar(300)  NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `tracked_at` datetime(6)  NULL;

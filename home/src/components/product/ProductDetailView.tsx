@@ -157,11 +157,106 @@ function PartnerProductsCarousel({ partnerName, products }: { partnerName: strin
 }
 
 /** initial: 서버에서 조회한 비로그인 공개 상세(검색엔진 SSR용, docs/32) — 마운트 후 로그인 토큰으로 재조회 */
+type OrderDelivery = {
+  id: number; receiverName?: string | null; receiverMobile?: string | null; zipcode?: string | null; address?: string | null; addressDetail?: string | null;
+  quantity: number; courierName?: string | null; invoiceNo?: string | null; deliveryStatus?: string | null; trackUrl?: string | null;
+};
+type PlacedOrder = {
+  orderNo: string; createdAt?: string; createdAtFull?: string; productName?: string; quantity: number; totalAmount: number;
+  payMethod?: string; status: string; ordererName?: string | null; deliveries: OrderDelivery[];
+  bank?: { bankName?: string | null; accountNumber?: string | null; accountHolder?: string | null } | null; // 무통장: 파트너사 입금계좌
+};
+
+/**
+ * 단순배송상품 (docs/33-1) — 이 영업건(refId·ordNo)의 주문이 접수돼 있으면 [구매하기] 대신 주문내역·수령인·송장번호 +
+ * [화물추적](택배사 조회화면 팝업). 주문이 없으면 [구매하기].
+ */
+function SimpleOrderPanel({ refId, ordNo, productId, open, onToggle }: {
+  refId: string; ordNo: string; productId: number; open: boolean; onToggle: () => void;
+}) {
+  const [order, setOrder] = useState<PlacedOrder | null | undefined>(undefined); // undefined=조회중, null=주문없음
+  useEffect(() => {
+    fetch(`${API_BASE}/api/public/orders/complete?${new URLSearchParams({ refId, ordNo })}`, { headers: { Accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: PlacedOrder | null) => setOrder(j))
+      .catch(() => setOrder(null));
+  }, [refId, ordNo]);
+
+  if (order === undefined) return <div className="mt-5 h-14 animate-pulse rounded-xl bg-surface" />;
+  if (order === null) {
+    return (
+      <Link href={`/order?${new URLSearchParams({ refId, ordNo, productId: String(productId) })}`}
+        className="mt-5 block rounded-xl bg-forest-800 px-5 py-4 text-center text-base font-black text-white hover:bg-forest-700">구매하기</Link>
+    );
+  }
+  return (
+    // 접힘: 우측 컬럼 남은 높이를 채움(좌측 이미지 영역 높이에 맞춤, 넘치면 내부 스크롤) / 펼침: 배송지 리스트만큼 늘어남
+    <div className={`mt-5 flex flex-col rounded-2xl border border-forest-200 bg-forest-50 p-4 sm:p-5 ${open ? "" : "lg:min-h-0 lg:flex-1 lg:overflow-y-auto"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-black text-forest-800">주문 접수 내역</p>
+        <span className="rounded-full bg-forest-800 px-2.5 py-0.5 text-xs font-bold text-white">{order.status}</span>
+      </div>
+      {/* 주문내역 + 무통장 입금계좌 — sm↑ 좌우 배치 */}
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-[4.5rem_1fr] content-start gap-y-1.5 text-sm">
+          <dt className="text-muted">주문번호</dt><dd className="break-all font-semibold text-ink">{order.orderNo}</dd>
+          <dt className="text-muted">주문일시</dt><dd className="text-ink">{order.createdAtFull ?? order.createdAt}</dd>
+          <dt className="text-muted">주문자</dt><dd className="text-ink">{order.ordererName ?? "-"}</dd>
+          <dt className="text-muted">수량</dt><dd className="text-ink">{order.quantity}개</dd>
+          <dt className="text-muted">결제금액</dt><dd className="text-ink"><b>{won(order.totalAmount)}</b>{order.payMethod === "BANK" ? " (무통장)" : ""}</dd>
+        </dl>
+        {order.payMethod === "BANK" && (
+          <div className="rounded-xl border border-gold-400/40 bg-gold-50 p-3">
+            <p className="text-xs font-bold text-forest-700">무통장 입금계좌</p>
+            <dl className="mt-2 grid grid-cols-[4rem_1fr] gap-y-1 text-sm">
+              <dt className="text-muted">은행명</dt><dd className="font-semibold text-ink">{order.bank?.bankName || "-"}</dd>
+              <dt className="text-muted">계좌번호</dt><dd className="break-all font-mono font-bold text-ink">{order.bank?.accountNumber || "-"}</dd>
+              <dt className="text-muted">예금주</dt><dd className="font-semibold text-ink">{order.bank?.accountHolder || "-"}</dd>
+              <dt className="text-muted">입금금액</dt><dd className="font-bold text-forest-800">{won(order.totalAmount)}</dd>
+            </dl>
+          </div>
+        )}
+      </div>
+      {/* mt-auto: 접힘 시 하단 고정 / pt-5: 펼침 시에도 입금계좌 영역과 간격 유지 */}
+      <div className="mt-auto pt-5">
+        <button type="button" onClick={onToggle} aria-expanded={open}
+          className="w-full rounded-xl border border-forest-300 bg-white px-4 py-3 text-sm font-black text-forest-800 hover:bg-forest-100">
+          {open ? "배송정보 닫기 ▲" : `배송정보확인 (${order.deliveries.length}곳) ▼`}
+        </button>
+      </div>
+      {open && (
+      <ul className="mt-3 space-y-2">
+        {order.deliveries.map((v) => (
+          <li key={v.id} className="rounded-xl border border-line bg-white p-3 text-sm">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-bold text-ink">{v.receiverName ?? "-"} <span className="font-normal text-muted">· {v.receiverMobile ?? "-"} · {v.quantity}개</span></p>
+                <p className="mt-0.5 text-xs text-ink-soft">{[v.zipcode && `(${v.zipcode})`, v.address, v.addressDetail].filter(Boolean).join(" ")}</p>
+                <p className="mt-1.5 text-xs text-ink">
+                  {v.invoiceNo
+                    ? <>{v.courierName ?? "택배"} <b className="font-mono">{v.invoiceNo}</b>{v.deliveryStatus && <span className="ml-1.5 rounded bg-gold-50 px-1.5 py-0.5 font-bold text-forest-800">{v.deliveryStatus}</span>}</>
+                    : <span className="text-muted">송장번호 등록 전 (배송 준비중)</span>}
+                </p>
+              </div>
+              {v.trackUrl && (
+                <button type="button" onClick={() => window.open(v.trackUrl!, "chinbiz_track", "width=900,height=760,scrollbars=yes,resizable=yes")}
+                  className="shrink-0 rounded-lg bg-forest-800 px-3 py-2 text-xs font-black text-white hover:bg-forest-700">화물추적</button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      )}
+    </div>
+  );
+}
+
 export default function ProductDetailView({ initial = null }: { initial?: Detail | null }) {
   const params = useParams<{ id: string }>();
   const [d, setD] = useState<Detail | null>(initial);
   const [status, setStatus] = useState<"loading" | "ok" | "error">(initial ? "ok" : "loading");
   const [mainImg, setMainImg] = useState(0);
+  const [shipOpen, setShipOpen] = useState(false); // 단순배송 주문 패널 [배송정보확인] 펼침
   const [toast, setToast] = useState<string | null>(null);
 
   // 카카오톡 링크 고객 동의 파라미터 (docs/27): ?refId=&ordNo= 또는 /products/15&refId=..&ordNo=.. 둘 다 허용
@@ -262,8 +357,8 @@ export default function ProductDetailView({ initial = null }: { initial?: Detail
                   )}
                 </div>
 
-                {/* 정보 */}
-                <div className="flex flex-col">
+                {/* 정보 — 단순배송 주문 패널이 접혀 있으면 h-0+min-h-full 로 행 높이를 좌측(이미지) 컬럼에 맞춤 */}
+                <div className={`flex flex-col ${consent && d.simpleDelivery && !shipOpen ? "lg:h-0 lg:min-h-full" : ""}`}>
                   <div className="flex flex-wrap gap-2">
                     {d.monthlyCare && <span className="rounded-md bg-forest-600 px-2.5 py-1 text-xs font-black text-white">월관리상품</span>}
                     {d.asSupport && <span className="rounded-md bg-forest-100 px-2.5 py-1 text-xs font-black text-forest-800">AS지원</span>}
@@ -302,8 +397,7 @@ export default function ProductDetailView({ initial = null }: { initial?: Detail
                   {/* 단순배송상품은 동의 패널 대신 [구매하기] → 주문서 입력 (docs/33) */}
                   {consent && !d.simpleDelivery && <SaleConsentPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} />}
                   {consent && d.simpleDelivery && (
-                    <Link href={`/order?${new URLSearchParams({ refId: consent.refId, ordNo: consent.ordNo, productId: String(d.id) })}`}
-                      className="mt-5 block rounded-xl bg-forest-800 px-5 py-4 text-center text-base font-black text-white hover:bg-forest-700">구매하기</Link>
+                    <SimpleOrderPanel refId={consent.refId} ordNo={consent.ordNo} productId={d.id} open={shipOpen} onToggle={() => setShipOpen((v) => !v)} />
                   )}
                 </div>
               </div>

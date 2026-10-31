@@ -70,6 +70,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\NoticeContr
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\NoticeRecipientResolver.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\NoticeRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\notice\PublicSiteController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\CourierTracker.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderAdminController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderDelivery.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderDeliveryRepository.java

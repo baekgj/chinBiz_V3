@@ -444,6 +444,12 @@ ALTER TABLE `app_setting` MODIFY `value` varchar(1000) COLLATE utf8mb4_unicode_c
 --   db/migration_new_fields.sql 의 [2026-10-29] docs/32 구간 CREATE TABLE 참조 (그 구간만 단독 실행해도 멱등)
 -- [2026-10-30] docs/33 신규 테이블 partner_order(단순배송 주문) / order_delivery(배송지) :
 --   db/migration_new_fields.sql 의 [partner_order / order_delivery] 구간 CREATE TABLE 참조
+-- [2026-10-31] docs/33-1 order_delivery 송장/화물추적 컬럼 (택배사코드 CJ/EPOST/LOTTE/HANJIN/LOGEN/KDEXP)
+ALTER TABLE `order_delivery` ADD COLUMN `courier_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `invoice_no` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `delivery_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `tracking_detail` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+ALTER TABLE `order_delivery` ADD COLUMN `tracked_at` datetime(6) DEFAULT NULL;
 
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
@@ -1611,3 +1617,29 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    (기존: entry_fee_paid 비트만 확인 → 본사가 DB/일자만 넣은 경우 게이트에 막힘) 검증: 로컬 partner(일자 2026-09-10, 비트 0) → entryFeePaid=true, /partner/orders 진입 확인.
 ■ [변경] 본사 [주문관리] 메뉴 위치: [조직망 및 영업관리] → [파트너사 관리]의 소메뉴(상담신청 아래). 경로 /master/organization/orders → /master/partners/orders.
    BE API(/api/org/orders, MASTER_ADMIN)는 그대로. 주문상세는 전체화면 레이어(헤더·하단 상태변경 바 고정, 수령인 표, Esc 닫기).
+
+====================================================================
+[추가] docs/33-1 작업 — 주문 송장번호/화물추적 (2026-10-31)
+====================================================================
+■ 파트너 admin [주문관리] 주문상세 수령인 표: 택배사 선택 · 송장번호 입력[저장] · 배송상태(배지+최근이력+조회일시) · 오른쪽 끝 [화물추적].
+   [화물추적] = 입력값 저장 + BE 가 택배사 조회화면(또는 그 화면이 호출하는 조회 API)을 호출 → 날짜·시각이 있는 이력 행 중 최신 행을 골라
+   키워드로 배송상태(집화완료/배송중/배송출발/배송완료, 이력 없으면 조회결과없음) 판정 → order_delivery 저장.
+   택배사: CJ대한통운(JSON API)·우체국·롯데·한진·로젠(HTML)·경동(JSON API). 목록/조회URL = be order/CourierTracker.COURIERS.
+   API: GET /api/partner/orders/couriers, PUT /api/partner/orders/{id}/deliveries/{did}/invoice, POST .../track (PARTNER, 본인 주문만).
+   택배사/송장번호 변경 시 이전 추적결과 초기화. 송장번호 영문/숫자 6~30자.
+■ HOME 상품상세: 카카오 링크(refId·ordNo) + 단순배송상품 + partner_order 접수건이 있으면 [구매하기] 대신 주문내역·수령인·송장번호·배송상태 +
+   [화물추적](택배사 화물추적 화면 팝업). 주문 없으면 기존 [구매하기]. (GET /api/public/orders/complete 재사용)
+■ 본사 [파트너사 관리]-[주문관리] 주문상세: 파트너 입력 택배사·송장번호·배송상태 조회 전용 + [화물추적] 팝업.
+■ DB: order_delivery 에 courier_code / invoice_no / delivery_status / tracking_detail / tracked_at 추가
+   → migration_new_fields.sql / schema_chin4.sql / 위 [DB 마이그레이션] 섹션 반영.
+■ 검증(로컬 DB): BE compile, home tsc 0(admin 은 기존 .next 잔여 타입 1건 외 0). 송장 검증 400 / 타 주문 배송지 404 / 본사 토큰으로 파트너 API 403,
+   6개 택배사 가짜 송장 조회 → 조회결과없음(우체국 검색폼 날짜범위 행 오인 수정), 파서 합성 데이터(HTML·CJ·경동 JSON) 최신 행/상태 판정 확인.
+   브라우저: 파트너 상세 입력·[화물추적] 갱신, 본사 상세 표시, HOME 상품상세 주문 패널·팝업 URL 확인. 테스트 송장값은 원복.
+   ⚠ 실제 송장번호로는 미검증 — 택배사 화면 구조에 따라 상태 판정이 다를 수 있음(운영 송장으로 1회 확인 필요).
+■ [보완 2026-10-31] 파트너 주문상세 수령인 표 소형화: 택배사 select·송장번호 input·[저장]·[화물추적] 높이 28px(h-7)·글자 12px(text-xs)·폭 축소,
+   셀 패딩 px-4→px-2, 표 min-width 제거 → 1024/1280px 에서 가로 스크롤바 없음 확인. (OrderManager THEME inputSm/primarySm/ghostSm)
+■ [보완 2026-10-31] HOME 상품상세 주문 접수 내역: 무통장 주문이면 파트너사 입금계좌(은행명·계좌번호·예금주·입금금액) 표시.
+   (/api/public/orders/complete 의 bank 사용, 로컬 삼화정공사는 계좌 미입력이라 "-")
+■ [보완 2026-10-31] HOME 상품상세 주문 접수 패널: 기본은 주문내역 + 무통장 입금계좌(좌우 배치)만 표시, 패널 높이는 좌측 이미지 영역(메인+썸네일)에 맞춤
+   (lg↑: 우측 컬럼 h-0+min-h-full → 행 높이=좌측 컬럼, 패널 flex-1). [배송정보확인 (N곳) ▼] 클릭 시 배송지 리스트(수령인·주소·송장·배송상태·[화물추적]) 펼침,
+   [배송정보 닫기 ▲] 로 접힘. 모바일(lg 미만)은 높이 제한 없음. 검증: 1280px 접힘 시 패널 하단 = 이미지 영역 하단, 내부 스크롤 없음 / 펼침 시 3곳 표시.

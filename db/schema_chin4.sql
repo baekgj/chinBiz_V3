@@ -462,6 +462,11 @@ CREATE TABLE IF NOT EXISTS `order_delivery` (
   `address` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `address_detail` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `quantity` int NOT NULL,
+  `courier_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `invoice_no` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tracking_detail` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tracked_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_order_delivery_order` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
