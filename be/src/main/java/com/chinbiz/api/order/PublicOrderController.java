@@ -31,11 +31,15 @@ public class PublicOrderController {
     private final ShopOrderRepository orderRepo;
     private final OrderDeliveryRepository deliveryRepo;
     private final OrderService orderService;
+    private final com.chinbiz.api.allowance.AllowanceService allowanceService;
+    private final com.chinbiz.api.alarm.AlarmService alarmService;
 
     public PublicOrderController(SaleRepository saleRepo, ProductRepository productRepo, PartnerRepository partnerRepo,
-                                 ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, OrderService orderService) {
+                                 ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, OrderService orderService,
+                                 com.chinbiz.api.allowance.AllowanceService allowanceService, com.chinbiz.api.alarm.AlarmService alarmService) {
         this.saleRepo = saleRepo; this.productRepo = productRepo; this.partnerRepo = partnerRepo;
         this.orderRepo = orderRepo; this.deliveryRepo = deliveryRepo; this.orderService = orderService;
+        this.allowanceService = allowanceService; this.alarmService = alarmService;
     }
 
     private Sale findSale(Long refId, String ordNo) {
@@ -143,6 +147,9 @@ public class PublicOrderController {
             od.setQuantity(d.quantity());
             deliveryRepo.save(od);
         }
+        // 주문 완료 → 버즈/소속센터/본부/본사 CP 수당 적립 + [주문접수] 알람 (docs/33-2)
+        allowanceService.createForShopOrder(s, qty);
+        try { alarmService.fireShopOrderEvent("ORDER_RECEIVE", o, s); } catch (Exception ignore) {}
         return ResponseEntity.status(201).body(Map.of("id", o.getId(), "orderNo", o.getOrderNo()));
     }
 

@@ -258,7 +258,9 @@ function OrderDetailModal({ api, id, tone, editInvoice, onClose, onSaved }: { ap
 
   async function save() {
     if (!d || status === d.status) return;
-    if (!window.confirm(`주문상태를 [${d.status}] → [${status}](으)로 변경하시겠습니까?`)) return;
+    const effect = status === "입금" ? "\n(적립된 CP수당이 MP수당으로 전환되고 [거래확정] 알람이 발송됩니다.)"
+      : status === "취소" ? "\n(지급된 수당만큼 −수당이 지급되고 [주문취소] 알람이 발송됩니다. 취소 후에는 상태를 변경할 수 없습니다.)" : "";
+    if (!window.confirm(`주문상태를 [${d.status}] → [${status}](으)로 변경하시겠습니까?${effect}`)) return;
     setBusy(true); setMsg(null);
     const r = await apiPut<Detail>(`${api}/${id}/status`, { status });
     setBusy(false);
@@ -339,7 +341,7 @@ function OrderDetailModal({ api, id, tone, editInvoice, onClose, onSaved }: { ap
         <div className={`shrink-0 border-t px-5 py-4 sm:px-8 ${t.modalLine}`}>
           <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2">
             <span className={`text-sm font-black ${t.title}`}>주문상태</span>
-            <select className={t.input} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select className={t.input} value={status} disabled={d.status === "취소"} onChange={(e) => setStatus(e.target.value)}>
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <button onClick={save} disabled={busy || status === d.status} className={t.primary}>{busy ? "저장 중…" : "상태 변경"}</button>

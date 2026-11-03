@@ -72,11 +72,15 @@ public final class AlarmDefs {
             msg("OOO 매니저회원의 @@@ 고객의 2차 영업활동을 취소합니다. CP수당 $$$$원을 차감합니다.\n[주문번호 : ______]", MANAGER, MGMT_CENTER),
             msg("OOO 매니저회원의 @@@ 고객의 2차 영업활동을 취소합니다.\n[주문번호 : ______]", BUZZ, CENTER))),
 
-        new Def("ORDER_CANCEL", "주문취소", "파트너사admin - [영업현황] 메뉴에서 [취소] 버튼 클릭시", merge(
+        new Def("ORDER_RECEIVE", "주문접수", "home - 단순배송상품 상세화면 [구매하기] → 주문서 [결제하기]로 주문 완료시", merge(
+            msg("@@@ 고객이 ***** 상품을 주문하였습니다\n(주문번호 : ______)\nCP수당 $$$$원이 적립됩니다.", BUZZ, CENTER, DIVISION, HQ),
+            msg("@@@ 고객이 ***** 상품을 주문하였습니다\n(주문번호 : ______)", PARTNER))),
+
+        new Def("ORDER_CANCEL", "주문취소", "파트너사admin - [영업현황] [취소] 버튼 / [주문관리] 주문상세 주문상태 [취소] 변경시", merge(
             msg("고객의 요청으로 해당 주문을 취소하였습니다. 기 적립된 CP수당 $$$$$원을 차감합니다.\n[주문번호 : ______]", BUZZ, REFERRER, CENTER, HQ, MGMT_CENTER),
             msg("고객의 요청으로 해당 주문을 취소하였습니다. 기 적립된 CP수당 $$$$$원을 차감되며, 활동비 보전으로 50000원을 지급해 드립니다.\n[주문번호 : ______]", MANAGER))),
 
-        new Def("ORDER_CONFIRM", "거래확정", "파트너사admin - [영업현황] 메뉴에서 [구매확정] 버튼 클릭시",
+        new Def("ORDER_CONFIRM", "거래확정", "파트너사admin - [영업현황] [구매확정] 버튼 / [주문관리] 주문상세 주문상태 [입금] 변경시",
             msg("고객 주문이 확정되어 적립된 CP수당이 MP수당으로 전환됩니다.\n[주문번호 : ______]", BUZZ, CENTER, MANAGER, MGMT_CENTER, DIVISION, REFERRER)),
 
         new Def("CLOSE", "마감완료", "본사admin - [수당및정산관리]/[매출현황] 메뉴에서 [마감완료] 버튼 클릭시",

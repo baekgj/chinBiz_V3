@@ -1,5 +1,9 @@
 package com.chinbiz.api.order;
 
+import com.chinbiz.api.alarm.AlarmService;
+import com.chinbiz.api.allowance.AllowanceService;
+import com.chinbiz.api.buzz.Sale;
+import com.chinbiz.api.buzz.SaleRepository;
 import com.chinbiz.api.partner.Partner;
 import com.chinbiz.api.partner.PartnerRepository;
 import org.springframework.data.domain.Page;
@@ -8,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,9 +31,14 @@ public class OrderService {
     private final OrderDeliveryRepository deliveryRepo;
     private final PartnerRepository partnerRepo;
     private final CourierTracker tracker;
+    private final SaleRepository saleRepo;
+    private final AllowanceService allowanceService;
+    private final AlarmService alarmService;
 
-    public OrderService(ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, PartnerRepository partnerRepo, CourierTracker tracker) {
+    public OrderService(ShopOrderRepository orderRepo, OrderDeliveryRepository deliveryRepo, PartnerRepository partnerRepo, CourierTracker tracker,
+                        SaleRepository saleRepo, AllowanceService allowanceService, AlarmService alarmService) {
         this.orderRepo = orderRepo; this.deliveryRepo = deliveryRepo; this.partnerRepo = partnerRepo; this.tracker = tracker;
+        this.saleRepo = saleRepo; this.allowanceService = allowanceService; this.alarmService = alarmService;
     }
 
     public Map<String, Object> row(ShopOrder o) {
@@ -104,12 +114,27 @@ public class OrderService {
         return o;
     }
 
+    @Transactional
     public ResponseEntity<?> changeStatus(ShopOrder o, String status) {
         if (o == null) return ResponseEntity.status(404).body(Map.of("message", "주문을 찾을 수 없습니다."));
         if (status == null || !STATUSES.contains(status.trim()))
             return ResponseEntity.badRequest().body(Map.of("message", "주문상태는 접수/입금/배송완료/취소 중 하나여야 합니다."));
-        o.setStatus(status.trim());
+        String prev = o.getStatus(), next = status.trim();
+        if (next.equals(prev)) return ResponseEntity.ok(detail(o));
+        if ("취소".equals(prev))
+            return ResponseEntity.badRequest().body(Map.of("message", "취소된 주문은 상태를 변경할 수 없습니다. (수당 역정산 완료)"));
+        o.setStatus(next);
         orderRepo.save(o);
+
+        // 입금 → CP→MP 전환 + [거래확정] 알람 / 취소 → (−)상계전표 + [주문취소] 알람 (docs/33-2)
+        Sale sale = o.getSaleId() == null ? null : saleRepo.findById(o.getSaleId()).orElse(null);
+        if ("입금".equals(next)) {
+            if (allowanceService.confirmOrder(o.getOrderNo()) > 0)
+                try { alarmService.fireShopOrderEvent("ORDER_CONFIRM", o, sale); } catch (Exception ignore) {}
+        } else if ("취소".equals(next)) {
+            allowanceService.reverseOrder(o.getOrderNo());
+            try { alarmService.fireShopOrderEvent("ORDER_CANCEL", o, sale); } catch (Exception ignore) {}
+        }
         return ResponseEntity.ok(detail(o));
     }
 

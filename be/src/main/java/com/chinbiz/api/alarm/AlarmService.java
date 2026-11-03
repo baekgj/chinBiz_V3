@@ -39,14 +39,16 @@ public class AlarmService {
     private final WebPushService webPushService;
     private final com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo;
     private final com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepo;
+    private final com.chinbiz.api.allowance.AllowanceRepository allowanceRepo;
 
     public AlarmService(AlarmSettingRepository settingRepo, AlarmRepository alarmRepo,
                         UserRepository userRepo, CenterCodeRepository centerCodeRepo,
                         ProductRepository productRepo, PartnerRepository partnerRepo,
                         WebPushService webPushService,
                         com.chinbiz.api.buzz.ManagerCenterRepository managerCenterRepo,
-                        com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepo) {
-        this.adminScopeRepo = adminScopeRepo;
+                        com.chinbiz.api.rbac.AdminScopeRepository adminScopeRepo,
+                        com.chinbiz.api.allowance.AllowanceRepository allowanceRepo) {
+        this.adminScopeRepo = adminScopeRepo; this.allowanceRepo = allowanceRepo;
         this.settingRepo = settingRepo; this.alarmRepo = alarmRepo;
         this.userRepo = userRepo; this.centerCodeRepo = centerCodeRepo;
         this.productRepo = productRepo; this.partnerRepo = partnerRepo;
@@ -303,6 +305,62 @@ public class AlarmService {
         tokens.put("amount", String.format("%,d", cp));
         tokens.put("orderNo", nz(sale.getOrderNo() == null ? String.valueOf(sale.getId()) : sale.getOrderNo()));
         return fire(processCode, map, tokens, "SALE", sale.getId());
+    }
+
+    // ───────────────────────── 단순배송 주문 (partner_order 기반) ─────────────────────────
+
+    /**
+     * 단순배송상품 주문 알람 (docs/33-2) — 버즈/소속센터/본부/본사/파트너.
+     *  - processCode: ORDER_RECEIVE(주문접수) / ORDER_CONFIRM(거래확정, 입금) / ORDER_CANCEL(주문취소)
+     *  - $$$$ 금액은 수신 대상별 실제 수당 원장(ORDER 전표) 금액으로 렌더링.
+     */
+    public int fireShopOrderEvent(String processCode, com.chinbiz.api.order.ShopOrder order, Sale sale) {
+        if (order == null) return 0;
+        User buzz = sale == null || sale.getBuzzId() == null ? null : userRepo.findById(sale.getBuzzId()).orElse(null);
+        Product product = order.getProductId() == null ? null : productRepo.findById(order.getProductId()).orElse(null);
+
+        Map<AlarmTarget, List<Recipient>> map = new EnumMap<>(AlarmTarget.class);
+        if (buzz != null) {
+            map.put(AlarmTarget.BUZZ, List.of(toRecipient(buzz)));
+            map.put(AlarmTarget.CENTER, centerAdmins(buzz.getSalesCenterId()));
+            map.put(AlarmTarget.DIVISION, divisionAdmins(buzz.getSalesCenterId()));
+        }
+        map.put(AlarmTarget.HQ, hqAdmins());
+        Recipient partner = partnerOf(product);
+        if (partner != null) map.put(AlarmTarget.PARTNER, List.of(partner));
+
+        // 대상별 수당 금액 — 이 주문의 ORDER 전표 회원구분별 합계
+        Map<com.chinbiz.api.allowance.Allowance.MemberType, Long> amounts = new EnumMap<>(com.chinbiz.api.allowance.Allowance.MemberType.class);
+        if (order.getOrderNo() != null)
+            for (com.chinbiz.api.allowance.Allowance a : allowanceRepo.findByOrderNoAndType(order.getOrderNo(), com.chinbiz.api.allowance.Allowance.Type.ORDER))
+                amounts.merge(a.getMemberType(), a.getAmount() == null ? 0L : a.getAmount(), Long::sum);
+
+        int created = 0;
+        for (Map.Entry<AlarmTarget, List<Recipient>> e : map.entrySet()) {
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("customer", nz(order.getOrdererName()));
+            tokens.put("product", nz(order.getProductName()));
+            tokens.put("orderNo", nz(order.getOrderNo()));
+            tokens.put("amount", String.format("%,d", amounts.getOrDefault(memberTypeOf(e.getKey()), 0L)));
+            Map<AlarmTarget, List<Recipient>> one = new EnumMap<>(AlarmTarget.class);
+            one.put(e.getKey(), e.getValue());
+            created += fire(processCode, one, tokens, "ORDER", order.getId());
+        }
+        return created;
+    }
+
+    /** 알람 대상 → 수당 원장 회원구분 (주문 알람 금액 조회용) */
+    private com.chinbiz.api.allowance.Allowance.MemberType memberTypeOf(AlarmTarget t) {
+        return switch (t) {
+            case BUZZ -> com.chinbiz.api.allowance.Allowance.MemberType.BUZZ;
+            case REFERRER -> com.chinbiz.api.allowance.Allowance.MemberType.TOPBUZZ;
+            case MANAGER -> com.chinbiz.api.allowance.Allowance.MemberType.MANAGER;
+            case CENTER -> com.chinbiz.api.allowance.Allowance.MemberType.BUZZ_CENTER;
+            case MGMT_CENTER -> com.chinbiz.api.allowance.Allowance.MemberType.MANAGER_CENTER;
+            case DIVISION -> com.chinbiz.api.allowance.Allowance.MemberType.DIVISION;
+            case HQ -> com.chinbiz.api.allowance.Allowance.MemberType.HQ;
+            case PARTNER -> com.chinbiz.api.allowance.Allowance.MemberType.MASTER; // 파트너 문구엔 금액 없음
+        };
     }
 
     // ───────────────────────── 마감/정산/지급 (월 단위) ─────────────────────────

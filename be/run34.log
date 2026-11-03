@@ -19298,3 +19298,87 @@ Hibernate:
         push_subscription ps1_0 
     where
         ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?
+Hibernate: 
+    select
+        ps1_0.id,
+        ps1_0.account,
+        ps1_0.auth,
+        ps1_0.created_at,
+        ps1_0.endpoint,
+        ps1_0.p256dh 
+    from
+        push_subscription ps1_0 
+    where
+        ps1_0.endpoint=?

@@ -96,6 +96,8 @@ public class AllowanceService {
         if (sale.getProductId() == null || sale.getOrderNo() == null) return;
         Product p = productRepo.findById(sale.getProductId()).orElse(null);
         if (p == null) return;
+        // 단순배송상품은 1차영업 등록이 아니라 HOME 주문 완료 시점에 CP 적립 (docs/33-2, createForShopOrder)
+        if (p.isSimpleDelivery()) return;
         Long partnerId = p.getPartnerId();
 
         // 1) 버즈 본인
@@ -119,6 +121,44 @@ public class AllowanceService {
         User master = masterAdmin();
         String hqId = master != null ? master.getUserId() : "HQ";
         add(sale, Allowance.MemberType.HQ, hqId, amount(p, p.getHqReward()), master, partnerId, buzz);
+    }
+
+    /**
+     * 단순배송상품 주문 완료(HOME [결제하기]) 시 CP 수당 생성 (docs/33-2).
+     *  - 대상: 버즈(BUZZ) · 소속센터(BUZZ_CENTER) · 본부(DIVISION) · 본사(HQ). 금액 = 상품 역할수당 × 구매수량.
+     *  - 이미 같은 (ORDER, 주문번호, 회원구분, 회원ID) 전표가 있으면 생략(구버전 1차영업 시점 적립분 중복 방지).
+     * @return 이 주문의 ORDER 전표(회원구분별 금액 조회용)
+     */
+    @Transactional
+    public java.util.List<Allowance> createForShopOrder(Sale sale, int quantity) {
+        if (sale.getProductId() == null || sale.getOrderNo() == null || sale.getBuzzId() == null) return java.util.List.of();
+        Product p = productRepo.findById(sale.getProductId()).orElse(null);
+        User buzz = userRepo.findById(sale.getBuzzId()).orElse(null);
+        if (p == null || buzz == null) return java.util.List.of();
+        Long partnerId = p.getPartnerId();
+        int qty = Math.max(quantity, 1);
+
+        addIfAbsent(sale, Allowance.MemberType.BUZZ, buzz.getUserId(), amount(p, p.getBuzzReward()) * qty, buzz, partnerId, buzz);
+
+        User center = centerAdmin(buzz.getSalesCenterId());
+        String centerId = center != null ? center.getUserId() : (buzz.getSalesCenterId() != null ? "SC:" + buzz.getSalesCenterId() : null);
+        addIfAbsent(sale, Allowance.MemberType.BUZZ_CENTER, centerId, amount(p, p.getSalesCenterReward()) * qty, center, partnerId, buzz);
+
+        User division = divisionAdmin(buzz.getSalesCenterId());
+        String divisionId = division != null ? division.getUserId() : "DIVISION";
+        addIfAbsent(sale, Allowance.MemberType.DIVISION, divisionId, amount(p, p.getDivisionReward()) * qty, division, partnerId, buzz);
+
+        User master = masterAdmin();
+        String hqId = master != null ? master.getUserId() : "HQ";
+        addIfAbsent(sale, Allowance.MemberType.HQ, hqId, amount(p, p.getHqReward()) * qty, master, partnerId, buzz);
+
+        return allowanceRepo.findByOrderNoAndType(sale.getOrderNo(), Allowance.Type.ORDER);
+    }
+
+    private void addIfAbsent(Sale sale, Allowance.MemberType mt, String memberId, long amt, User payee, Long partnerId, User handler) {
+        if (memberId == null || memberId.isBlank()) return;
+        if (allowanceRepo.existsById(new AllowanceId(Allowance.Type.ORDER, sale.getOrderNo(), mt, memberId))) return;
+        add(sale, mt, memberId, amt, payee, partnerId, handler);
     }
 
     /**
@@ -172,17 +212,19 @@ public class AllowanceService {
         }
     }
 
-    /** 구매확정: 해당 주문의 수당 상태 CP→MP, 구매확정일자 세팅 */
+    /** 구매확정: 해당 주문의 수당 상태 CP→MP, 구매확정일자 세팅. @return CP→MP 전환된 전표 수 */
     @Transactional
-    public void confirmOrder(String orderNo) {
-        if (orderNo == null) return;
+    public int confirmOrder(String orderNo) {
+        if (orderNo == null) return 0;
         java.time.LocalDate today = java.time.LocalDate.now();
+        int converted = 0;
         for (Allowance a : allowanceRepo.findByOrderNoAndType(orderNo, Allowance.Type.ORDER)) {
-            if (a.getStatus() == Allowance.Status.CP) a.setStatus(Allowance.Status.MP);
+            if (a.getStatus() == Allowance.Status.CP) { a.setStatus(Allowance.Status.MP); converted++; }
             a.setConfirmDate(today);
             // fixed_date/fixed_month 는 구매확정이 아니라 본사 [마감완료] 시점에만 기록 (docs/12)
             allowanceRepo.save(a);
         }
+        return converted;
     }
 
     /**
@@ -198,25 +240,7 @@ public class AllowanceService {
         java.time.LocalDate today = java.time.LocalDate.now();
 
         // 1) ORDER 전표 → CANCEL 상계전표(금액 −)
-        for (Allowance o : allowanceRepo.findByOrderNoAndType(orderNo, Allowance.Type.ORDER)) {
-            Allowance c = new Allowance();
-            c.setType(Allowance.Type.CANCEL);
-            c.setOrderNo(orderNo);
-            c.setMemberType(o.getMemberType());
-            c.setMemberId(o.getMemberId());
-            c.setStatus(o.getStatus());
-            c.setProductId(o.getProductId());
-            c.setPartnerId(o.getPartnerId());
-            c.setAmount(o.getAmount() == null ? 0L : -o.getAmount());
-            c.setContractDate(o.getContractDate());
-            c.setConfirmDate(o.getConfirmDate());
-            c.setAccountNumber(o.getAccountNumber());
-            c.setBankName(o.getBankName());
-            c.setAccountHolder(o.getAccountHolder());
-            c.setPaid(o.isPaid());
-            c.setHandlerId(o.getHandlerId());
-            allowanceRepo.save(c);
-        }
+        reverseOrder(orderNo);
 
         // 2) 매니저 보전비 있는 상품 + 구매확정/배송·설치 단계 → 매니저 취소수당(CANCEL_FEE = product.cancel_amount)
         String st = sale.getStatus();
@@ -243,6 +267,38 @@ public class AllowanceService {
                 allowanceRepo.save(fee);
             }
         }
+    }
+
+    /**
+     * 주문 ORDER 전표 → 동일 내역 + 유형 CANCEL + 금액(−) 상계전표 Insert. 기존 전표는 수정하지 않음.
+     * 이미 상계된 (회원구분, 회원ID)는 건너뜀(중복 취소 방지).
+     * @return 생성된 CANCEL 전표
+     */
+    @Transactional
+    public java.util.List<Allowance> reverseOrder(String orderNo) {
+        java.util.List<Allowance> out = new java.util.ArrayList<>();
+        if (orderNo == null) return out;
+        for (Allowance o : allowanceRepo.findByOrderNoAndType(orderNo, Allowance.Type.ORDER)) {
+            if (allowanceRepo.existsById(new AllowanceId(Allowance.Type.CANCEL, orderNo, o.getMemberType(), o.getMemberId()))) continue;
+            Allowance c = new Allowance();
+            c.setType(Allowance.Type.CANCEL);
+            c.setOrderNo(orderNo);
+            c.setMemberType(o.getMemberType());
+            c.setMemberId(o.getMemberId());
+            c.setStatus(o.getStatus());
+            c.setProductId(o.getProductId());
+            c.setPartnerId(o.getPartnerId());
+            c.setAmount(o.getAmount() == null ? 0L : -o.getAmount());
+            c.setContractDate(o.getContractDate());
+            c.setConfirmDate(o.getConfirmDate());
+            c.setAccountNumber(o.getAccountNumber());
+            c.setBankName(o.getBankName());
+            c.setAccountHolder(o.getAccountHolder());
+            c.setPaid(o.isPaid());
+            c.setHandlerId(o.getHandlerId());
+            out.add(allowanceRepo.save(c));
+        }
+        return out;
     }
 
     /**
