@@ -537,9 +537,36 @@ CALL chinbiz_add_col('order_delivery','tracked_at',      "`tracked_at` datetime(
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
 -- 완료.
 
+-- ── [2026-11-05] docs/34 : 상품 택배비 설정 + 주문 택배비 ─────────────────
+-- product.shipping_type: FREE(택배비없음) / PER_QTY(개별부과) / PER_ADDRESS(배송지별부과) / PER_ADDRESS_QTY(배송지별개별부과)
+-- partner_order.total_amount = 판매가×수량 + shipping_fee
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+DELIMITER $$
+CREATE PROCEDURE chinbiz_add_col(IN p_tbl VARCHAR(64), IN p_col VARCHAR(64), IN p_ddl TEXT)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_tbl AND COLUMN_NAME = p_col) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `', p_tbl, '` ADD COLUMN ', p_ddl);
+    PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+  END IF;
+END$$
+DELIMITER ;
+CALL chinbiz_add_col('product','shipping_type',     "`shipping_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'FREE'");
+CALL chinbiz_add_col('product','shipping_unit_qty', "`shipping_unit_qty` int DEFAULT 1");
+CALL chinbiz_add_col('product','shipping_fee',      "`shipping_fee` bigint DEFAULT 0");
+CALL chinbiz_add_col('partner_order','shipping_fee', "`shipping_fee` bigint DEFAULT 0");
+DROP PROCEDURE IF EXISTS chinbiz_add_col;
+-- 완료.
+
 
 ALTER TABLE `order_delivery` ADD COLUMN `courier_code` varchar(20)  NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `invoice_no` varchar(40)  NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `delivery_status` varchar(20)  NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `tracking_detail` varchar(300)  NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `tracked_at` datetime(6)  NULL;
+
+
+ALTER TABLE `product` ADD COLUMN `shipping_type` varchar(20)  DEFAULT 'FREE';
+ALTER TABLE `product` ADD COLUMN `shipping_unit_qty` bigint  DEFAULT 1;
+ALTER TABLE `product` ADD COLUMN `shipping_fee` bigint  DEFAULT 0;
+ALTER TABLE `partner_order` ADD COLUMN `shipping_type` bigint  DEFAULT 0;

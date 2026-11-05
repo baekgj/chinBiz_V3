@@ -450,6 +450,11 @@ ALTER TABLE `order_delivery` ADD COLUMN `invoice_no` varchar(40) COLLATE utf8mb4
 ALTER TABLE `order_delivery` ADD COLUMN `delivery_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `tracking_detail` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `tracked_at` datetime(6) DEFAULT NULL;
+-- [2026-11-05] docs/34 상품 택배비 설정 + 주문 택배비
+ALTER TABLE `product` ADD COLUMN `shipping_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'FREE';
+ALTER TABLE `product` ADD COLUMN `shipping_unit_qty` int DEFAULT 1;
+ALTER TABLE `product` ADD COLUMN `shipping_fee` bigint DEFAULT 0;
+ALTER TABLE `partner_order` ADD COLUMN `shipping_fee` bigint DEFAULT 0;
 
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
@@ -1661,3 +1666,26 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    - 취소된 주문은 이후 상태 변경 불가(400). admin 화면도 취소 주문은 상태 select 비활성 + 변경 확인창에 수당 영향 안내.
 ■ 검증(로컬 DB, 테스트 BE 9002): 주문 201 → CP 4건(270,000/60,000/30,000/30,000, 수량 2) + 주문접수 알람 6건(파트너 포함, 대상별 금액)
    → 입금 200: 4건 MP·구매확정일 → 거래확정 알람 → 취소 200: CANCEL −4건(순합계 0) + 주문취소 알람 → 접수 재변경 400. 테스트 데이터 삭제함.
+
+====================================================================
+[추가] docs/34 작업 — 버즈/매니저 화면 · 대시보드 CP/MP · 파트너 정산 · 택배비 (2026-11-05)
+====================================================================
+■ 1. 버즈 상품상세: [이 상품으로 수익을 만드는 2가지 방법] 섹션을 흰 카드(theme.card)로 감싸 배경을 하단 [1차영업신청]까지 확장 (components/buzz/ProductDetail.tsx)
+■ 2. 매니저 상품상세: 위 섹션 삭제(버즈 뷰에서만 노출)
+■ 3. 버즈/매니저 대시보드 CP/MP 카드에 보조 박스 추가 + MP 로직 수정 (BuzzDashboardController)
+   - 잔여 예정수당(CP) remainingCp = 기간 무관 CP 전표 합계
+   - 출금 가능 수당(MP) withdrawableMp = 기간 무관 MP 전표 합계 − 지급완료(allowance_payment.payment_flag=Y) 합계
+   - 누적 출금수당(MP) withdrawnMp = 지급완료(payment_flag=Y) 합계
+   - [버그 원인] 기존 MP 카드 = cumulativeMp(allowance_payment 합) → 마감/정산 전 MP(추천인 JOIN 500원 등)가 누락돼 ₩0 표시
+■ 4. 파트너 admin
+   - 대시보드 [실시간 상품 영업 및 고객정보 현황] 실DB 연동(/api/partner/sales, 최근 10건·탭·고객명 클릭 상세모달·[전체보기])
+   - 상단 우측 상호명 = 로그인 파트너 name(상호명) (기존 '삼화정공사' 하드코딩)
+   - 로그인 첫 화면 = /partner/dashboard (home login·Header·admin ROLE_PATH, 로고·결제완료 이동 경로)
+   - [정산 현황] 타이틀 "친비즈 본사 지급 수당", CP/MP 실데이터(GET /api/partner/billing: sale↔partner_order 접수/입금 건의 판매가×수량 합계), 예치금 계좌 섹션 삭제
+■ 5. 택배비 설정
+   - product.shipping_type(FREE/PER_QTY/PER_ADDRESS/PER_ADDRESS_QTY)·shipping_unit_qty·shipping_fee, partner_order.shipping_fee (위 [DB 마이그레이션] 반영)
+   - 계산(order/ShippingFee): 개별부과=ceil(총수량/N)×X, 배송지별=배송지수×X, 배송지별개별=Σceil(배송지수량/N)×X
+   - 본사 상품등록 폼 택배비 설정 UI / HOME 주문서 상품금액+택배비=결제금액(서버 재계산 저장, total_amount 에 포함)
+   - 택배비 표시: HOME 주문완료·상품상세 주문내역, 파트너/본사 주문관리 리스트·상세(OrderManager)
+■ 검증(로컬 DB, 테스트 BE 9002): dukebaek 버즈 remainingCp 769,400 / withdrawableMp 12,000(기존 0) — DB 합계와 일치,
+   partner billing CP 6,000,000 / MP 0 — DB 합계와 일치, 주문서 form 택배비 필드 응답, ShippingFee 4유형 계산 확인. FE tsc 오류 0.

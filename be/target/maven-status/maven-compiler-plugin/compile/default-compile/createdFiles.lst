@@ -1,3 +1,4 @@
+com\chinbiz\api\partner\PartnerBillingController.class
 com\chinbiz\api\notice\NoticeRecipientResolver$1.class
 com\chinbiz\api\ad\AdImageResizer$Result.class
 com\chinbiz\api\order\OrderDeliveryRepository.class
@@ -8,6 +9,7 @@ com\chinbiz\api\push\PushSubscription.class
 com\chinbiz\api\auth\dto\SignupRequest.class
 com\chinbiz\api\edu\BuzzEducationController.class
 com\chinbiz\api\order\CourierTracker$Courier.class
+com\chinbiz\api\order\ShippingFee.class
 com\chinbiz\api\edu\EduMaterialStorage.class
 com\chinbiz\api\order\OrderAdminController.class
 com\chinbiz\api\ad\Ad$AdType.class

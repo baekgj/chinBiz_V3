@@ -78,6 +78,13 @@ public class Product {
     /** 취소비용(매니저 보전비, 원) — cancel_fee_flag=true 일 때 사용 */
     @Column(name = "cancel_amount") private Long cancelAmount = 0L;
 
+    /** 택배비 설정 (docs/34) — FREE(택배비없음) / PER_QTY(개별부과) / PER_ADDRESS(배송지별부과) / PER_ADDRESS_QTY(배송지별개별부과) */
+    @Column(name = "shipping_type", length = 20) private String shippingType = "FREE";
+    /** 택배비 부과 기준 수량 — PER_QTY / PER_ADDRESS_QTY 에서 (N)개 상품당 */
+    @Column(name = "shipping_unit_qty") private Integer shippingUnitQty = 1;
+    /** 택배비 금액(원) — 기준 단위당 부과 금액 */
+    @Column(name = "shipping_fee") private Long shippingFee = 0L;
+
     // 상품 특성 플래그 (docs/25) — 키워드 태그 위 노출
     @Column(name = "monthly_care", nullable = false) private boolean monthlyCare = false; // 월관리상품 여부
     @Column(name = "as_support", nullable = false) private boolean asSupport = false;     // AS지원상품 여부
@@ -149,6 +156,9 @@ public class Product {
     public boolean isSimpleDelivery() { return simpleDelivery; } public void setSimpleDelivery(boolean v) { simpleDelivery = v; }
     public boolean isCancelFeeFlag() { return cancelFeeFlag; } public void setCancelFeeFlag(boolean v) { cancelFeeFlag = v; }
     public Long getCancelAmount() { return cancelAmount; } public void setCancelAmount(Long v) { cancelAmount = v; }
+    public String getShippingType() { return shippingType == null ? "FREE" : shippingType; } public void setShippingType(String v) { shippingType = v; }
+    public Integer getShippingUnitQty() { return shippingUnitQty == null ? 1 : shippingUnitQty; } public void setShippingUnitQty(Integer v) { shippingUnitQty = v; }
+    public Long getShippingFee() { return shippingFee == null ? 0L : shippingFee; } public void setShippingFee(Long v) { shippingFee = v; }
     public boolean isPopular() { return popular; } public void setPopular(boolean v) { popular = v; }
     public boolean isRecommended() { return recommended; } public void setRecommended(boolean v) { recommended = v; }
     public boolean isMonthlyCare() { return monthlyCare; } public void setMonthlyCare(boolean v) { monthlyCare = v; }

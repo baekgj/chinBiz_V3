@@ -1,8 +1,20 @@
-import { krw } from "@/components/ui";
-import { Card } from "@/components/partner/PartnerUI";
+"use client";
 
-/** 파트너 대시보드 · 친비즈 본사 지급 수당 및 예치금 현황 (B2B Billing Hub) — docs/25 partner.docx */
+import { useEffect, useState } from "react";
+import { krw } from "@/components/ui";
+import { apiGet } from "@/lib/api";
+
+/** 파트너 · 친비즈 본사 지급 수당 (B2B Billing Hub) — docs/25 partner.docx
+ *  CP/MP 실데이터(docs/34): sale·partner_order 의 주문접수(CP) / 입금완료(MP) 상품금액 합계. 예치금 계좌 섹션 삭제 */
 export default function BillingSection() {
+  const [sum, setSum] = useState<{ cp: number; mp: number } | null>(null);
+  useEffect(() => {
+    // 실패 응답도 data(에러 본문)가 채워지므로 r.ok 일 때만 반영 + 숫자 보정 (미배포 BE 404 시 krw(undefined) 런타임 오류 방지)
+    apiGet<{ cp?: number; mp?: number }>("/api/partner/billing").then((r) => {
+      if (r.ok && r.data) setSum({ cp: Number(r.data.cp ?? 0), mp: Number(r.data.mp ?? 0) });
+    });
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* 실시간 Billing 연동 배지 */}
@@ -25,8 +37,8 @@ export default function BillingSection() {
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-700">● 진행 중</span>
           </div>
-          <p className="mt-4 text-3xl font-black text-slate-900">{krw(18500000)}</p>
-          <p className="mt-2 text-xs text-slate-500">현재 진행 중인 영업 건이 완결될 시 지급할 총액</p>
+          <p className="mt-4 text-3xl font-black text-slate-900">{sum ? krw(sum.cp) : "—"}</p>
+          <p className="mt-2 text-xs text-slate-500">주문접수 상태 주문의 상품금액 합계 (입금 완료 시 MP 전환)</p>
         </div>
 
         <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
@@ -40,34 +52,11 @@ export default function BillingSection() {
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-emerald-300">✓ 정산 대상</span>
           </div>
-          <p className="mt-4 text-3xl font-black">{krw(7200000)}</p>
-          <p className="mt-2 text-xs text-slate-400">구매확정 완료되어 친비즈 본사에 정산 지급할 금액</p>
+          <p className="mt-4 text-3xl font-black">{sum ? krw(sum.mp) : "—"}</p>
+          <p className="mt-2 text-xs text-slate-400">입금완료 상태 주문의 상품금액 합계</p>
         </div>
       </div>
 
-      {/* 예치금 계좌 */}
-      <Card title="파트너사 예치금 계좌 정보" sub="친비즈 본사 지급 수당 정산용 B2B 가상계좌">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">현재 정산 예치금 잔액</p>
-            <p className="mt-1 text-2xl font-black text-sky-700">{krw(15000000)}</p>
-            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">✓ 안전 지표 (정산 여유 확보)</p>
-          </div>
-          <div className="rounded-xl bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">전용 가상계좌</p>
-            <p className="mt-1 text-lg font-black text-slate-900">🏦 신한은행 110-xxx-xxxxxx</p>
-            <p className="mt-1 text-xs text-slate-500">예금주 (주)친비즈</p>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <button className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-sky-700">↓ 예치금 충전하기</button>
-          <button className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">⇄ 확정수당 자동차감 설정</button>
-        </div>
-        <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2">
-          <a href="#" className="flex items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">📄 월간 정산 명세서 세부 출력 <span className="text-slate-400">›</span></a>
-          <a href="#" className="flex items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">🧾 수당 세금계산서 발행 내역 확인 <span className="text-slate-400">›</span></a>
-        </div>
-      </Card>
     </div>
   );
 }

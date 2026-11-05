@@ -31,6 +31,12 @@ public interface AllowanceRepository extends JpaRepository<Allowance, AllowanceI
                     @Param("types") Collection<Allowance.MemberType> types,
                     @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
+    /** 특정 회원·상태·회원구분(들)의 전체 기간 수당 합산 (대시보드 잔여 예정CP / 출금가능 MP, docs/34) */
+    @Query("select coalesce(sum(a.amount),0) from Allowance a " +
+           "where a.memberId = :mid and a.status = :status and a.memberType in :types")
+    long sumAll(@Param("mid") String mid, @Param("status") Allowance.Status status,
+                @Param("types") Collection<Allowance.MemberType> types);
+
     /** 대시보드 패널티/보전: 회원+구분(들)+상태+전표유형(CANCEL_FEE 등)의 기간 내 합산 */
     @Query("select coalesce(sum(a.amount),0) from Allowance a " +
            "where a.memberId = :mid and a.status = :status and a.memberType in :types and a.type = :tx " +

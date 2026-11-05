@@ -7,6 +7,7 @@ import { clearToken, goToLogin } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import AlarmBell from "@/components/AlarmBell";
 import AdminHomeLink from "@/components/AdminHomeLink";
+import { useMe } from "@/components/MeContext";
 import BrandMark from "../BrandMark";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
 
 export default function PartnerTopbar() {
   const pathname = usePathname();
+  const me = useMe(); // 파트너 계정 name = 로그인 파트너사 상호명 (docs/34)
   const active = (href: string) => (href === "/partner" ? pathname === "/partner" : pathname.startsWith(href));
   const childActive = (child: string, parent: string) =>
     child === parent ? pathname === child : pathname === child || pathname.startsWith(child + "/");
@@ -45,7 +47,7 @@ export default function PartnerTopbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <Link href="/partner" className="flex items-center gap-2.5">
+        <Link href="/partner/dashboard" className="flex items-center gap-2.5">
           <BrandMark light />
           <div className="leading-tight">
             <p className="text-sm font-black text-slate-900">친비즈 <span className="text-sky-600">PARTNER</span></p>
@@ -84,7 +86,7 @@ export default function PartnerTopbar() {
           {/* 업체명 클릭 → 내정보 수정 */}
           <Link href="/partner/profile"
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${pathname.startsWith("/partner/profile") ? "bg-sky-50 text-sky-700" : "text-slate-600 hover:bg-slate-100"}`}>
-            삼화정공사 담당자님
+            {me?.name ? `${me.name} 담당자님` : "담당자님"}
           </Link>
           <button onClick={() => { clearToken(); goToLogin(); }} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="로그아웃">
             <Icon name="logout" className="h-5 w-5" />

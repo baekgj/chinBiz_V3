@@ -24,6 +24,14 @@ const ROLE_FIELDS: { key: string; label: string }[] = [
 const LEVEL_LABEL: Record<string, string> = { LARGE: "대", MEDIUM: "중", SMALL: "소" };
 const inputCls = "w-full rounded-lg border border-line bg-navy-950 px-3 py-2 text-sm text-white outline-none focus:border-brand-500 placeholder:text-slate-600";
 
+// 택배비 설정 유형 (docs/34) — BE order/ShippingFee 와 동일 키
+const SHIPPING_TYPES = [
+  { key: "FREE", label: "택배비없음(무료)" },
+  { key: "PER_QTY", label: "개별부과" },
+  { key: "PER_ADDRESS", label: "배송지별부과" },
+  { key: "PER_ADDRESS_QTY", label: "배송지별개별부과" },
+];
+
 export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; initial?: ProductData }) {
   const router = useRouter();
   const [cats, setCats] = useState<Cat[]>([]);
@@ -61,6 +69,10 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
   const [simpleDelivery, setSimpleDelivery] = useState<boolean>(Boolean(initial?.simpleDelivery));
   const [cancelFeeFlag, setCancelFeeFlag] = useState<boolean>(Boolean(initial?.cancelFeeFlag));
   const [cancelAmount, setCancelAmount] = useState<string>(initial?.cancelAmount != null ? String(initial.cancelAmount) : "");
+  // 택배비 설정 (docs/34)
+  const [shippingType, setShippingType] = useState<string>(initial?.shippingType ? String(initial.shippingType) : "FREE");
+  const [shippingUnitQty, setShippingUnitQty] = useState<string>(initial?.shippingUnitQty != null ? String(initial.shippingUnitQty) : "1");
+  const [shippingFee, setShippingFee] = useState<string>(initial?.shippingFee ? String(initial.shippingFee) : "");
   const [popular, setPopular] = useState<boolean>(Boolean(initial?.popular));
   const [recommended, setRecommended] = useState<boolean>(Boolean(initial?.recommended));
   const [monthlyCare, setMonthlyCare] = useState<boolean>(Boolean(initial?.monthlyCare)); // 월관리상품 (docs/25)
@@ -163,6 +175,10 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
       contractEndDate: f.contractEndDate || null, installProduct, simpleDelivery,
       cancelFeeFlag, cancelAmount: cancelFeeFlag ? Number(cancelAmount || 0) : 0,
       popular, recommended,
+      // docs/34 택배비 설정
+      shippingType,
+      shippingUnitQty: Math.max(1, Number(shippingUnitQty || 1)),
+      shippingFee: shippingType === "FREE" ? 0 : Number(shippingFee || 0),
       // docs/25 확장
       monthlyCare, asSupport, videoUrl: f.videoUrl,
       specEffect: f.specEffect, salesTarget: f.salesTarget, productFeature: f.productFeature, processFlow: f.processFlow,
@@ -250,6 +266,36 @@ export default function ProductForm({ mode, initial }: { mode: "new" | "edit"; i
                 className="mt-1 w-full rounded-lg border border-line bg-navy-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500" />
             </label>
           )}
+          {/* 택배비 설정 (docs/34) — HOME 구매하기 결제금액에 합산 */}
+          <div className="sm:col-span-2">
+            <span className="text-xs font-semibold text-slate-400">택배비 설정</span>
+            <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {SHIPPING_TYPES.map((t) => (
+                <button type="button" key={t.key} onClick={() => setShippingType(t.key)}
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold ${shippingType === t.key ? "border-brand-500 bg-brand-600/20 text-white" : "border-line text-slate-400 hover:bg-navy-800"}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-navy-900/60 px-3 py-2.5 text-sm text-slate-300">
+              {shippingType === "FREE" && <span>택배비 <b className="text-white">0원</b> (무료배송)</span>}
+              {shippingType === "PER_ADDRESS" && <span>한 배송지당</span>}
+              {(shippingType === "PER_QTY" || shippingType === "PER_ADDRESS_QTY") && (
+                <>
+                  {shippingType === "PER_ADDRESS_QTY" && <span>한 배송지당</span>}
+                  <input type="number" min={1} value={shippingUnitQty} onChange={(e) => setShippingUnitQty(e.target.value)} className={`w-16 rounded-lg border border-line bg-navy-900 px-2 py-1.5 text-center text-sm text-white outline-none focus:border-brand-500`} />
+                  <span>개 상품당</span>
+                </>
+              )}
+              {shippingType !== "FREE" && (
+                <>
+                  <span>택배비</span>
+                  <input type="number" min={0} value={shippingFee} onChange={(e) => setShippingFee(e.target.value)} placeholder="예: 3000" className={`w-28 rounded-lg border border-line bg-navy-900 px-2 py-1.5 text-center text-sm text-white outline-none focus:border-brand-500`} />
+                  <span>원 부과</span>
+                </>
+              )}
+            </div>
+          </div>
           <div className="sm:col-span-2">
             <span className="text-xs font-semibold text-slate-400">상품 특성 <span className="font-normal text-slate-500">(중복 선택 가능)</span></span>
             <div className="mt-1 flex gap-2">

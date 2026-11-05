@@ -23,7 +23,8 @@ public class ShopOrder {
     @Column(name = "product_name", length = 200) private String productName;
     @Column(name = "sale_price") private Long salePrice;              // 주문 시점 판매가(원)
     @Column(nullable = false) private int quantity;                    // 구매수량
-    @Column(name = "total_amount") private Long totalAmount;          // 결제금액 = 판매가 × 수량
+    @Column(name = "total_amount") private Long totalAmount;          // 결제금액 = 판매가 × 수량 + 택배비
+    @Column(name = "shipping_fee") private Long shippingFee = 0L;     // 택배비(원, docs/34)
     @Column(name = "pay_method", length = 10) private String payMethod; // BANK(무통장) / CARD(신용카드 — 현재 비활성)
     @Column(length = 10) private String status = "접수";
 
@@ -51,6 +52,7 @@ public class ShopOrder {
     public Long getSalePrice() { return salePrice; } public void setSalePrice(Long v) { salePrice = v; }
     public int getQuantity() { return quantity; } public void setQuantity(int v) { quantity = v; }
     public Long getTotalAmount() { return totalAmount; } public void setTotalAmount(Long v) { totalAmount = v; }
+    public Long getShippingFee() { return shippingFee == null ? 0L : shippingFee; } public void setShippingFee(Long v) { shippingFee = v; }
     public String getPayMethod() { return payMethod; } public void setPayMethod(String v) { payMethod = v; }
     public String getStatus() { return status; } public void setStatus(String v) { status = v; }
     public String getOrdererName() { return ordererName; } public void setOrdererName(String v) { ordererName = v; }

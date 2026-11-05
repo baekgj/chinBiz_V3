@@ -13,7 +13,7 @@ type LoginResponse = { token: string; name: string; role: string };
 const ADMIN_URL = resolveAdminUrl();
 const ROLE_PATH: Record<string, string> = {
   MASTER_ADMIN: "/master",
-  PARTNER: "/partner",
+  PARTNER: "/partner/dashboard", // 파트너 로그인 첫 화면=대시보드 (docs/34)
   BUZZ: "/buzz",
   MANAGER: "/buzz",
   DIVISION_ADMIN: "/division",

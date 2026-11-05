@@ -160,8 +160,10 @@ export default function ProductDetail({ id }: { id: string }) {
         </Card>
       ))}
 
-      {/* ★ 이 상품으로 수익을 만드는 2가지 방법 — HOME 상품상세 하단 영역과 동일(docs/32) */}
-      <section>
+      {/* ★ 이 상품으로 수익을 만드는 2가지 방법 — HOME 상품상세 하단 영역과 동일(docs/32)
+          버즈 뷰만 노출(매니저 뷰 삭제, docs/34) · 카드 배경을 하단 1차영업신청까지 확장 */}
+      {!isManager && (
+      <section className={theme.card}>
         <h2 className={`text-xl font-black sm:text-2xl ${theme.cellMain}`}>이 상품으로 수익을 만드는 2가지 방법</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {/* OPTION A · CP — 버즈회원 */}
@@ -200,13 +202,14 @@ export default function ProductDetail({ id }: { id: string }) {
           </div>
         </div>
         <p className={`mt-3 text-xs ${theme.cellSub}`}>* CP · MP 포인트는 친비즈 정책에 따라 적립됩니다.</p>
-      </section>
 
-      {/* 우측 하단 1차영업신청 */}
-      {showApply && (
-        <div className="flex justify-end">
-          <Link href={applyHref} className={`rounded-xl px-6 py-2.5 text-sm font-bold ${theme.primaryBtn}`}>1차영업신청</Link>
-        </div>
+        {/* 우측 하단 1차영업신청 */}
+        {showApply && (
+          <div className="mt-5 flex justify-end">
+            <Link href={applyHref} className={`rounded-xl px-6 py-2.5 text-sm font-bold ${theme.primaryBtn}`}>1차영업신청</Link>
+          </div>
+        )}
+      </section>
       )}
     </div>
   );

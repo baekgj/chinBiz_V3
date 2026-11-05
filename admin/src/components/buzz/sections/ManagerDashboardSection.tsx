@@ -17,7 +17,7 @@ function maskName(n: string): string {
   return n[0] + "*".repeat(n.length - 2) + n[n.length - 1];
 }
 
-type Dash = { cp: number; mp: number; confirmedMp: number; cumulativeMp: number };
+type Dash = { cp: number; mp: number; confirmedMp: number; cumulativeMp: number; remainingCp?: number; withdrawableMp?: number; withdrawnMp?: number };
 type MCenter = { centerName: string; status: string };
 type Lead = { id: number; createdAt?: string; productName?: string; customerName?: string; buzzName?: string; centerName?: string; status?: string; eduApproved?: boolean };
 type Managed = { id: number; status?: string; customerName?: string };
@@ -109,15 +109,31 @@ export default function ManagerDashboardSection() {
 
       {/* 수당 요약 카드 (이번 달 예정 CP 좌 / 출금 가능 확정 MP 우) */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className={`rounded-2xl p-5 shadow-sm ${theme.cpCard}`}>
-          <p className={`text-xs font-semibold ${theme.cpLabel}`}>이번 달 예정 수당 (CP)</p>
-          <p className="mt-2 text-3xl font-black">{krw(dash.cp)}</p>
-          <p className={`mt-1 text-xs ${theme.cpLabel}`}>진행 중인 2차 영업 성공 시 예상 수당</p>
+        <div className={`flex items-center justify-between gap-3 rounded-2xl p-5 shadow-sm ${theme.cpCard}`}>
+          <div className="min-w-0">
+            <p className={`text-xs font-semibold ${theme.cpLabel}`}>이번 달 예정 수당 (CP)</p>
+            <p className="mt-2 text-3xl font-black">{krw(dash.cp)}</p>
+            <p className={`mt-1 text-xs ${theme.cpLabel}`}>진행 중인 2차 영업 성공 시 예상 수당</p>
+          </div>
+          {/* 잔여 예정수당(CP) — 기간 무관 MP 전환 전 CP 누계 (docs/34) */}
+          <div className="shrink-0 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-right">
+            <p className={`text-[11px] font-semibold ${theme.cpLabel}`}>잔여 예정수당 (CP)</p>
+            <p className="mt-1 text-lg font-black">{krw(dash.remainingCp ?? 0)}</p>
+          </div>
         </div>
         <Link href="/buzz/allowances" className={`block rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 ${theme.mpCard}`}>
-          <p className="text-xs font-bold">출금 가능 확정 수당 (MP)</p>
-          <p className="mt-2 text-3xl font-black">{krw(dash.cumulativeMp)}</p>
-          <p className="mt-2 text-xs font-semibold opacity-90">실사·계약 최종 승인 · [수당현황 / 정산현황]에서 확인 &gt;</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold">출금 가능 확정 수당 (MP)</p>
+              <p className="mt-2 text-3xl font-black">{krw(dash.withdrawableMp ?? 0)}</p>
+              <p className="mt-2 text-xs font-semibold opacity-90">실사·계약 최종 승인 · [수당현황 / 정산현황]에서 확인 &gt;</p>
+            </div>
+            {/* 누적 출금수당(MP) — 지급완료 누계 (docs/34) */}
+            <div className="shrink-0 rounded-xl border border-black/10 bg-white/25 px-4 py-3 text-right">
+              <p className="text-[11px] font-bold opacity-90">누적 출금수당 (MP)</p>
+              <p className="mt-1 text-lg font-black">{krw(dash.withdrawnMp ?? 0)}</p>
+            </div>
+          </div>
         </Link>
       </div>
 

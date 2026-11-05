@@ -125,6 +125,16 @@ public class BuzzDashboardController {
             m.put("confirmedMp", allowanceRepo.sumMonthly(mid, Allowance.Status.MP, types, from, to));                       // 이번달 확정 MP
             m.put("cumulativeMp", paymentRepo.sumCumulative(mid, List.of(Allowance.MemberType.BUZZ, Allowance.MemberType.TOPBUZZ))); // 누적 확정 MP
         }
+        // 대시보드 CP/MP 카드 (docs/34) — 기간 무관 누계
+        //  잔여 예정수당(CP)  = 아직 MP 전환 전인 CP 전표 합계(취소 −전표 포함)
+        //  출금 가능 수당(MP) = MP 확정 전표 합계 − 지급완료(payment_flag=Y) 합계 (정산 전 MP·정산 후 지급대기 포함)
+        //  누적 출금수당(MP)  = 지급완료(payment_flag=Y) 합계
+        //  ※ 기존 cumulativeMp(allowance_payment 합)는 정산(마감) 전 MP(추천인 JOIN 수당 등)를 누락해 ₩0 으로 보이던 원인
+        long mpAll = allowanceRepo.sumAll(mid, Allowance.Status.MP, types);
+        long withdrawn = paymentRepo.sumWithdrawn(mid, types);
+        m.put("remainingCp", allowanceRepo.sumAll(mid, Allowance.Status.CP, types));
+        m.put("withdrawableMp", mpAll - withdrawn);
+        m.put("withdrawnMp", withdrawn);
         return ResponseEntity.ok(m);
     }
 }

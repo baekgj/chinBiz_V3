@@ -67,6 +67,10 @@ public class PublicOrderController {
         m.put("productId", p.getId());
         m.put("productName", p.getName());
         m.put("salePrice", p.getSalePrice() == null ? 0 : p.getSalePrice());
+        // 택배비 설정 (docs/34) — HOME 주문서에서 결제금액 계산(서버도 주문 저장 시 재계산)
+        m.put("shippingType", p.getShippingType());
+        m.put("shippingUnitQty", p.getShippingUnitQty());
+        m.put("shippingFee", p.getShippingFee());
         m.put("image1", p.getImage1());
         // 주문자 기본값 — 영업 건의 대표자 정보
         m.put("ordererName", s.getCeoName());
@@ -125,7 +129,10 @@ public class PublicOrderController {
         o.setProductName(p.getName());
         o.setSalePrice(price);
         o.setQuantity(qty);
-        o.setTotalAmount(price * qty);
+        // 택배비 = 상품 택배비 설정 × (총수량 / 배송지 수 / 배송지별 수량) — docs/34
+        long shipping = ShippingFee.calc(p, ds.stream().map(d -> d.quantity() == null ? 0 : d.quantity()).toList());
+        o.setShippingFee(shipping);
+        o.setTotalAmount(price * qty + shipping);
         o.setPayMethod("BANK");
         o.setStatus("접수");
         o.setOrdererName(trim(req.ordererName()));

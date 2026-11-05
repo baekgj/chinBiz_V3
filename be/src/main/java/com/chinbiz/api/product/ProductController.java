@@ -45,7 +45,9 @@ public class ProductController {
             String specEffect, String salesTarget, String productFeature, String processFlow,
             // docs/32 상품정보·SEO
             String brand, String modelName, String manufacturer, String origin, String specSize,
-            String seoTitle, String seoDescription, String seoKeywords
+            String seoTitle, String seoDescription, String seoKeywords,
+            // docs/34 택배비 설정
+            String shippingType, Integer shippingUnitQty, Long shippingFee
     ) {}
 
     private Map<String, Object> dto(Product p) {
@@ -79,6 +81,9 @@ public class ProductController {
         m.put("simpleDelivery", p.isSimpleDelivery());
         m.put("cancelFeeFlag", p.isCancelFeeFlag());
         m.put("cancelAmount", p.getCancelAmount());
+        m.put("shippingType", p.getShippingType());
+        m.put("shippingUnitQty", p.getShippingUnitQty());
+        m.put("shippingFee", p.getShippingFee());
         m.put("popular", p.isPopular());
         m.put("recommended", p.isRecommended());
         m.put("monthlyCare", p.isMonthlyCare());
@@ -216,6 +221,11 @@ public class ProductController {
         p.setSeoTitle(trimOrNull(req.seoTitle()));
         p.setSeoDescription(trimOrNull(req.seoDescription()));
         p.setSeoKeywords(trimOrNull(req.seoKeywords()));
+        // 택배비 설정 (docs/34) — 무료면 금액 0, 기준수량은 1 이상
+        String st = com.chinbiz.api.order.ShippingFee.normalizeType(req.shippingType());
+        p.setShippingType(st);
+        p.setShippingUnitQty(req.shippingUnitQty() == null || req.shippingUnitQty() < 1 ? 1 : req.shippingUnitQty());
+        p.setShippingFee("FREE".equals(st) ? 0L : Math.max(0L, n(req.shippingFee())));
     }
 
     private String trimOrNull(String s) { return s == null || s.isBlank() ? null : s.trim(); }

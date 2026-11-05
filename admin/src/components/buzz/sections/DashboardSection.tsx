@@ -9,7 +9,7 @@ import { useBuzz } from "@/components/buzz/theme";
 import { apiGet, mediaUrl } from "@/lib/api";
 import { myReward } from "@/lib/reward";
 
-type Dash = { cp: number; mp: number; confirmedMp: number; cumulativeMp: number };
+type Dash = { cp: number; mp: number; confirmedMp: number; cumulativeMp: number; remainingCp?: number; withdrawableMp?: number; withdrawnMp?: number };
 type Summary = {
   stages: Record<string, number>;
   recentMessage: string | null;
@@ -80,15 +80,31 @@ export default function DashboardSection() {
 
       {/* 수당 요약 카드 (이번 달 예정 CP 좌 / 출금 가능 MP 우 — docs/22) */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className={`rounded-2xl p-5 shadow-sm ${theme.cpCard}`}>
-          <p className={`text-xs font-semibold ${theme.cpLabel}`}>이번 달 예정 수당 (CP)</p>
-          <p className="mt-2 text-3xl font-black">{krw(dash.cp)}</p>
-          <p className={`mt-1 text-xs ${theme.cpLabel}`}>실사/계약 진행 중 · 곧 정산될 예상 금액</p>
+        <div className={`flex items-center justify-between gap-3 rounded-2xl p-5 shadow-sm ${theme.cpCard}`}>
+          <div className="min-w-0">
+            <p className={`text-xs font-semibold ${theme.cpLabel}`}>이번 달 예정 수당 (CP)</p>
+            <p className="mt-2 text-3xl font-black">{krw(dash.cp)}</p>
+            <p className={`mt-1 text-xs ${theme.cpLabel}`}>실사/계약 진행 중 · 곧 정산될 예상 금액</p>
+          </div>
+          {/* 잔여 예정수당(CP) — 기간 무관 MP 전환 전 CP 누계 (docs/34) */}
+          <div className="shrink-0 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-right">
+            <p className={`text-[11px] font-semibold ${theme.cpLabel}`}>잔여 예정수당 (CP)</p>
+            <p className="mt-1 text-lg font-black">{krw(dash.remainingCp ?? 0)}</p>
+          </div>
         </div>
         <Link href="/buzz/allowances" className={`block rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 ${theme.mpCard}`}>
-          <p className="text-xs font-bold">출금 가능 수당 (MP)</p>
-          <p className="mt-2 text-3xl font-black">{krw(dash.cumulativeMp)}</p>
-          <p className="mt-2 text-xs font-semibold opacity-90">확정 금액 · [수당현황 / 정산현황]에서 확인 &gt;</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold">출금 가능 수당 (MP)</p>
+              <p className="mt-2 text-3xl font-black">{krw(dash.withdrawableMp ?? 0)}</p>
+              <p className="mt-2 text-xs font-semibold opacity-90">확정 금액 · [수당현황 / 정산현황]에서 확인 &gt;</p>
+            </div>
+            {/* 누적 출금수당(MP) — 지급완료 누계 (docs/34) */}
+            <div className="shrink-0 rounded-xl border border-black/10 bg-white/25 px-4 py-3 text-right">
+              <p className="text-[11px] font-bold opacity-90">누적 출금수당 (MP)</p>
+              <p className="mt-1 text-lg font-black">{krw(dash.withdrawnMp ?? 0)}</p>
+            </div>
+          </div>
         </Link>
       </div>
 

@@ -18,6 +18,10 @@ public interface AllowancePaymentRepository extends JpaRepository<AllowancePayme
     @Query("select coalesce(sum(p.paymentAmount),0) from AllowancePayment p where p.memberId = :mid and p.memberType in :types")
     long sumCumulative(@Param("mid") String mid, @Param("types") Collection<Allowance.MemberType> types);
 
+    /** 누적 출금(지급완료 payment_flag=Y) 금액 합산 (대시보드 누적 출금수당 MP, docs/34) */
+    @Query("select coalesce(sum(p.paymentAmount),0) from AllowancePayment p where p.memberId = :mid and p.memberType in :types and p.paymentFlag = 'Y'")
+    long sumWithdrawn(@Param("mid") String mid, @Param("types") Collection<Allowance.MemberType> types);
+
     /** [본사 정산내역/지급내역] fixed_month=검색월 + payment_flag(N/Y) */
     List<AllowancePayment> findByFixedMonthAndPaymentFlagOrderByIdDesc(String fixedMonth, String paymentFlag);
 

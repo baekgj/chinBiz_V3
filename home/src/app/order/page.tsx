@@ -13,6 +13,7 @@ type FormInfo = {
   ordererName?: string | null; ordererTel?: string | null; ordererMobile?: string | null; ordererEmail?: string | null;
   ordererZipcode?: string | null; ordererAddress?: string | null; ordererAddressDetail?: string | null;
   existingOrderId?: number | null;
+  shippingType?: string; shippingUnitQty?: number; shippingFee?: number; // 택배비 설정 (docs/34)
 };
 
 type Orderer = { name: string; tel: string; mobile: string; email: string; zipcode: string; address: string; addressDetail: string };
@@ -20,6 +21,31 @@ type Delivery = { receiverName: string; receiverMobile: string; zipcode: string;
 
 const won = (n: number) => n.toLocaleString("ko-KR") + " 원";
 const emptyDelivery = (quantity: number): Delivery => ({ receiverName: "", receiverMobile: "", zipcode: "", address: "", addressDetail: "", quantity });
+
+/** 택배비 계산 (docs/34) — BE order/ShippingFee.calc 와 동일 규칙 */
+function calcShipping(info: FormInfo, qtys: number[]): number {
+  const fee = info.shippingFee ?? 0;
+  const unit = Math.max(1, info.shippingUnitQty ?? 1);
+  if (!fee || qtys.length === 0) return 0;
+  switch (info.shippingType) {
+    case "PER_QTY": return Math.ceil(qtys.reduce((a, b) => a + b, 0) / unit) * fee;
+    case "PER_ADDRESS": return qtys.length * fee;
+    case "PER_ADDRESS_QTY": return qtys.reduce((a, q) => a + Math.ceil(Math.max(q, 1) / unit), 0) * fee;
+    default: return 0;
+  }
+}
+
+/** 택배비 설정 안내 문구 */
+function shippingRule(info: FormInfo): string {
+  const fee = (info.shippingFee ?? 0).toLocaleString("ko-KR");
+  const unit = info.shippingUnitQty ?? 1;
+  switch (info.shippingType) {
+    case "PER_QTY": return `${unit}개 상품당 택배비 ${fee}원`;
+    case "PER_ADDRESS": return `한 배송지당 택배비 ${fee}원`;
+    case "PER_ADDRESS_QTY": return `한 배송지당 ${unit}개 상품당 택배비 ${fee}원`;
+    default: return "무료배송";
+  }
+}
 
 const inputCls = "w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink outline-none focus:border-forest-500";
 const btnCls = "shrink-0 rounded-lg border border-forest-600/40 px-3 py-2.5 text-sm font-bold text-forest-700 hover:bg-forest-50";
@@ -86,6 +112,10 @@ export default function OrderPage() {
   const setD = (i: number, patch: Partial<Delivery>) => setDeliveries((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
   const assigned = deliveries.reduce((s, d) => s + d.quantity, 0);
   const remain = qty - assigned;
+  // 결제금액 = 상품금액 + 택배비 (docs/34)
+  const productAmount = info ? info.salePrice * qty : 0;
+  const shipping = info ? calcShipping(info, deliveries.map((d) => d.quantity)) : 0;
+  const payAmount = productAmount + shipping;
 
   /** 구매수량 변경 — 배송지 수는 수량을 넘지 않고, 배송지별 수량 합계가 구매수량을 넘지 않도록 뒤에서부터 차감 */
   function changeQty(next: number) {
@@ -126,7 +156,7 @@ export default function OrderPage() {
     if (!orderer.name.trim() || !orderer.mobile.trim() || !orderer.address.trim()) { alert("주문자 정보(주문자명·핸드폰번호·주소)를 입력해 주세요."); return; }
     if (deliveries.some((d) => !d.receiverName.trim() || !d.receiverMobile.trim() || !d.address.trim())) { alert("수령인 정보(수령인명·핸드폰번호·주소)를 모두 입력해 주세요."); return; }
     if (remain !== 0) { alert(`배송지별 수량의 합계(${assigned})가 구매수량(${qty})과 같아야 합니다.`); return; }
-    if (!confirm(`총 ${won(info.salePrice * qty)}을 무통장으로 주문하시겠습니까?`)) return;
+    if (!confirm(`총 ${won(payAmount)}을 무통장으로 주문하시겠습니까?`)) return;
     setSubmitting(true);
     const r = await apiPost<{ id: number }>("/api/public/orders", {
       refId: Number(params.refId), ordNo: params.ordNo, productId: info.productId, quantity: qty, payMethod: "BANK",
@@ -178,7 +208,9 @@ export default function OrderPage() {
                       <button type="button" onClick={() => changeQty(qty + 1)} className="grid h-9 w-9 place-items-center text-lg font-bold text-ink-soft hover:bg-surface" aria-label="수량 증가">+</button>
                     </div>
                   </div>
-                  <p className="pt-1"><span className="text-muted">결제금액 : </span><b className="text-lg text-forest-800">{won(info.salePrice * qty)}</b></p>
+                  <p className="pt-1"><span className="text-muted">상품금액 : </span><b className="text-ink">{won(productAmount)}</b></p>
+                  <p><span className="text-muted">택배비 : </span><b className="text-ink">{won(shipping)}</b> <span className="text-xs text-muted">({shippingRule(info)})</span></p>
+                  <p className="pt-1"><span className="text-muted">결제금액 : </span><b className="text-lg text-forest-800">{won(payAmount)}</b></p>
                 </div>
               </section>
 

@@ -6,9 +6,9 @@ import { apiGet, apiPost, apiPut } from "@/lib/api";
 
 /**
  * 단순배송상품 주문관리 (docs/33) — 파트너 admin(/api/partner/orders, 라이트) · 본사 admin(/api/org/orders, 다크) 공용.
- * 리스트: 주문번호·주문일자·구매자명·상품명·판매가격·수량·결제금액·주문상태. 주문번호 클릭 → 상세 + 주문상태 변경.
+ * 리스트: 주문번호·주문일자·구매자명·상품명·판매가격·수량·택배비·결제금액·주문상태. 주문번호 클릭 → 상세 + 주문상태 변경.
  */
-type Row = { id: number; orderNo: string; createdAt: string; ordererName?: string; productName?: string; partnerName?: string; salePrice: number; quantity: number; totalAmount: number; payMethod?: string; status: string };
+type Row = { id: number; orderNo: string; createdAt: string; ordererName?: string; productName?: string; partnerName?: string; salePrice: number; quantity: number; totalAmount: number; shippingFee?: number; payMethod?: string; status: string };
 type Delivery = {
   id: number; receiverName?: string; receiverMobile?: string; zipcode?: string; address?: string; addressDetail?: string; quantity: number;
   courierCode?: string | null; courierName?: string | null; invoiceNo?: string | null;
@@ -95,7 +95,7 @@ export default function OrderManager({ api, tone, showPartner = false, editInvoi
 
   useEffect(() => { load(0); }, [load]);
 
-  const cols = showPartner ? 9 : 8;
+  const cols = showPartner ? 10 : 9;
 
   return (
     <section className={t.card}>
@@ -126,6 +126,7 @@ export default function OrderManager({ api, tone, showPartner = false, editInvoi
               {showPartner && <th className="px-4 py-3 text-left font-semibold">파트너사</th>}
               <th className="px-4 py-3 text-right font-semibold">판매가격</th>
               <th className="px-4 py-3 text-right font-semibold">수량</th>
+              <th className="px-4 py-3 text-right font-semibold">택배비</th>
               <th className="px-4 py-3 text-right font-semibold">결제금액</th>
               <th className="px-4 py-3 text-center font-semibold">주문상태</th>
             </tr>
@@ -144,6 +145,7 @@ export default function OrderManager({ api, tone, showPartner = false, editInvoi
                 {showPartner && <td className={`px-4 py-3 ${t.cell}`}>{o.partnerName ?? "-"}</td>}
                 <td className={`px-4 py-3 text-right ${t.cell}`}>{won(o.salePrice)}</td>
                 <td className={`px-4 py-3 text-right ${t.cell}`}>{o.quantity}</td>
+                <td className={`px-4 py-3 text-right ${t.cell}`}>{won(o.shippingFee ?? 0)}</td>
                 <td className={`px-4 py-3 text-right font-bold ${t.cellMain}`}>{won(o.totalAmount)}</td>
                 <td className="px-4 py-3 text-center"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_BADGE[o.status] ?? ""}`}>{o.status}</span></td>
               </tr>
@@ -296,6 +298,7 @@ function OrderDetailModal({ api, id, tone, editInvoice, onClose, onSaved }: { ap
                 {d.partnerName && <Line k="파트너사" v={d.partnerName} />}
                 <Line k="판매가격" v={won(d.salePrice)} />
                 <Line k="수량" v={d.quantity} />
+                <Line k="택배비" v={won(d.shippingFee ?? 0)} />
                 <Line k="결제금액" v={won(d.totalAmount)} />
                 <Line k="결제방식" v={d.payMethod === "BANK" ? "무통장" : d.payMethod === "CARD" ? "신용카드" : d.payMethod} />
               </div>

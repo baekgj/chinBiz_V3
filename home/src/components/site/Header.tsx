@@ -13,7 +13,7 @@ const NAV = [
 ];
 
 const ROLE_PATH: Record<string, string> = {
-  MASTER_ADMIN: "/master", PARTNER: "/partner", BUZZ: "/buzz", MANAGER: "/buzz",
+  MASTER_ADMIN: "/master", PARTNER: "/partner/dashboard", BUZZ: "/buzz", MANAGER: "/buzz",
   DIVISION_ADMIN: "/division", CENTER_ADMIN: "/center",
 };
 

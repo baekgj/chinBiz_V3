@@ -76,6 +76,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderDeliver
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderDeliveryRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\OrderService.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\PublicOrderController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\ShippingFee.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\ShopOrder.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\order\ShopOrderRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\AdminSalesController.java
@@ -91,6 +92,7 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\org\OrgController.
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\dto\PartnerRequest.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\dto\PartnerResponse.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\Partner.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerBillingController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerController.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerInquiry.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\partner\PartnerInquiryController.java

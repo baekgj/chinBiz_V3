@@ -7,7 +7,7 @@ import { apiGet } from "@/lib/api";
 
 type Delivery = { receiverName?: string; receiverMobile?: string; zipcode?: string; address?: string; addressDetail?: string; quantity: number };
 type Order = {
-  orderNo: string; createdAtFull?: string; productName: string; salePrice: number; quantity: number; totalAmount: number;
+  orderNo: string; createdAtFull?: string; productName: string; salePrice: number; quantity: number; totalAmount: number; productAmount?: number; shippingFee?: number;
   payMethod: string; status: string; ordererName?: string; ordererMobile?: string;
   deliveries: Delivery[];
   bank?: { bankName?: string | null; accountNumber?: string | null; accountHolder?: string | null };
@@ -73,6 +73,8 @@ export default function OrderCompletePage() {
                   <Line k="상품명" v={o.productName} />
                   <Line k="판매가" v={won(o.salePrice)} />
                   <Line k="수량" v={o.quantity} />
+                  <Line k="상품금액" v={won(o.productAmount ?? o.salePrice * o.quantity)} />
+                  <Line k="택배비" v={won(o.shippingFee ?? 0)} />
                   <Line k="결제방식" v={o.payMethod === "BANK" ? "무통장" : "신용카드"} />
                   <Line k="주문상태" v={o.status} />
                   <Line k="결제금액" v={won(o.totalAmount)} strong />

@@ -162,7 +162,7 @@ type OrderDelivery = {
   quantity: number; courierName?: string | null; invoiceNo?: string | null; deliveryStatus?: string | null; trackUrl?: string | null;
 };
 type PlacedOrder = {
-  orderNo: string; createdAt?: string; createdAtFull?: string; productName?: string; quantity: number; totalAmount: number;
+  orderNo: string; createdAt?: string; createdAtFull?: string; productName?: string; quantity: number; totalAmount: number; shippingFee?: number;
   payMethod?: string; status: string; ordererName?: string | null; deliveries: OrderDelivery[];
   bank?: { bankName?: string | null; accountNumber?: string | null; accountHolder?: string | null } | null; // 무통장: 파트너사 입금계좌
 };
@@ -203,6 +203,7 @@ function SimpleOrderPanel({ refId, ordNo, productId, open, onToggle }: {
           <dt className="text-muted">주문일시</dt><dd className="text-ink">{order.createdAtFull ?? order.createdAt}</dd>
           <dt className="text-muted">주문자</dt><dd className="text-ink">{order.ordererName ?? "-"}</dd>
           <dt className="text-muted">수량</dt><dd className="text-ink">{order.quantity}개</dd>
+          <dt className="text-muted">택배비</dt><dd className="text-ink">{won(order.shippingFee ?? 0)}</dd>
           <dt className="text-muted">결제금액</dt><dd className="text-ink"><b>{won(order.totalAmount)}</b>{order.payMethod === "BANK" ? " (무통장)" : ""}</dd>
         </dl>
         {order.payMethod === "BANK" && (

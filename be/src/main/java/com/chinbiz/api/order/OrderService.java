@@ -53,6 +53,8 @@ public class OrderService {
         m.put("salePrice", o.getSalePrice());
         m.put("quantity", o.getQuantity());
         m.put("totalAmount", o.getTotalAmount());
+        m.put("productAmount", (o.getSalePrice() == null ? 0L : o.getSalePrice()) * o.getQuantity()); // 상품금액(택배비 제외)
+        m.put("shippingFee", o.getShippingFee());                                                     // 택배비 (docs/34)
         m.put("payMethod", o.getPayMethod());
         m.put("status", o.getStatus());
         return m;

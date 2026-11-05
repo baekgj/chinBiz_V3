@@ -200,6 +200,9 @@ CREATE TABLE IF NOT EXISTS `product` (
   `simple_delivery` bit(1) NOT NULL DEFAULT b'0',   -- 단순배송상품 여부
   `cancel_fee_flag` bit(1) NOT NULL DEFAULT b'0',   -- 취소 시 매니저 보전비 있음
   `cancel_amount` bigint DEFAULT 0,                 -- 취소비용(매니저 보전비, 원)
+  `shipping_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'FREE', -- 택배비 설정(FREE/PER_QTY/PER_ADDRESS/PER_ADDRESS_QTY, docs/34)
+  `shipping_unit_qty` int DEFAULT 1,               -- 택배비 기준수량((N)개 상품당)
+  `shipping_fee` bigint DEFAULT 0,                 -- 택배비 금액(원)
   `kw_popular` bit(1) NOT NULL,
   `kw_recommended` bit(1) NOT NULL,
   PRIMARY KEY (`id`)
@@ -437,6 +440,7 @@ CREATE TABLE IF NOT EXISTS `partner_order` (
   `sale_price` bigint DEFAULT NULL,
   `quantity` int NOT NULL,
   `total_amount` bigint DEFAULT NULL,
+  `shipping_fee` bigint DEFAULT 0,                 -- 택배비(원, docs/34) — total_amount 에 포함
   `pay_method` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `orderer_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
