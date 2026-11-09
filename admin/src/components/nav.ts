@@ -91,6 +91,7 @@ export const NAV: NavItem[] = [
       { href: "/master/settings/fees", label: "관리비설정" },
       { href: "/master/settings/terms", label: "약관설정" },
       { href: "/master/settings/alarms", label: "알람설정" },
+      { href: "/master/settings/alimtalk", label: "알림톡설정" },
     ],
   },
 ];

@@ -35,3 +35,13 @@
 ## 남은 일
 - 도메인 BE 실연동: 산하 센터 집계(센터별 1·2차 영업/GMV/지원비), 본부 지갑 CP/MP 원장, 리더보드 점수 산식 — 현재 전부 mock.
 - 본부↔센터 계층(`center_code` head_code 그룹) 기준 실데이터 매핑.
+
+## docs/35-1 (2026-11-09) 본부분석 · 센터별 실적비교 실데이터
+- BE `org/DivisionDashboardController` (`/api/division`):
+  - `GET /dashboard` — CP=전체기간 예정수당 합계, MP=확정 합계−지급완료(출금가능, 버즈 대시보드와 동일), 산하 센터수/버즈회원수/상품종류 + 센터장 지정 리스트
+  - `GET /centers?month=YYYY-MM` — 월별 산하 현황 + 센터별(센터코드·센터명·센터장ID·센터장명·버즈수·매니저수·영업접수건수·본부배정수당)
+  - `GET /centers/{idx}/products?month=` — 센터의 상품별 버즈수·접수건수·본부배정수당(건당, RATE면 %) (타 본부 센터 403)
+- 집계 기준: 소속 센터 = 본부장 할당 본부행(center_code.fix_idx=본인, 복수 가능) + user.sales_center_id 본부의 센터행 전체 / 센터장 = center_code.fix_idx 할당 계정(없으면 [미등록]) / 버즈 = BUZZ 소속(월말 기준 누적) /
+  매니저 = manager_center 승인(Y) / 1차영업 = 등록자 소속센터 / 상품종류 = 취소/반품 제외 / 본부수당 센터귀속 = 전표 handler_id 소속센터(월=전표 등록일)
+- FE: `DivisionDashboard`(매핑 섹션 삭제 → [소속센터 센터장 지정 현황], 미등록은 (미등록)) · `WalletSection`(props) ·
+  `CentersSection`(오른쪽 상단 월 검색·기본 이번달, 센터코드/센터명 클릭 시 해당 센터 [1차 영업 상품별 센터/버즈 매핑 현황] 펼침, 1개만, 활성센터수 컬럼 삭제)

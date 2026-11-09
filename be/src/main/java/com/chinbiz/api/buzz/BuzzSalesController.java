@@ -272,7 +272,7 @@ public class BuzzSalesController {
                 java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE), s.getId()));
         saleRepo.save(s);
 
-        // 대표자 핸드폰으로 상품 URL 카카오톡 발송 (docs/27) — 현재 대기(로그만)
+        // 대표자 핸드폰으로 상품 URL 카카오 알림톡 발송 (docs/27, 알리고 연동 docs/35 — 비동기)
         try { consentService.sendProductLink(s); } catch (Exception ignore) {}
 
         // 수당 원장 레코드 생성 (버즈/소속센터/본부/본사 + 추천인)

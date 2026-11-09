@@ -474,3 +474,35 @@ CREATE TABLE IF NOT EXISTS `order_delivery` (
   PRIMARY KEY (`id`),
   KEY `idx_order_delivery_order` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `alimtalk_template` (
+  `event_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `button_json` text COLLATE utf8mb4_unicode_ci,
+  `enabled` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `failover` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fmessage` text COLLATE utf8mb4_unicode_ci,
+  `fsubject` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `subject` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tpl_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`event_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `alimtalk_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(6) NOT NULL,
+  `event_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `mid` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receiver` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recv_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ref_id` bigint DEFAULT NULL,
+  `result` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `result_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `result_message` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `test_mode` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tpl_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_alimtalk_log_ref` (`event_code`,`ref_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

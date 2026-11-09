@@ -95,3 +95,10 @@ LNB 조직망 관리 하위: **본부ᆞ센터 리스트 / 회원 리스트 / �
 - **조직망 및 영업관리 > 영업 관리**: 단순배송상품(`product.simple_delivery`) 영업 건은 리스트에서 제외(`AdminSalesController.list`).
 - **파트너사 관리 > 주문 관리** `/master/partners/orders` (상담신청 아래, RBAC 담당자 A — 2026-10-30 조직망→파트너사 관리로 이동): `components/OrderManager`(tone=dark, 파트너사 컬럼) — 주문번호·주문일자·구매자명·상품명·판매가격·수량·결제금액·주문상태, 주문번호 클릭→상세(주문자·수령인 배송지별 수량)+상태변경(접수/입금/배송완료/취소). BE `order/OrderAdminController` `GET /api/org/orders`, `GET/PUT /api/org/orders/{id}[/status]`.
 - 테이블 `partner_order`(엔티티 `ShopOrder`) + `order_delivery`. 생성은 HOME `PublicOrderController`(아래 CLAUDE.md 참고).
+
+## docs/35 (2026-11-09) 알림톡설정 (카카오 알림톡 · 알리고)
+- 메뉴: [시스템 설정] > [알림톡설정] `/master/settings/alimtalk` (`components/master/AlimtalkSettings.tsx`)
+- 구성: 알리고 연동 계정(API Key 마스킹) · 발송 문구(이벤트 `SALE1_CUSTOMER` = 1차영업신청 접수 → 가망고객 대표자 핸드폰, #{변수} 치환·버튼·대체문자·미리보기·알리고 템플릿 불러오기) · 테스트 발송 · 발송 이력
+- BE: `com.chinbiz.api.alimtalk` (`AligoClient`, `AlimtalkService`, `AlimtalkController` `/api/org/alimtalk/*`), 테이블 `alimtalk_template`/`alimtalk_log`(Insert-Only), 계정은 `app_setting` `aligo_*`
+- 발송 지점: `BuzzSalesController.create` → `SaleConsentService.sendProductLink` (비동기)
+- 남은 일: 운영 알리고 계정·발송 서버 IP 등록·카카오 템플릿 검수 승인 후 [발송 사용] ON. 다른 이벤트 추가 시 `AlimtalkTemplate` 행 + 발송 지점만 추가.

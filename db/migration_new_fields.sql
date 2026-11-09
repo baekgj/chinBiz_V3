@@ -570,3 +570,38 @@ ALTER TABLE `product` ADD COLUMN `shipping_type` varchar(20)  DEFAULT 'FREE';
 ALTER TABLE `product` ADD COLUMN `shipping_unit_qty` bigint  DEFAULT 1;
 ALTER TABLE `product` ADD COLUMN `shipping_fee` bigint  DEFAULT 0;
 ALTER TABLE `partner_order` ADD COLUMN `shipping_type` bigint  DEFAULT 0;
+-- ── [2026-11-09] docs/35 : 카카오 알림톡(알리고) 발송 문구 설정 + 발송 이력 ─────────
+-- alimtalk_template: 이벤트별 발송 문구(SALE1_CUSTOMER=1차영업신청 접수→가망고객 대표자). 기본행은 BE 기동 시 자동 시드(발송중지 상태)
+-- alimtalk_log: 발송 이력(Insert-Only). 알리고 계정은 app_setting aligo_apikey/aligo_userid/aligo_senderkey/aligo_sender/aligo_test_mode
+CREATE TABLE IF NOT EXISTS `alimtalk_template` (
+  `event_code` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `button_json` text COLLATE utf8mb4_unicode_ci,
+  `enabled` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `failover` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fmessage` text COLLATE utf8mb4_unicode_ci,
+  `fsubject` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `subject` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tpl_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`event_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `alimtalk_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(6) NOT NULL,
+  `event_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `mid` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receiver` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `recv_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ref_id` bigint DEFAULT NULL,
+  `result` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `result_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `result_message` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `test_mode` varchar(1) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tpl_code` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_alimtalk_log_ref` (`event_code`,`ref_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 완료.

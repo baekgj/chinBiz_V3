@@ -14,4 +14,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findByRoleAndSalesCenterId(Role role, Long salesCenterId);
     /** 나를 추천인으로 등록한 회원 (referral_code = 내 userId) */
     List<User> findByReferralCode(String referralCode);
+    /** 여러 센터(소속) 소속 회원 — 본부 산하 집계(docs/35-1) */
+    List<User> findBySalesCenterIdIn(java.util.Collection<Long> salesCenterIds);
 }

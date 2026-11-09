@@ -51,7 +51,8 @@ public class AppSettingController {
     @GetMapping
     public Map<String, String> list() {
         Map<String, String> m = new LinkedHashMap<>();
-        repo.findAll().forEach(s -> m.put(s.getCode(), s.getValue()));
+        // 알리고 계정(aligo_*)은 [알림톡설정] 전용 API 로만 노출(API Key 비노출, docs/35)
+        repo.findAll().forEach(s -> { if (!s.getCode().startsWith("aligo_")) m.put(s.getCode(), s.getValue()); });
         // 누락 키 기본값 채움
         m.putIfAbsent(JOIN_CP_BUZZ, "500");
         m.putIfAbsent(JOIN_CP_REFERRER, "500");
@@ -63,7 +64,7 @@ public class AppSettingController {
 
     @PutMapping
     public ResponseEntity<?> update(@RequestBody Map<String, String> body) {
-        if (body != null) body.forEach((k, v) -> { if (k != null && v != null) repo.put(k, v.trim()); });
+        if (body != null) body.forEach((k, v) -> { if (k != null && v != null && !k.startsWith("aligo_")) repo.put(k, v.trim()); });
         return ResponseEntity.ok(Map.of("message", "저장되었습니다."));
     }
 

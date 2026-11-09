@@ -1,20 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { krw } from "@/components/ui";
 import { dv } from "@/components/division/DivisionUI";
-import { apiGet } from "@/lib/api";
 
-/** 본부 자산 — 이달 CP/MP (Allowance: 회원구분 DIVISION, 로그인 본부 기준) */
-export default function WalletSection() {
-  const [cp, setCp] = useState(0);
-  const [mp, setMp] = useState(0);
-  useEffect(() => { apiGet<{ cp: number; mp: number }>("/api/division/dashboard").then((r) => { if (r.ok && r.data) { setCp(r.data.cp ?? 0); setMp(r.data.mp ?? 0); } }); }, []);
-
+/**
+ * 본부 자산 — CP/MP (docs/35-1: 상위 DivisionDashboard 가 /api/division/dashboard 로 조회해 전달)
+ *  - CP: 전체 기간 예정수당 합계
+ *  - MP: 확정수당 합계 − 지급완료(출금) 합계 = 출금 가능 금액
+ */
+export default function WalletSection({ cp, mp }: { cp: number; mp: number }) {
   return (
     <div className="space-y-5">
-      {/* CP / MP 본부 총합 (이달) */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className={`rounded-2xl p-5 shadow-sm ${dv.cpCard}`}>
           <div className="flex items-center justify-between">
@@ -34,7 +31,6 @@ export default function WalletSection() {
         </div>
       </div>
 
-      {/* 현황판 아래로 이동한 랭킹 보기 버튼 (기여도 요약 카드는 삭제) */}
       <Link href="/division/leaderboard" className={`block rounded-xl px-4 py-3 text-center text-sm font-bold ${dv.outlineBtn}`}>
         산하 센터별 본부 수당 기여도 랭킹 보기 ›
       </Link>

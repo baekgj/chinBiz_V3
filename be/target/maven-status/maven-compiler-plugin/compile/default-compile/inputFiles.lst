@@ -19,6 +19,13 @@ C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alarm\AlarmSetting
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alarm\AlarmSettingSeeder.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alarm\AlarmTarget.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alarm\MyAlarmController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AligoClient.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkController.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkLog.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkLogRepository.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkService.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkTemplate.java
+C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\alimtalk\AlimtalkTemplateRepository.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\Allowance.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowanceId.java
 C:\ing_process\chinbizERP_V3\be\src\main\java\com\chinbiz\api\allowance\AllowancePayment.java

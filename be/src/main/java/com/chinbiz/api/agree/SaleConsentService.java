@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  * 1차영업(sale) 고객 동의 연동 (docs/27).
  *  - syncProvideAgree : agree(대표자명+핸드폰+provide) 최신 기록 → sale.agree_check/agree_date
  *  - productLink      : 대표자에게 보낼 상품 URL ({HOME_URL}/products/{상품번호}?refId={sale.id}&ordNo={order_no})
- *  - sendProductLink  : 카카오톡 발송 — ⚠ 현재 대기(미발송). 알림톡 연동 시 이 메서드만 구현하면 된다.
+ *  - sendProductLink  : 카카오 알림톡 발송 (알리고 연동, docs/35) — 문구는 본사 [시스템설정]-[알림톡설정]
  */
 @Service
 public class SaleConsentService {
@@ -19,10 +19,12 @@ public class SaleConsentService {
 
     private final AgreeRepository agreeRepo;
     private final String homeUrl;
+    private final com.chinbiz.api.alimtalk.AlimtalkService alimtalkService;
 
-    public SaleConsentService(AgreeRepository agreeRepo,
+    public SaleConsentService(AgreeRepository agreeRepo, com.chinbiz.api.alimtalk.AlimtalkService alimtalkService,
                               @Value("${app.home-url:http://localhost:8001}") String homeUrl) {
         this.agreeRepo = agreeRepo;
+        this.alimtalkService = alimtalkService;
         this.homeUrl = homeUrl.endsWith("/") ? homeUrl.substring(0, homeUrl.length() - 1) : homeUrl;
     }
 
@@ -37,10 +39,10 @@ public class SaleConsentService {
         return homeUrl + "/products/" + s.getProductId() + "?refId=" + s.getId() + "&ordNo=" + s.getOrderNo();
     }
 
-    /** 대표자 핸드폰으로 상품 URL 카카오톡 발송 — 대기 상태(실발송 없음, 로그만 남김) */
+    /** 1차영업신청 접수 → 대표자 핸드폰으로 알림톡 발송(비동기, 결과는 alimtalk_log). 수신번호 없으면 SKIP 기록 */
     public void sendProductLink(Sale s) {
-        if (isBlank(s.getCeoPhone())) return;
-        log.info("[KAKAO-PENDING] sale={} to={} url={}", s.getId(), s.getCeoPhone(), productLink(s));
+        log.info("[ALIMTALK-REQ] sale={} to={} url={}", s.getId(), s.getCeoPhone(), productLink(s));
+        alimtalkService.sendSale1Customer(s, productLink(s));
     }
 
     private static boolean isBlank(String v) { return v == null || v.isBlank(); }
