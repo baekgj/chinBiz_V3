@@ -304,8 +304,40 @@ public class AlarmService {
         tokens.put("product", product == null ? "" : nz(product.getName()));
         tokens.put("amount", String.format("%,d", cp));
         tokens.put("orderNo", nz(sale.getOrderNo() == null ? String.valueOf(sale.getId()) : sale.getOrderNo()));
+
+        // [1차영업등록] (docs/36) — 수신 대상별로 상품의 역할별 수당으로 CP 금액을 각각 렌더링
+        //  버즈=buzz_reward / 상위추천=chinku_reward / 센터=sales_center_reward / 본부=division_reward / 본사=hq_reward
+        if ("SALE1".equals(processCode)) {
+            int created = 0;
+            for (Map.Entry<AlarmTarget, List<Recipient>> e : map.entrySet()) {
+                Map<String, String> t = new HashMap<>(tokens);
+                Long reward = rewardFor(product, e.getKey());
+                if (reward != null) t.put("amount", String.format("%,d", cpAmount(product, reward)));
+                Map<AlarmTarget, List<Recipient>> one = new EnumMap<>(AlarmTarget.class);
+                one.put(e.getKey(), e.getValue());
+                created += fire(processCode, one, t, "SALE", sale.getId());
+            }
+            return created;
+        }
         return fire(processCode, map, tokens, "SALE", sale.getId());
     }
+
+    /** 알람 대상 → 상품 역할별 수당값 (null=대상별 수당 없음 → 기존 금액 유지) */
+    private Long rewardFor(Product p, AlarmTarget t) {
+        if (p == null) return null;
+        return switch (t) {
+            case BUZZ -> nzl(p.getBuzzReward());
+            case REFERRER -> nzl(p.getChinkuReward());
+            case MANAGER -> nzl(p.getManagerReward());
+            case CENTER -> nzl(p.getSalesCenterReward());
+            case MGMT_CENTER -> nzl(p.getMgmtCenterReward());
+            case DIVISION -> nzl(p.getDivisionReward());
+            case HQ -> nzl(p.getHqReward());
+            case PARTNER -> null;
+        };
+    }
+
+    private static Long nzl(Long v) { return v == null ? 0L : v; }
 
     // ───────────────────────── 단순배송 주문 (partner_order 기반) ─────────────────────────
 
@@ -528,6 +560,12 @@ public class AlarmService {
         if (p == null) return 0;
         Long reward = "manager".equals(which) ? p.getManagerReward() : p.getBuzzReward();
         if (reward == null) return 0;
+        return cpAmount(p, reward);
+    }
+
+    /** 역할별 수당값(reward) → CP 금액(원). RATE=총수당×(reward/100), FIXED=원 */
+    private long cpAmount(Product p, long reward) {
+        if (p == null) return 0;
         if (p.getRewardType() == Product.RewardType.FIXED) return reward;
         long total = p.getTotalAllowance() == null ? 0 : p.getTotalAllowance();
         return Math.round(total * (reward / 100.0));

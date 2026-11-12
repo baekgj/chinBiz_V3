@@ -6,6 +6,9 @@ import { apiGet, mediaUrl } from "@/lib/api";
 type AdImage = { imageUrl: string; mobileUrl?: string | null; linkUrl?: string | null; altText?: string | null; width?: number | null; height?: number | null };
 type Ad = { id: number; areaId: string; adType: "SLIDE" | "BANNER" | "LAYER_POPUP"; title?: string | null; images: AdImage[] };
 
+/** HOME 상단(MAIN_TOP) 광고 영역 높이(px) — 풀폭, 이미지는 object-cover 로 채움 */
+const TOP_HEIGHT = 200;
+
 const POPUP_HIDE_KEY = (id: number) => `chinbiz_ad_popup_hide_${id}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -33,7 +36,7 @@ function AdLink({ img, children }: { img: AdImage; children: React.ReactNode }) 
 }
 
 /** 슬라이드형 — 자동 넘김(5초) · 좌우 화살표 · 인디케이터 · 터치 스와이프 · 마우스 오버 시 일시정지 */
-function AdSlider({ ad }: { ad: Ad }) {
+function AdSlider({ ad, full }: { ad: Ad; full?: boolean }) {
   const n = ad.images.length;
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -51,7 +54,7 @@ function AdSlider({ ad }: { ad: Ad }) {
   const ratio = first?.width && first?.height ? `${first.width} / ${first.height}` : "3 / 1";
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-forest-50 shadow-sm"
+    <div className={`group relative overflow-hidden bg-forest-50 ${full ? "" : "rounded-2xl shadow-sm"}`}
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
       onTouchStart={(e) => { touchX.current = e.touches[0].clientX; setPaused(true); }}
       onTouchEnd={(e) => {
@@ -63,7 +66,7 @@ function AdSlider({ ad }: { ad: Ad }) {
       role="region" aria-roledescription="carousel" aria-label={ad.title || "광고"}>
       <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${idx * 100}%)` }}>
         {ad.images.map((img, i) => (
-          <div key={i} className="w-full shrink-0" style={{ aspectRatio: ratio }} aria-hidden={i !== idx}>
+          <div key={i} className="w-full shrink-0" style={full ? { height: TOP_HEIGHT } : { aspectRatio: ratio }} aria-hidden={i !== idx}>
             <AdLink img={img}><AdPicture img={img} eager={i === 0} className="h-full w-full object-cover" /></AdLink>
           </div>
         ))}
@@ -88,12 +91,18 @@ function AdSlider({ ad }: { ad: Ad }) {
 }
 
 /** 배너형 — 이미지를 세로로 나열 */
-function AdBanner({ ad }: { ad: Ad }) {
+function AdBanner({ ad, full }: { ad: Ad; full?: boolean }) {
   return (
-    <div className="space-y-3">
+    <div className={full ? "" : "space-y-3"}>
       {ad.images.map((img, i) => (
-        <div key={i} className="overflow-hidden rounded-2xl shadow-sm">
-          <AdLink img={img}><AdPicture img={img} className="h-auto w-full" /></AdLink>
+        <div key={i} className={full ? "overflow-hidden" : "overflow-hidden rounded-2xl shadow-sm"}>
+          {full ? (
+            <div style={{ height: TOP_HEIGHT }}>
+              <AdLink img={img}><AdPicture img={img} className="h-full w-full object-cover" /></AdLink>
+            </div>
+          ) : (
+            <AdLink img={img}><AdPicture img={img} className="h-auto w-full" /></AdLink>
+          )}
         </div>
       ))}
     </div>
@@ -137,20 +146,40 @@ function AdPopup({ ad, onClose }: { ad: Ad; onClose: () => void }) {
  * 슬라이드형·배너형은 히어로 아래 컨텐츠 폭(1152px)으로, 레이어팝업형은 진입 시 팝업으로 노출.
  * 이미지는 BE 업로드 시 PC 1200px / 모바일 750px 로 리사이징되어 화면 폭에 맞춰 선택된다.
  */
-export default function MainAds() {
+const TOP_AREA_ID = "MAIN_TOP";
+const isTop = (a: Ad) => (a.areaId || "").trim().toUpperCase() === TOP_AREA_ID;
+
+/**
+ * slot="top" (docs/36): 광고영역ID MAIN_TOP 광고만 — 메인 최상단(헤더 아래)에 좌우 여백 없는 FULL 폭으로 노출.
+ * slot="main"(기본): MAIN_TOP 을 제외한 슬라이드·배너 + 레이어팝업.
+ */
+export default function MainAds({ slot = "main" }: { slot?: "top" | "main" }) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [popups, setPopups] = useState<Ad[]>([]);
 
   useEffect(() => {
     apiGet<Ad[]>("/api/public/ads?position=MAIN").then((r) => {
       if (!r.ok || !r.data) return;
-      setAds(r.data.filter((a) => a.adType !== "LAYER_POPUP"));
+      if (slot === "top") {
+        setAds(r.data.filter((a) => isTop(a) && a.adType !== "LAYER_POPUP"));
+        return;
+      }
+      setAds(r.data.filter((a) => a.adType !== "LAYER_POPUP" && !isTop(a)));
       setPopups(r.data.filter((a) => {
         if (a.adType !== "LAYER_POPUP") return false;
         try { return localStorage.getItem(POPUP_HIDE_KEY(a.id)) !== today(); } catch { return true; }
       }));
     });
-  }, []);
+  }, [slot]);
+
+  if (slot === "top") {
+    if (ads.length === 0) return null;
+    return (
+      <section aria-label="상단 광고" className="w-full">
+        {ads.map((a) => (a.adType === "SLIDE" ? <AdSlider key={a.id} ad={a} full /> : <AdBanner key={a.id} ad={a} full />))}
+      </section>
+    );
+  }
 
   return (
     <>

@@ -1,0 +1,29 @@
+
+> home@0.1.0 dev
+> next dev -p 8001
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:8001
+- Network:       http://172.30.1.88:8001
+- Environments: .env.local
+✓ Ready in 853ms
+
+ GET / 200 in 427ms (next.js: 131ms, application-code: 295ms)
+ GET / 200 in 131ms (next.js: 4ms, application-code: 127ms)
+ GET / 200 in 373ms (next.js: 13ms, application-code: 359ms)
+ GET /login 200 in 139ms (next.js: 80ms, application-code: 59ms)
+ GET / 200 in 607ms (next.js: 9ms, application-code: 599ms)
+ GET /login 200 in 87ms (next.js: 12ms, application-code: 75ms)
+ GET / 200 in 475ms (next.js: 8ms, application-code: 467ms)
+✓ Compiled in 204ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+✓ Compiled in 0ms
+ GET / 200 in 860ms (next.js: 170ms, application-code: 690ms)
+ GET / 200 in 531ms (next.js: 138ms, application-code: 394ms)
+ GET / 200 in 151ms (next.js: 6ms, application-code: 145ms)
+ GET / 200 in 253ms (next.js: 6ms, application-code: 247ms)
+ GET / 200 in 236ms (next.js: 6ms, application-code: 230ms)
+✓ Compiled in 214ms
+ GET / 200 in 268ms (next.js: 92ms, application-code: 176ms)
+ GET / 200 in 77ms (next.js: 8ms, application-code: 69ms)
+ GET / 200 in 131ms (next.js: 2ms, application-code: 128ms)

@@ -1752,3 +1752,29 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    - [센터별 실적비교] 센터장ID/센터장명도 동일 기준, 미등록 표기 [미등록]으로 통일
    - 검증: 임시로 서울종로(C003) fix_idx=ctr_gangnam1, 충청남부 본부행 fix_idx=div_seoul1 지정 → div_seoul1 소속센터 14+26=40개 전부 표시,
      서울종로 센터장 ctr_gangnam1/강남1센터장/02-200-2000 표시(소속센터가 달라도 할당 기준), 나머지 미등록. 검증 후 fix_idx 원복.
+
+====================================================================
+[추가] docs/36 작업 — 결제 안내/환불정책 약관 · HOME 상단 광고(MAIN_TOP) · 1차영업 알람 역할별 CP (2026-11-12)
+====================================================================
+■ 1. 본사 [시스템설정]-[약관설정] 탭 3종 추가 (TermSeeder 시드, 기동 시 없으면 INSERT — 스키마 변경 없음)
+   - PAID_SERVICE_REFUND(유료서비스 결제 및 환불정책) / MANAGER_TICKET(관리 매니저 이용권 안내) / CENTER_TICKET(센터 이용권 안내)
+   - ⚠ 서버 반영 후 본사 [약관설정]에서 3종 내용 등록 필요.
+   (1) 매니저 [결제](/buzz/payment) → 관리 매니저 이용권 안내 + 유료서비스 결제 및 환불정책 + [동의하기]
+       → [동의하기] 클릭 시 기존 회비결제 화면(/buzz/payment/pay) 이동
+   (2) 센터 [결제](/center/payment) → 센터 이용권 안내 + 유료서비스 결제 및 환불정책 + [동의하기] → /center/payment/pay
+   (3) 회비 만기 시 PaymentGate: 결제 안내 화면과 그 하위 회비결제 화면(/payment/pay)만 허용, 그 외 메뉴는 결제 안내 화면으로 이동
+       (만기 상태면 안내 화면 상단에 만기일 경고 표시). 파트너 입점비 결제(/partner/payment)는 기존과 동일.
+   - 컴포넌트: admin/src/components/payment/PaymentPolicy.tsx (신규), PaymentGate.tsx (하위경로 허용)
+■ 2. HOME 메인 상단 광고 — 본사 [광고관리] 광고영역ID=MAIN_TOP(대소문자 무시) 게시 광고를
+   헤더 바로 아래·히어로 위에 좌우 여백 없는 FULL 폭(라운드/그림자 제거)으로 노출. 슬라이드형/배너형 지원.
+   기존 히어로 아래 광고영역에서는 MAIN_TOP 제외(중복 노출 방지). MainAds slot="top".
+■ 3. [1차영업신청](SALE1) 알람 CP 금액을 수신 대상별 상품 역할수당으로 개별 렌더링 (AlarmService.fireSaleEvent)
+   - 버즈=buzz_reward / 상위추천=chinku_reward / 센터=sales_center_reward / 본부=division_reward / 본사=hq_reward
+   - RATE: 총수당×(값/100), FIXED: 원 (AllowanceService 와 동일 산식). 파트너 문구는 금액 없음(기존 유지)
+   - 기존: 모든 대상에 버즈 CP 금액 동일 발송. SALE2 등 다른 영업 알람은 변경 없음.
+■ 검증(로컬 DB): 약관 3종 시드·저장 OK / center 만기일 임시 과거 → /center 접근 시 /center/payment 강제이동,
+   [동의하기] → /center/payment/pay 결제화면 정상(게이트 통과), 만기일 원복. /buzz/payment, /buzz/payment/pay 200.
+   테스트 광고 area_id 임시 MAIN_TOP → HOME 상단 풀폭(폭=뷰포트, left 0) 노출, 하단 광고영역 중복 없음 → 원복.
+   buzztester 1차영업 등록(상품12 FIXED) → 알람 BUZZ 8,000원 / HQ 5,200원 (기존: 전부 8,000원). 테스트 영업 sale#76 로컬에 남음.
+■ [보완 2026-11-12] HOME 상단(MAIN_TOP) 광고 영역 높이 200px 고정 (MainAds TOP_HEIGHT=200, 최초 80px→200px 변경, 이미지 object-cover로 채움 — 비율 다른 이미지는 상하가 잘림)
+   검증: 상단 광고 section 높이 200 / 폭=뷰포트(left 0). 테스트 광고 area_id 원복.

@@ -25,7 +25,9 @@ export default function PaymentGate({ paymentPath }: { paymentPath: string }) {
       const gated =
         (d.payerType === "USER" && d.expired === true) ||
         (d.payerType === "PARTNER" && d.entryFeePaid === false);
-      if (gated && pathname !== paymentPath) window.location.href = paymentPath;
+      // 만기 시 허용 화면: 결제 안내(이용권 안내+결제/환불정책) 및 그 하위 회비결제 화면(/pay) (docs/36)
+      const allowed = pathname === paymentPath || pathname.startsWith(paymentPath + "/");
+      if (gated && !allowed) window.location.href = paymentPath;
     });
     return () => { alive = false; };
   }, [pathname, paymentPath]);

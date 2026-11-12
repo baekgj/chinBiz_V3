@@ -86,6 +86,9 @@ export default function Home() {
       <Header />
 
       <main className="flex-1">
+        {/* ── 상단 광고 (광고영역ID MAIN_TOP, 좌우 여백 없는 FULL 폭, docs/36) ── */}
+        <MainAds slot="top" />
+
         {/* ── Hero ── */}
         <section className="relative overflow-hidden bg-forest-900 text-white">
           <div className="absolute inset-0 grid-pattern opacity-60" />

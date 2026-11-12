@@ -1,0 +1,183 @@
+
+> admin@0.1.0 dev
+> next dev -p 3100
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3100
+- Network:       http://172.30.1.88:3100
+- Environments: .env.local
+✓ Ready in 868ms
+
+ GET / 200 in 250ms (next.js: 130ms, application-code: 120ms)
+ GET / 200 in 61ms (next.js: 5ms, application-code: 57ms)
+ GET /login 200 in 149ms (next.js: 34ms, application-code: 115ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="login/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/login" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                    <SegmentViewNode type="page" pagePath="login/page...">
+                      <SegmentTrieNode>
+                      <ClientPageRoot Component={function AdminLoginPage} serverProvidedParams={{...}}>
+                        <AdminLoginPage params={Promise} searchParams={Promise}>
+                          <main className="grid min-h...">
+                            <div className="w-full max...">
+                              <div>
+                              <form>
+                              <a
++                               href="http://localhost"
+-                               href="http://chinbiz.kr"
+                                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border bord..."
+                              >
++                               ← 친비즈 홈으로 가기
+                              ...
+                    ...
+                  ...
+        ...
+ 
+ GET /center/members 404 in 93ms (next.js: 27ms, application-code: 66ms)
+ GET /center 200 in 90ms (next.js: 22ms, application-code: 68ms)
+ GET /center/payment 200 in 77ms (next.js: 40ms, application-code: 36ms)
+ GET /center/payment/pay 200 in 692ms (next.js: 670ms, application-code: 21ms)
+ GET /buzz/payment 200 in 60ms (next.js: 26ms, application-code: 34ms)
+ GET /buzz/payment/pay 200 in 495ms (next.js: 462ms, application-code: 33ms)
+ GET /center/payment/pay 200 in 29ms (next.js: 3ms, application-code: 26ms)
+ GET /master 200 in 336ms (next.js: 61ms, application-code: 275ms)
+ GET /master 200 in 154ms (next.js: 6ms, application-code: 148ms)
+ GET /master/settings 200 in 117ms (next.js: 76ms, application-code: 41ms)
+ GET /master/settings/terms 200 in 86ms (next.js: 49ms, application-code: 37ms)
+ GET /master/organization 200 in 133ms (next.js: 72ms, application-code: 61ms)
+ GET /master/organization/members 200 in 184ms (next.js: 77ms, application-code: 107ms)
+ GET /master/organization/members/45 200 in 571ms (next.js: 510ms, application-code: 62ms)
+ GET /master/organization/members 200 in 83ms (next.js: 28ms, application-code: 54ms)
+ GET /buzz 200 in 208ms (next.js: 79ms, application-code: 129ms)
+ GET /buzz 200 in 213ms (next.js: 6ms, application-code: 207ms)
+ GET /buzz/payment 200 in 117ms (next.js: 11ms, application-code: 107ms)
+ GET /master/settings 200 in 47ms (next.js: 7ms, application-code: 40ms)
+ GET /master/settings/terms 200 in 47ms (next.js: 6ms, application-code: 41ms)
+ GET /buzz/payment 200 in 112ms (next.js: 5ms, application-code: 107ms)
+ GET /buzz/payment 200 in 134ms (next.js: 6ms, application-code: 128ms)
+ GET /buzz/payment/pay 200 in 38ms (next.js: 5ms, application-code: 33ms)
+ GET /master/organization 200 in 38ms (next.js: 6ms, application-code: 32ms)
+ GET /master/organization/members 200 in 49ms (next.js: 11ms, application-code: 38ms)
+ GET /login 200 in 93ms (next.js: 7ms, application-code: 87ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="login/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/login" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                    <SegmentViewNode type="page" pagePath="login/page...">
+                      <SegmentTrieNode>
+                      <ClientPageRoot Component={function AdminLoginPage} serverProvidedParams={{...}}>
+                        <AdminLoginPage params={Promise} searchParams={Promise}>
+                          <main className="grid min-h...">
+                            <div className="w-full max...">
+                              <div>
+                              <form>
+                              <a
++                               href="http://localhost"
+-                               href="http://chinbiz.kr"
+                                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border bord..."
+                              >
++                               ← 친비즈 홈으로 가기
+                              ...
+                    ...
+                  ...
+        ...
+ 
+ GET /center 200 in 96ms (next.js: 5ms, application-code: 91ms)
+ GET /master/organization/members/21 200 in 69ms (next.js: 24ms, application-code: 45ms)
+ GET /master/organization/members 200 in 48ms (next.js: 7ms, application-code: 41ms)
+ GET /center 200 in 95ms (next.js: 5ms, application-code: 90ms)
+ GET /center/payment 200 in 114ms (next.js: 6ms, application-code: 108ms)
+ GET /center/payment/pay 200 in 50ms (next.js: 6ms, application-code: 44ms)
+ GET /master/settings 200 in 38ms (next.js: 5ms, application-code: 33ms)
+ GET /master/settings/terms 200 in 46ms (next.js: 5ms, application-code: 41ms)
+ GET /center/payment 200 in 50ms (next.js: 7ms, application-code: 43ms)
+ GET /master/ads 200 in 111ms (next.js: 72ms, application-code: 39ms)
+ GET /master/ads/2 200 in 445ms (next.js: 399ms, application-code: 47ms)
+ GET /master/ads 200 in 50ms (next.js: 8ms, application-code: 42ms)
+ GET /master 200 in 91ms (next.js: 6ms, application-code: 85ms)
+ GET /master 200 in 165ms (next.js: 5ms, application-code: 160ms)
+ GET /master/ads 200 in 44ms (next.js: 4ms, application-code: 40ms)
+ GET /master/ads/2 200 in 57ms (next.js: 22ms, application-code: 35ms)
+ GET /master/organization 200 in 47ms (next.js: 7ms, application-code: 39ms)
+ GET /master/organization/sales 200 in 164ms (next.js: 102ms, application-code: 63ms)
+ GET /master/partners 200 in 163ms (next.js: 67ms, application-code: 96ms)
+ GET /master/partners/orders 200 in 140ms (next.js: 82ms, application-code: 58ms)
+ GET /master/products 200 in 102ms (next.js: 66ms, application-code: 36ms)
+ GET /master/organization 200 in 43ms (next.js: 6ms, application-code: 36ms)
+ GET /master/organization/sales 200 in 42ms (next.js: 8ms, application-code: 34ms)
+ GET /login 200 in 101ms (next.js: 6ms, application-code: 95ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="login/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/login" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                    <SegmentViewNode type="page" pagePath="login/page...">
+                      <SegmentTrieNode>
+                      <ClientPageRoot Component={function AdminLoginPage} serverProvidedParams={{...}}>
+                        <AdminLoginPage params={Promise} searchParams={Promise}>
+                          <main className="grid min-h...">
+                            <div className="w-full max...">
+                              <div>
+                              <form>
+                              <a
++                               href="http://localhost"
+-                               href="http://chinbiz.kr"
+                                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border bord..."
+                              >
++                               ← 친비즈 홈으로 가기
+                              ...
+                    ...
+                  ...
+        ...
+ 

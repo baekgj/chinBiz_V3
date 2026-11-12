@@ -27,6 +27,10 @@ public class TermSeeder implements CommandLineRunner {
             // 홈 상품화면 고객(대표자) 동의 [보기] 레이어 (docs/27)
             {"customer_provide", "개인정보 3자제공"},
             {"customer_marketing", "마케팅 활용동의"},
+            // 매니저/센터 [결제] 메뉴 안내 화면 (docs/36)
+            {"PAID_SERVICE_REFUND", "유료서비스 결제 및 환불정책"},
+            {"MANAGER_TICKET", "관리 매니저 이용권 안내"},
+            {"CENTER_TICKET", "센터 이용권 안내"},
     };
 
     @Override
