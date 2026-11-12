@@ -458,6 +458,10 @@ ALTER TABLE `partner_order` ADD COLUMN `shipping_fee` bigint DEFAULT 0;
 -- [2026-11-09] docs/35 카카오 알림톡(알리고) 신규 테이블 alimtalk_template(발송문구) / alimtalk_log(발송이력, Insert-Only) :
 --   db/migration_new_fields.sql 의 [2026-11-09] docs/35 구간 CREATE TABLE 참조 (BE ddl-auto=update 로도 자동 생성)
 --   알리고 계정은 app_setting(aligo_*) 행으로 저장(신규 컬럼 없음)
+-- [2026-11-12] docs/36 보완 — 광고영역 크기 (본사 [광고등록] 높이/넓이 → HOME 광고영역 적용)
+ALTER TABLE `ad_chinbiz` ADD COLUMN `area_height` int DEFAULT NULL;
+ALTER TABLE `ad_chinbiz` ADD COLUMN `width_mode` varchar(10) NOT NULL DEFAULT 'DEFAULT';
+ALTER TABLE `ad_chinbiz` ADD COLUMN `area_width` int DEFAULT NULL;
 
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
@@ -1778,3 +1782,13 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    buzztester 1차영업 등록(상품12 FIXED) → 알람 BUZZ 8,000원 / HQ 5,200원 (기존: 전부 8,000원). 테스트 영업 sale#76 로컬에 남음.
 ■ [보완 2026-11-12] HOME 상단(MAIN_TOP) 광고 영역 높이 200px 고정 (MainAds TOP_HEIGHT=200, 최초 80px→200px 변경, 이미지 object-cover로 채움 — 비율 다른 이미지는 상하가 잘림)
    검증: 상단 광고 section 높이 200 / 폭=뷰포트(left 0). 테스트 광고 area_id 원복.
+■ [보완 2026-11-12] 본사 [광고관리]-[광고등록] 광고영역 크기 입력 → HOME 광고영역 적용
+   - 광고영역 높이(px, 30~2000 · 비우면 이미지 비율 자동) / 광고 넓이: 기본(콘텐츠 폭 1152px)·폭 지정(px, 100~3000)·FULL(좌우 여백 없음)
+   - 슬라이드형·배너형 적용(레이어팝업형 제외, 입력란 비활성). 높이 지정 시 이미지는 object-cover 로 채움(비율 다르면 일부 잘림).
+     폭 지정은 가운데 정렬, 화면이 더 좁으면 화면 폭에 맞춰 축소.
+   - MAIN_TOP 광고도 동일 설정값 적용(기존 하드코딩 FULL/200px 제거) — MAIN_TOP 은 노출 위치(헤더 아래)만 고정.
+     ⚠ 서버에서 MAIN_TOP 을 기존처럼 쓰려면 광고등록에서 넓이 FULL · 높이 200 으로 설정.
+   - DB: ad_chinbiz.area_height / width_mode / area_width 컬럼 추가 → migration_new_fields.sql · schema_chin4.sql · [DB 마이그레이션] 반영
+   - 파일: be ad/Ad.java·AdController.java, admin components/master/AdForm.tsx, home components/landing/MainAds.tsx
+   - 검증(로컬): 넓이 누락/높이 10px → 400, FIXED 800·높이 150 → HOME 광고 800×150 가운데 정렬,
+     MAIN_TOP+DEFAULT+높이 250(admin 화면 저장) → 상단 광고 높이 250 콘텐츠 폭 렌더링 확인. tsc 오류 0, BE 컴파일 OK.

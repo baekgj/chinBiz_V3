@@ -15,6 +15,7 @@ public class Ad {
 
     public enum Position { MAIN }
     public enum AdType { SLIDE, BANNER, LAYER_POPUP }
+    public enum WidthMode { DEFAULT, FIXED, FULL }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,6 +28,12 @@ public class Ad {
     @Column(name = "ad_type", nullable = false, length = 20) private AdType adType = AdType.SLIDE;
     @Column(nullable = false) private boolean published = false;                   // 광고게시여부
     @Column(name = "image_count", nullable = false) private int imageCount = 1;    // 등록이미지 수
+    // HOME 광고영역 크기 (docs/36 보완) — 슬라이드형·배너형에 적용
+    @Column(name = "area_height") private Integer areaHeight;                       // 높이(px), null=이미지 비율 자동
+    @Enumerated(EnumType.STRING)
+    @Column(name = "width_mode", nullable = false, length = 10, columnDefinition = "varchar(10) not null default 'DEFAULT'")
+    private WidthMode widthMode = WidthMode.DEFAULT;                                // DEFAULT=콘텐츠폭 / FIXED=지정폭 / FULL=전체폭
+    @Column(name = "area_width") private Integer areaWidth;                         // 지정 넓이(px) — FIXED 일 때
     @Column(name = "created_at", nullable = false, updatable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at") private LocalDateTime updatedAt;
 
@@ -40,6 +47,9 @@ public class Ad {
     public AdType getAdType() { return adType; } public void setAdType(AdType v) { adType = v; }
     public boolean isPublished() { return published; } public void setPublished(boolean v) { published = v; }
     public int getImageCount() { return imageCount; } public void setImageCount(int v) { imageCount = v; }
+    public Integer getAreaHeight() { return areaHeight; } public void setAreaHeight(Integer v) { areaHeight = v; }
+    public WidthMode getWidthMode() { return widthMode; } public void setWidthMode(WidthMode v) { widthMode = v; }
+    public Integer getAreaWidth() { return areaWidth; } public void setAreaWidth(Integer v) { areaWidth = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

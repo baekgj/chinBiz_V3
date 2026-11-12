@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiGet, mediaUrl } from "@/lib/api";
 
 type AdImage = { imageUrl: string; mobileUrl?: string | null; linkUrl?: string | null; altText?: string | null; width?: number | null; height?: number | null };
-type Ad = { id: number; areaId: string; adType: "SLIDE" | "BANNER" | "LAYER_POPUP"; title?: string | null; images: AdImage[] };
+type Ad = {
+  id: number; areaId: string; adType: "SLIDE" | "BANNER" | "LAYER_POPUP"; title?: string | null; images: AdImage[];
+  /** 광고영역 크기 (본사 [광고등록]) — 높이 px(null=이미지 비율) / 넓이 DEFAULT=콘텐츠폭·FIXED=지정폭·FULL=전체폭 */
+  areaHeight?: number | null; widthMode?: "DEFAULT" | "FIXED" | "FULL" | null; areaWidth?: number | null;
+};
 
-/** HOME 상단(MAIN_TOP) 광고 영역 높이(px) — 풀폭, 이미지는 object-cover 로 채움 */
-const TOP_HEIGHT = 200;
 
 const POPUP_HIDE_KEY = (id: number) => `chinbiz_ad_popup_hide_${id}`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -36,7 +38,7 @@ function AdLink({ img, children }: { img: AdImage; children: React.ReactNode }) 
 }
 
 /** 슬라이드형 — 자동 넘김(5초) · 좌우 화살표 · 인디케이터 · 터치 스와이프 · 마우스 오버 시 일시정지 */
-function AdSlider({ ad, full }: { ad: Ad; full?: boolean }) {
+function AdSlider({ ad, full, height }: { ad: Ad; full?: boolean; height?: number | null }) {
   const n = ad.images.length;
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -66,7 +68,7 @@ function AdSlider({ ad, full }: { ad: Ad; full?: boolean }) {
       role="region" aria-roledescription="carousel" aria-label={ad.title || "광고"}>
       <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${idx * 100}%)` }}>
         {ad.images.map((img, i) => (
-          <div key={i} className="w-full shrink-0" style={full ? { height: TOP_HEIGHT } : { aspectRatio: ratio }} aria-hidden={i !== idx}>
+          <div key={i} className="w-full shrink-0" style={height ? { height } : { aspectRatio: ratio }} aria-hidden={i !== idx}>
             <AdLink img={img}><AdPicture img={img} eager={i === 0} className="h-full w-full object-cover" /></AdLink>
           </div>
         ))}
@@ -91,13 +93,13 @@ function AdSlider({ ad, full }: { ad: Ad; full?: boolean }) {
 }
 
 /** 배너형 — 이미지를 세로로 나열 */
-function AdBanner({ ad, full }: { ad: Ad; full?: boolean }) {
+function AdBanner({ ad, full, height }: { ad: Ad; full?: boolean; height?: number | null }) {
   return (
     <div className={full ? "" : "space-y-3"}>
       {ad.images.map((img, i) => (
         <div key={i} className={full ? "overflow-hidden" : "overflow-hidden rounded-2xl shadow-sm"}>
-          {full ? (
-            <div style={{ height: TOP_HEIGHT }}>
+          {height ? (
+            <div style={{ height }}>
               <AdLink img={img}><AdPicture img={img} className="h-full w-full object-cover" /></AdLink>
             </div>
           ) : (
@@ -146,11 +148,28 @@ function AdPopup({ ad, onClose }: { ad: Ad; onClose: () => void }) {
  * 슬라이드형·배너형은 히어로 아래 컨텐츠 폭(1152px)으로, 레이어팝업형은 진입 시 팝업으로 노출.
  * 이미지는 BE 업로드 시 PC 1200px / 모바일 750px 로 리사이징되어 화면 폭에 맞춰 선택된다.
  */
+/**
+ * 광고 1건 — 본사 [광고등록]의 광고영역 크기 설정 적용
+ *  - 넓이: FULL=좌우 여백 없는 전체 폭 / FIXED=지정 px(화면이 좁으면 화면 폭에 맞춤, 가운데 정렬) / DEFAULT=콘텐츠 폭(1152px)
+ *  - 높이: 지정 px(이미지는 object-cover 로 채움) / 미지정=이미지 비율 자동
+ */
+function AdBlock({ ad }: { ad: Ad }) {
+  const full = ad.widthMode === "FULL";
+  const height = ad.areaHeight && ad.areaHeight > 0 ? ad.areaHeight : null;
+  const body = ad.adType === "SLIDE"
+    ? <AdSlider ad={ad} full={full} height={height} />
+    : <AdBanner ad={ad} full={full} height={height} />;
+  if (full) return <div className="w-full">{body}</div>;
+  if (ad.widthMode === "FIXED" && ad.areaWidth)
+    return <div className="mx-auto w-full px-4 sm:px-5" style={{ maxWidth: ad.areaWidth + 40 }}>{body}</div>;
+  return <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">{body}</div>;
+}
+
 const TOP_AREA_ID = "MAIN_TOP";
 const isTop = (a: Ad) => (a.areaId || "").trim().toUpperCase() === TOP_AREA_ID;
 
 /**
- * slot="top" (docs/36): 광고영역ID MAIN_TOP 광고만 — 메인 최상단(헤더 아래)에 좌우 여백 없는 FULL 폭으로 노출.
+ * slot="top" (docs/36): 광고영역ID MAIN_TOP 광고만 — 메인 최상단(헤더 아래)에 노출. 크기는 광고등록 설정값(높이/넓이) 적용.
  * slot="main"(기본): MAIN_TOP 을 제외한 슬라이드·배너 + 레이어팝업.
  */
 export default function MainAds({ slot = "main" }: { slot?: "top" | "main" }) {
@@ -176,7 +195,7 @@ export default function MainAds({ slot = "main" }: { slot?: "top" | "main" }) {
     if (ads.length === 0) return null;
     return (
       <section aria-label="상단 광고" className="w-full">
-        {ads.map((a) => (a.adType === "SLIDE" ? <AdSlider key={a.id} ad={a} full /> : <AdBanner key={a.id} ad={a} full />))}
+        {ads.map((a) => <AdBlock key={a.id} ad={a} />)}
       </section>
     );
   }
@@ -184,8 +203,8 @@ export default function MainAds({ slot = "main" }: { slot?: "top" | "main" }) {
   return (
     <>
       {ads.length > 0 && (
-        <section aria-label="광고" className="mx-auto w-full max-w-6xl space-y-4 px-4 pt-8 sm:px-5 sm:pt-12">
-          {ads.map((a) => (a.adType === "SLIDE" ? <AdSlider key={a.id} ad={a} /> : <AdBanner key={a.id} ad={a} />))}
+        <section aria-label="광고" className="w-full space-y-4 pt-8 sm:pt-12">
+          {ads.map((a) => <AdBlock key={a.id} ad={a} />)}
         </section>
       )}
       {popups[0] && <AdPopup key={popups[0].id} ad={popups[0]} onClose={() => setPopups((p) => p.slice(1))} />}

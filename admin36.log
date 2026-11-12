@@ -181,3 +181,17 @@ https://react.dev/link/hydration-mismatch
                   ...
         ...
  
+ GET /login 200 in 393ms (next.js: 152ms, application-code: 241ms)
+ GET /login 200 in 115ms (next.js: 6ms, application-code: 109ms)
+ GET /login 200 in 35ms (next.js: 3ms, application-code: 32ms)
+ GET /master 200 in 304ms (next.js: 62ms, application-code: 242ms)
+ GET /master 200 in 146ms (next.js: 8ms, application-code: 138ms)
+ GET /master/ads 200 in 310ms (next.js: 216ms, application-code: 94ms)
+ GET /master/ads/2 200 in 328ms (next.js: 220ms, application-code: 109ms)
+ GET /master/ads 200 in 63ms (next.js: 10ms, application-code: 53ms)
+ GET /master/ads/2 200 in 59ms (next.js: 19ms, application-code: 40ms)
+ GET /master/ads 200 in 52ms (next.js: 6ms, application-code: 46ms)
+ GET /master/ads/2 200 in 64ms (next.js: 22ms, application-code: 42ms)
+ GET /master/ads 200 in 47ms (next.js: 5ms, application-code: 42ms)
+ GET /master/settings 200 in 96ms (next.js: 46ms, application-code: 50ms)
+ GET /master/settings/terms 200 in 77ms (next.js: 28ms, application-code: 49ms)

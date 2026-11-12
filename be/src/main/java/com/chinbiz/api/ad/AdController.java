@@ -36,7 +36,8 @@ public class AdController {
 
     public record ImageReq(String imageUrl, String mobileUrl, String linkUrl, String altText, Integer width, Integer height) {}
     public record AdRequest(String title, String areaId, String position, String adType, Boolean published,
-                            Integer imageCount, List<ImageReq> images) {}
+                            Integer imageCount, List<ImageReq> images,
+                            Integer areaHeight, String widthMode, Integer areaWidth) {}
 
     @GetMapping
     public List<Map<String, Object>> list() {
@@ -118,6 +119,12 @@ public class AdController {
         if (count < 1 || count > MAX_IMAGES) return "등록이미지 수는 1~" + MAX_IMAGES + "개입니다.";
         long uploaded = req.images() == null ? 0 : req.images().stream().filter(i -> i != null && i.imageUrl() != null && !i.imageUrl().isBlank()).count();
         if (uploaded < count) return "등록이미지 " + count + "개를 모두 업로드해 주세요. (현재 " + uploaded + "개)";
+        if (req.areaHeight() != null && req.areaHeight() != 0 && (req.areaHeight() < 30 || req.areaHeight() > 2000))
+            return "광고영역 높이는 30~2000px 로 입력해 주세요. (비우면 이미지 비율 자동)";
+        Ad.WidthMode wm = parseWidthMode(req.widthMode());
+        if (wm == null) return "광고 넓이 설정을 선택해 주세요.";
+        if (wm == Ad.WidthMode.FIXED && (req.areaWidth() == null || req.areaWidth() < 100 || req.areaWidth() > 3000))
+            return "광고 넓이는 100~3000px 로 입력해 주세요.";
         var dup = repo.findByAreaId(req.areaId().trim());
         if (dup.isPresent() && !dup.get().getId().equals(selfId)) return "이미 사용 중인 광고영역ID입니다.";
         return null;
@@ -130,6 +137,16 @@ public class AdController {
         a.setAdType(parseType(req.adType()));
         a.setPublished(req.published() != null && req.published());
         a.setImageCount(req.imageCount());
+        a.setAreaHeight(req.areaHeight() == null || req.areaHeight() == 0 ? null : req.areaHeight());
+        Ad.WidthMode wm = parseWidthMode(req.widthMode());
+        a.setWidthMode(wm);
+        a.setAreaWidth(wm == Ad.WidthMode.FIXED ? req.areaWidth() : null);
+    }
+
+    /** 넓이 설정 — 미전송(구 클라이언트)은 DEFAULT */
+    private static Ad.WidthMode parseWidthMode(String v) {
+        if (v == null || v.isBlank()) return Ad.WidthMode.DEFAULT;
+        try { return Ad.WidthMode.valueOf(v.trim().toUpperCase()); } catch (Exception e) { return null; }
     }
 
     private void saveImages(Ad a, List<ImageReq> images) {
@@ -168,6 +185,9 @@ public class AdController {
         m.put("adType", a.getAdType().name());
         m.put("published", a.isPublished());
         m.put("imageCount", a.getImageCount());
+        m.put("areaHeight", a.getAreaHeight());
+        m.put("widthMode", a.getWidthMode() == null ? Ad.WidthMode.DEFAULT.name() : a.getWidthMode().name());
+        m.put("areaWidth", a.getAreaWidth());
         m.put("createdAt", a.getCreatedAt() == null ? null : a.getCreatedAt().toString());
         m.put("updatedAt", a.getUpdatedAt() == null ? null : a.getUpdatedAt().toString());
         return m;

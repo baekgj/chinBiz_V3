@@ -27,3 +27,20 @@
  GET / 200 in 268ms (next.js: 92ms, application-code: 176ms)
  GET / 200 in 77ms (next.js: 8ms, application-code: 69ms)
  GET / 200 in 131ms (next.js: 2ms, application-code: 128ms)
+✓ Compiled in 159ms
+✓ Compiled in 127ms
+ GET / 200 in 411ms (next.js: 191ms, application-code: 220ms)
+ GET / 200 in 287ms (next.js: 130ms, application-code: 157ms)
+✓ Compiled in 52ms
+✓ Compiled in 78ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 494ms (next.js: 133ms, application-code: 361ms)
+ GET / 200 in 285ms (next.js: 84ms, application-code: 201ms)
+ GET / 200 in 157ms (next.js: 5ms, application-code: 153ms)
+ GET / 200 in 275ms (next.js: 5ms, application-code: 270ms)
+ GET /login 200 in 92ms (next.js: 34ms, application-code: 58ms)
+ GET / 200 in 210ms (next.js: 8ms, application-code: 202ms)
+ GET / 200 in 231ms (next.js: 5ms, application-code: 225ms)
+ GET / 200 in 264ms (next.js: 5ms, application-code: 259ms)
+ GET / 200 in 262ms (next.js: 6ms, application-code: 256ms)
+ GET / 200 in 287ms (next.js: 8ms, application-code: 278ms)

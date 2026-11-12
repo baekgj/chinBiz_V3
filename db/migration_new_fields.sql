@@ -555,9 +555,17 @@ CALL chinbiz_add_col('product','shipping_type',     "`shipping_type` varchar(20)
 CALL chinbiz_add_col('product','shipping_unit_qty', "`shipping_unit_qty` int DEFAULT 1");
 CALL chinbiz_add_col('product','shipping_fee',      "`shipping_fee` bigint DEFAULT 0");
 CALL chinbiz_add_col('partner_order','shipping_fee', "`shipping_fee` bigint DEFAULT 0");
+-- [2026-11-12] docs/36 보완 — 광고영역 크기 (높이 px / 넓이 DEFAULT·FIXED·FULL / 지정 넓이 px)
+CALL chinbiz_add_col('ad_chinbiz','area_height', "`area_height` int DEFAULT NULL");
+CALL chinbiz_add_col('ad_chinbiz','width_mode',  "`width_mode` varchar(10) NOT NULL DEFAULT 'DEFAULT'");
+CALL chinbiz_add_col('ad_chinbiz','area_width',  "`area_width` int DEFAULT NULL");
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
 -- 완료.
 
+
+ALTER TABLE `ad_chinbiz` ADD COLUMN `area_height` int(4)  NULL;
+ALTER TABLE `ad_chinbiz` ADD COLUMN `area_width` int(4)  NULL;
+ALTER TABLE `ad_chinbiz` ADD COLUMN `width_mode` varchar(10)   NOT NULL DEFAULT 'DEFAULT';
 
 ALTER TABLE `order_delivery` ADD COLUMN `courier_code` varchar(20)  NULL;
 ALTER TABLE `order_delivery` ADD COLUMN `invoice_no` varchar(40)  NULL;

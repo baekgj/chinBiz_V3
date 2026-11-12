@@ -38,6 +38,7 @@ com\chinbiz\api\allowance\AllowanceId.class
 com\chinbiz\api\ad\AdController.class
 com\chinbiz\api\buzz\BuzzManagerController.class
 com\chinbiz\api\category\Category.class
+com\chinbiz\api\ad\Ad$WidthMode.class
 com\chinbiz\api\product\ProductController.class
 com\chinbiz\api\edu\EducationAdminController.class
 com\chinbiz\api\terms\TermRepository.class

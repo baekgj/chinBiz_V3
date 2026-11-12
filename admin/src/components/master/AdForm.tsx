@@ -8,6 +8,7 @@ export type AdImage = { imageUrl: string; mobileUrl?: string | null; linkUrl?: s
 export type AdData = {
   id?: number; title?: string | null; areaId: string; position: string; adType: string;
   published: boolean; imageCount: number; images?: AdImage[];
+  areaHeight?: number | null; widthMode?: string | null; areaWidth?: number | null;
 };
 
 export const AD_TYPES = [
@@ -35,6 +36,9 @@ export default function AdForm({ initial }: { initial?: AdData }) {
   const [position, setPosition] = useState(initial?.position ?? "MAIN");
   const [adType, setAdType] = useState(initial?.adType ?? "SLIDE");
   const [published, setPublished] = useState(initial?.published ?? true);
+  const [areaHeight, setAreaHeight] = useState<string>(initial?.areaHeight ? String(initial.areaHeight) : "");
+  const [widthMode, setWidthMode] = useState<string>(initial?.widthMode ?? "DEFAULT");
+  const [areaWidth, setAreaWidth] = useState<string>(initial?.areaWidth ? String(initial.areaWidth) : "");
   const [images, setImages] = useState<AdImage[]>(() => {
     const n = Math.max(1, initial?.imageCount ?? 1);
     return Array.from({ length: n }, (_, i) => initial?.images?.[i] ?? emptyImg());
@@ -72,7 +76,11 @@ export default function AdForm({ initial }: { initial?: AdData }) {
     const missing = images.findIndex((x) => !x.imageUrl);
     if (missing >= 0) return setNotice(`이미지 ${missing + 1}을(를) 업로드해 주세요.`);
     setSaving(true);
-    const payload = { title, areaId: areaId.trim(), position, adType, published, imageCount: count, images };
+    if (widthMode === "FIXED" && !(Number(areaWidth) >= 100)) return setNotice("광고 넓이(px)를 100 이상으로 입력해 주세요.");
+    const payload = {
+      title, areaId: areaId.trim(), position, adType, published, imageCount: count, images,
+      areaHeight: areaHeight ? Number(areaHeight) : null, widthMode, areaWidth: widthMode === "FIXED" ? Number(areaWidth) : null,
+    };
     const r = edit ? await apiPut(`/api/ads/${initial!.id}`, payload) : await apiPost("/api/ads", payload);
     setSaving(false);
     if (r.ok) router.push("/master/ads");
@@ -132,6 +140,44 @@ export default function AdForm({ initial }: { initial?: AdData }) {
                 className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg font-bold text-slate-200 hover:bg-navy-800 disabled:opacity-30">+</button>
               <span className="ml-2 text-xs text-slate-500">최대 {MAX_IMAGES}개 · 개수만큼 업로드 칸이 생성됩니다</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOME 광고영역 크기 (슬라이드형·배너형 적용) */}
+      <section className="card p-5">
+        <h3 className="text-sm font-black text-white">광고영역 크기</h3>
+        <p className="mb-4 mt-1 text-xs text-slate-500">
+          HOME 광고영역에 적용됩니다. 지정한 크기와 이미지 비율이 다르면 이미지가 영역을 채우도록 일부 잘릴 수 있습니다.
+          {adType === "LAYER_POPUP" && <span className="ml-1 font-semibold text-amber-400">레이어팝업형에는 적용되지 않습니다.</span>}
+        </p>
+        <div className={`grid gap-4 sm:grid-cols-2 ${adType === "LAYER_POPUP" ? "pointer-events-none opacity-40" : ""}`}>
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-400">광고영역 높이 <span className="font-normal text-slate-500">(px · 비우면 이미지 비율 자동)</span></span>
+            <div className="mt-1 flex items-center gap-2">
+              <input type="number" min={30} max={2000} className={inputCls} value={areaHeight}
+                onChange={(e) => setAreaHeight(e.target.value.replace(/[^0-9]/g, ""))} placeholder="자동 (예: 200)" />
+              <span className="text-sm text-slate-400">px</span>
+            </div>
+          </label>
+          <div>
+            <span className="text-xs font-semibold text-slate-400">광고 넓이</span>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {[["DEFAULT", "기본 (콘텐츠 폭 1152px)"], ["FIXED", "폭 지정"], ["FULL", "FULL (좌우 여백 없음)"]].map(([v, l]) => (
+                <button key={v} type="button" onClick={() => setWidthMode(v)}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold ${widthMode === v ? "bg-brand-600 text-white" : "border border-line text-slate-400 hover:bg-navy-800"}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            {widthMode === "FIXED" && (
+              <div className="mt-2 flex items-center gap-2">
+                <input type="number" min={100} max={3000} className={inputCls} value={areaWidth}
+                  onChange={(e) => setAreaWidth(e.target.value.replace(/[^0-9]/g, ""))} placeholder="예: 800" />
+                <span className="text-sm text-slate-400">px</span>
+              </div>
+            )}
+            <span className="mt-1 block text-[11px] text-slate-500">폭 지정 시 화면이 더 좁으면(모바일) 화면 폭에 맞춰 줄어듭니다.</span>
           </div>
         </div>
       </section>
