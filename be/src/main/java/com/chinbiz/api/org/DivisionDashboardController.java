@@ -235,6 +235,91 @@ public class DivisionDashboardController {
         return ResponseEntity.ok(out);
     }
 
+    // ───────────────────────── 센터 리더보드 (docs/37) ─────────────────────────
+
+    /**
+     * 산하 센터별 본부 수당 기여도 랭킹 + 소속(버즈 1차) vs 관리(매니저 2차) 기여 비중.
+     *  - month 미지정 = 전체 기간, "YYYY-MM" = 해당월
+     *  - divisionReward : 본부 배정수당 순액(취소 (−)전표 포함), 센터 귀속 = 전표 처리자 소속센터 (/centers 와 동일)
+     *  - salesCount     : 센터 소속 버즈의 1차영업 건수(취소/반품 제외)
+     *  - mgmtCount      : 센터 승인(Y) 매니저가 2차 배정받은 영업 건수(취소/반품 제외, 배정일 기준)
+     *  - score          : 본부수당 1위 대비 백분율(수당이 모두 0이면 1·2차 건수 합 기준)
+     */
+    @GetMapping("/leaderboard")
+    public ResponseEntity<?> leaderboard(Authentication auth, @RequestParam(required = false) String month) {
+        User me = me(auth);
+        if (me == null) return unauthorized();
+        Ctx c = new Ctx(me);
+        boolean all = month == null || month.isBlank();
+        YearMonth ym = ym(month);
+        LocalDateTime from = all ? LocalDateTime.MIN : ym.atDay(1).atStartOfDay();
+        LocalDateTime to = all ? LocalDateTime.MAX : ym.plusMonths(1).atDay(1).atStartOfDay();
+
+        // 본부 배정수당 (센터 귀속 = 처리자 소속센터)
+        Map<Long, Long> rewardBy = new HashMap<>();
+        for (Allowance a : allowanceRepo.findByMemberIdAndMemberTypeInOrderBySeqDesc(me.getUserId(), DIV)) {
+            if (a.getHandlerId() == null || (!all && !in(a.getCreatedAt(), from, to))) continue;
+            Long cid = c.loginCenter.get(a.getHandlerId());
+            if (cid == null) continue;
+            rewardBy.merge(cid, a.getAmount() == null ? 0L : a.getAmount(), Long::sum);
+        }
+
+        // 1차(소속) 영업 건수
+        Map<Long, Long> salesBy = c.sales().stream()
+                .filter(s -> !CANCELED.equals(s.getStatus()) && (all || in(s.getCreatedAt(), from, to)))
+                .map(s -> c.userCenter.get(s.getBuzzId())).filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(x -> x, Collectors.counting()));
+
+        // 2차(관리) 영업 건수 — 센터 승인 매니저 → 센터 목록(복수 활동센터 가능)
+        Map<Long, Set<Long>> mgrCenters = new HashMap<>();
+        if (!c.centerIds.isEmpty())
+            managerCenterRepo.findByCenterIdInAndStatus(c.centerIds, "Y")
+                    .forEach(mc -> mgrCenters.computeIfAbsent(mc.getBuzzId(), k -> new HashSet<>()).add(mc.getCenterId()));
+        Map<Long, Long> mgmtBy = new HashMap<>();
+        if (!mgrCenters.isEmpty()) {
+            for (Sale s : saleRepo.findByManagerIdIn(mgrCenters.keySet())) {
+                if (CANCELED.equals(s.getStatus())) continue;
+                LocalDateTime t = s.getManagerDatedAt() != null ? s.getManagerDatedAt() : s.getCreatedAt();
+                if (!all && !in(t, from, to)) continue;
+                for (Long cid : mgrCenters.getOrDefault(s.getManagerId(), Set.of())) mgmtBy.merge(cid, 1L, Long::sum);
+            }
+        }
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (CenterCode cc : c.centers) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("idx", cc.getIdx());
+            m.put("centerCode", cc.getCenterCode());
+            m.put("centerName", cc.getCenterName());
+            m.put("divisionReward", rewardBy.getOrDefault(cc.getIdx(), 0L));
+            m.put("salesCount", salesBy.getOrDefault(cc.getIdx(), 0L));
+            m.put("mgmtCount", mgmtBy.getOrDefault(cc.getIdx(), 0L));
+            list.add(m);
+        }
+        java.util.function.ToLongFunction<Map<String, Object>> rw = m -> ((Number) m.get("divisionReward")).longValue();
+        java.util.function.ToLongFunction<Map<String, Object>> cnt = m -> ((Number) m.get("salesCount")).longValue() + ((Number) m.get("mgmtCount")).longValue();
+        list.sort((a, b) -> {
+            int r = Long.compare(rw.applyAsLong(b), rw.applyAsLong(a));
+            return r != 0 ? r : Long.compare(cnt.applyAsLong(b), cnt.applyAsLong(a));
+        });
+        long maxReward = list.stream().mapToLong(rw).max().orElse(0);
+        long maxCnt = list.stream().mapToLong(cnt).max().orElse(0);
+        int rank = 0;
+        for (Map<String, Object> m : list) {
+            long score = maxReward > 0 ? Math.round(Math.max(0, rw.applyAsLong(m)) * 100.0 / maxReward)
+                    : maxCnt > 0 ? Math.round(cnt.applyAsLong(m) * 100.0 / maxCnt) : 0;
+            m.put("score", score);
+            m.put("rank", ++rank);
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("month", all ? null : ym.toString());
+        out.put("scoreBasis", maxReward > 0 ? "REWARD" : "COUNT");
+        out.put("totalReward", rewardBy.values().stream().mapToLong(Long::longValue).sum());
+        out.put("centers", list);
+        return ResponseEntity.ok(out);
+    }
+
     /** 센터의 해당월 1차영업 상품별 버즈/접수/본부배정수당(건당) */
     @GetMapping("/centers/{idx}/products")
     public ResponseEntity<?> centerProducts(Authentication auth, @PathVariable Long idx, @RequestParam(required = false) String month) {

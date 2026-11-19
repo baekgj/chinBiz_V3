@@ -53,6 +53,7 @@ com\chinbiz\api\org\MasterDashboardController.class
 com\chinbiz\api\auth\JwtAuthenticationFilter.class
 com\chinbiz\api\category\Category$Status.class
 com\chinbiz\api\partner\PartnerInquiryController.class
+com\chinbiz\api\org\DivisionCenterController.class
 com\chinbiz\api\partner\PartnerSalesController.class
 com\chinbiz\api\payment\PaymentController$ConfirmRequest.class
 com\chinbiz\api\alimtalk\AligoClient$Result.class
@@ -84,6 +85,7 @@ com\chinbiz\api\order\PublicOrderController$DeliveryReq.class
 com\chinbiz\api\center\CenterSettlementController.class
 com\chinbiz\api\org\OrgController$OrgMemberRequest.class
 com\chinbiz\api\rbac\AdminScopeController.class
+com\chinbiz\api\org\DivisionCenterController$CenterRegisterRequest.class
 com\chinbiz\api\user\UserSelfController$SelfUpdate.class
 com\chinbiz\api\common\AccountValidation.class
 com\chinbiz\api\edu\EduMaterialDownloadRepository.class

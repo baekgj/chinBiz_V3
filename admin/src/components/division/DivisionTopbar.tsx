@@ -13,9 +13,13 @@ import BrandMark from "../BrandMark";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 
-// 본부 메뉴 순서 (docs/24): 본부분석 | 광역상품마켓 | 센터별실적비교 | 광역프로모션 | 본부수당/정산 | 공지사항
+// 본부 메뉴 순서 (docs/24, docs/37 센터관리 추가): 본부분석 | 센터관리(센터등록·추천등록센터List) | 광역상품마켓 | 센터별실적비교 | 광역프로모션 | 본부수당/정산 | 공지사항
 const NAV: NavItem[] = [
   { href: "/division", label: "본부분석" },
+  { href: "/division/center-mgmt", label: "센터관리", children: [
+    { href: "/division/center-mgmt/new", label: "센터등록" },
+    { href: "/division/center-mgmt", label: "추천등록센터List" },
+  ] },
   { href: "/division/market", label: "광역상품마켓" },
   { href: "/division/centers", label: "센터별 실적비교" },
   { href: "/division/promotion", label: "광역프로모션" },

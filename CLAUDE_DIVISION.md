@@ -45,3 +45,14 @@
   매니저 = manager_center 승인(Y) / 1차영업 = 등록자 소속센터 / 상품종류 = 취소/반품 제외 / 본부수당 센터귀속 = 전표 handler_id 소속센터(월=전표 등록일)
 - FE: `DivisionDashboard`(매핑 섹션 삭제 → [소속센터 센터장 지정 현황], 미등록은 (미등록)) · `WalletSection`(props) ·
   `CentersSection`(오른쪽 상단 월 검색·기본 이번달, 센터코드/센터명 클릭 시 해당 센터 [1차 영업 상품별 센터/버즈 매핑 현황] 펼침, 1개만, 활성센터수 컬럼 삭제)
+
+## docs/37 (2026-11-19) 리더보드 실데이터 · 센터관리 · 추천본부 관리비 수당
+- **센터 리더보드**(`/division/leaderboard`): `GET /api/division/leaderboard?month=` 실데이터. 순위/점수 = 산하 센터별 본부 배정수당 순액(처리자 소속센터 귀속, /centers와 동일) 1위 대비 %, 전부 0이면 1·2차 건수 기준. 소속 vs 관리 = 센터 소속 버즈 1차영업 건수 vs 센터 승인(Y) 매니저 2차 배정 건수(취소/반품 제외). 월 검색 / 전체기간.
+- **[센터관리] 메뉴**(본부분석↔광역상품마켓 사이) — 소메뉴 [센터등록] `/division/center-mgmt/new`, [추천등록센터List] `/division/center-mgmt`.
+  - 센터등록: 광역본부(전체) → 센터(본부 산하 전체) + 아이디(중복확인)/비밀번호(10자+)/이름/전화/이메일. 저장 시 role=CENTER_ADMIN, sales_center_id=센터 idx, **referral_code=등록 본부장 user_id(추천본부)**. **센터장 지정(center_code.fix_idx)은 하지 않음**(2026-11-19 변경 — 본사 [본부ᆞ센터 리스트]에서 지정).
+  - 추천등록센터List: referral_code=본인인 CENTER_ADMIN — 등록일·본부코드·본부명·센터코드·센터명·아이디·이름·전화번호.
+  - BE `org/DivisionCenterController` (`/api/division/center-mgmt/**`, DIVISION_ADMIN).
+- **센터 관리비 수당 = 추천본부**: 본사 [관리비설정] 센터회원 라벨 "추천본부". 센터 회비 결제 시 공급가×설정%를 소속본부가 아닌 referral_code 본부에 DIVISION CP(MEMBERSHIP)로 지급(`AllowanceService.createForMembership`). 추천본부가 없는 센터(본사 등록 등)는 미지급.
+- 검증(2026-11-19, 로컬 chin4): 리더보드 실집계(서울성북 100점·₩84,300) / 등록 400(비번)·409(아이디·할당센터)·201 / 소속본부 div_seoul1 ≠ 추천본부 division 케이스에서 월회비 220,000 → division에 40,000 지급 확인. 테스트 데이터 삭제 완료.
+- **본사 등록 추천인(docs/37 후속)**: 본사 admin [본부ᆞ센터등록](`OrgController.create`) 시 referral_code = 등록한 본사 계정 ID(예: `admin`). → 본사가 등록한 센터는 추천인이 본부가 아니므로 센터 관리비의 추천본부 수당 미지급(본사 귀속). 검증(2026-11-19): 본부·센터 등록 201, referral_code=admin 저장, 테스트 데이터 삭제.
+- **소속센터 일괄변경 ↔ 센터장 할당 동기화(2026-11-19)**: 본사 회원수정 [하위추천회원 소속센터 전체변경](`OrgController.cascadeCenter`)이 sales_center_id 만 바꿔 center_code.fix_idx 와 어긋나던 문제 수정(증상: centeryc 소속=서대문인데 fix_idx=서울양천 → 서대문 센터장 후보에서 제외). 이제 대상이 CENTER_ADMIN이면 fix_idx 도 새 센터로 이동(이전 할당 해제), 새 센터에 다른 센터장이 있으면 409. 하위 체인의 본부/센터장 계정은 소속 변경에서 제외. 검증: 409/이동/제외 3케이스 통과, 테스트 데이터 삭제.

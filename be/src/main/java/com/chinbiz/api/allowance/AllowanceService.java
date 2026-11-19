@@ -320,7 +320,10 @@ public class AllowanceService {
             center = centerAdmin(payer.getSalesCenterId());
             division = divisionAdmin(payer.getSalesCenterId());
         } else if (payer != null && payer.getRole() == Role.CENTER_ADMIN) {
-            division = divisionAdmin(payer.getSalesCenterId());
+            // docs/37: 센터 관리비 수당은 소속본부가 아닌 추천본부(referral_code = 센터를 등록한 본부장 ID)에 지급
+            String ref = payer.getReferralCode();
+            division = ref == null || ref.isBlank() ? null : userRepo.findByUserId(ref.trim())
+                    .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);
         } else if (partnerSaleId != null && !partnerSaleId.isBlank()) {
             division = userRepo.findByUserId(partnerSaleId.trim())
                     .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);

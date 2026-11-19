@@ -107,7 +107,7 @@ export default function FeeSettingsManager() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-brand-500/30 bg-navy-900/60 px-4 py-2.5 lg:ml-auto">
                 <span className="text-xs font-bold text-brand-300">센터회원 회비 결제시</span>
                 <label className="flex items-center gap-2 text-sm text-slate-300">
-                  소속본부
+                  추천본부
                   <input inputMode="decimal" value={fees.fee_reward_center_division_pct} onChange={(e) => set("fee_reward_center_division_pct")(e.target.value)} className={rewardCls} />
                   <span className="text-slate-400">% 수당지급</span>
                 </label>
@@ -150,7 +150,7 @@ export default function FeeSettingsManager() {
           파트너 입점비 {won(fees.fee_partner_entry)}원. (매니저·센터·파트너 admin 결제 메뉴에서 사용 예정)
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          * 수당지급: 결제 완료 시 회비/입점비 공급가액(부가세 제외) × 설정 %(원 미만 절사)를 소속센터/소속본부(파트너는 등록 시 선택한 영업본부)에 CP 수당(MEMBERSHIP)으로 자동 적립되고, 수당담당자에게 알람이 발송됩니다.
+          * 수당지급: 결제 완료 시 회비/입점비 공급가액(부가세 제외) × 설정 %(원 미만 절사)를 소속센터/소속본부(센터회원은 센터를 등록한 추천본부, 파트너는 등록 시 선택한 영업본부)에 CP 수당(MEMBERSHIP)으로 자동 적립되고, 수당담당자에게 알람이 발송됩니다.
         </p>
       </Card>
     </div>

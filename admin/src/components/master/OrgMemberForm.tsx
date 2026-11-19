@@ -272,6 +272,9 @@ export default function OrgMemberForm({ mode, initial }: { mode: "new" | "edit";
             <p className="mt-2 text-xs text-slate-400">
               <b className="text-white">{initial?.name}</b>님과 <b className="text-white">{initial?.name}</b>님을 추천으로 가입한 모든 하위 버즈회원의 소속센터를 일괄 변경합니다.
             </p>
+            {initial?.role === "CENTER_ADMIN" && (
+              <p className="mt-1 text-xs text-amber-300">센터장 계정은 센터장 할당도 선택한 센터로 함께 이동합니다. (선택한 센터에 다른 센터장이 있으면 변경 불가 · 하위 본부/센터장 계정은 제외)</p>
+            )}
             <div className="mt-4 space-y-3">
               <Field label="본부 선택">
                 <select className={inputCls} value={cDivision} onChange={(e) => setCDivision(e.target.value ? Number(e.target.value) : "")}>

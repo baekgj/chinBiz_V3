@@ -156,15 +156,28 @@ public class OrgController {
         User root = userRepository.findById(id).orElse(null);
         if (root == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "회원을 찾을 수 없습니다."));
         if (req.salesCenterId() == null) return ResponseEntity.badRequest().body(Map.of("message", "변경할 센터를 선택해 주세요."));
+        CenterCode target = centerCodeRepository.findById(req.salesCenterId()).orElse(null);
+        if (target == null || target.getCenterCode() == null)
+            return ResponseEntity.badRequest().body(Map.of("message", "변경할 센터를 다시 선택해 주세요."));
+
+        // 센터장(CENTER_ADMIN) 본인 변경 시 센터장 할당(center_code.fix_idx)도 함께 이동 —
+        // sales_center_id 와 fix_idx 가 어긋나면 [본부ᆞ센터 리스트] 후보에서 빠지고 수당 라우팅도 갈라짐
+        boolean rootIsHead = root.getRole() == Role.CENTER_ADMIN;
+        if (rootIsHead && target.getFixIdx() != null && !target.getFixIdx().equals(root.getId()))
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
+                    "변경할 센터(" + target.getCenterName() + ")에 이미 센터장이 할당되어 있습니다. [본부ᆞ센터 리스트]에서 먼저 삭제해 주세요."));
 
         // 대상 회원 + 하위 추천 체인 수집 (referral_code 그래프 BFS, 사이클 방지)
         List<User> targets = new ArrayList<>();
+        int skippedHeads = 0;
         Set<Long> visited = new HashSet<>();
         Deque<User> queue = new ArrayDeque<>();
         queue.add(root); visited.add(root.getId());
         while (!queue.isEmpty()) {
             User cur = queue.poll();
-            targets.add(cur);
+            // 하위 체인의 본부/센터장 계정은 자기 코드의 장이므로 소속을 옮기지 않음(본인 소속·할당 유지). 그 하위 체인은 계속 탐색
+            if (cur != root && (cur.getRole() == Role.CENTER_ADMIN || cur.getRole() == Role.DIVISION_ADMIN)) skippedHeads++;
+            else targets.add(cur);
             if (cur.getUserId() == null) continue;
             for (User child : userRepository.findByReferralCode(cur.getUserId())) {
                 if (child.getId() != null && visited.add(child.getId())) queue.add(child);
@@ -172,8 +185,20 @@ public class OrgController {
         }
         targets.forEach(u -> u.setSalesCenterId(req.salesCenterId()));
         userRepository.saveAll(targets);
+
+        if (rootIsHead) {
+            for (CenterCode old : centerCodeRepository.findByFixIdx(root.getId())) {
+                if (!old.getIdx().equals(target.getIdx())) { old.setFixIdx(null); centerCodeRepository.save(old); }
+            }
+            target.setFixIdx(root.getId());
+            centerCodeRepository.save(target);
+        }
+
+        String msg = targets.size() + "명(본인 포함)의 소속센터가 변경되었습니다."
+                + (rootIsHead ? " 센터장 할당도 " + target.getCenterName() + "(으)로 이동했습니다." : "")
+                + (skippedHeads > 0 ? " (하위 본부/센터장 계정 " + skippedHeads + "명은 제외)" : "");
         return ResponseEntity.ok(Map.of(
-                "message", targets.size() + "명(본인 포함)의 소속센터가 변경되었습니다.",
+                "message", msg,
                 "count", targets.size(),
                 "salesCenterId", req.salesCenterId(),
                 "centerName", centerName(req.salesCenterId())));
@@ -242,9 +267,9 @@ public class OrgController {
             String bankName, String accountNumber, String accountHolder, Long salesCenterId,
             String membershipExpiry) {}  // 센터·매니저 서비스종료일자(yyyy-MM-dd)
 
-    /** 본부/센터 계정 등록 */
+    /** 본부/센터 계정 등록 — 추천인(referral_code) = 등록한 본사 계정 ID (docs/37 후속) */
     @PostMapping("/members")
-    public ResponseEntity<?> create(@RequestBody OrgMemberRequest req) {
+    public ResponseEntity<?> create(org.springframework.security.core.Authentication auth, @RequestBody OrgMemberRequest req) {
         Role role = parseOrgRole(req.role());
         if (role == null) return ResponseEntity.badRequest().body(Map.of("message", "역할은 본부(DIVISION_ADMIN) 또는 센터(CENTER_ADMIN)여야 합니다."));
         if (isBlank(req.name())) return ResponseEntity.badRequest().body(Map.of("message", "이름을 입력해 주세요."));
@@ -259,6 +284,7 @@ public class OrgController {
         String taken = assignConflict(req.salesCenterId(), null);
         if (taken != null) return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", taken));
         apply(u, req);
+        if (auth != null) u.setReferralCode(auth.getName()); // 본사 등록 = 추천인 본사 ID
         userRepository.save(u);
         bindFix(u, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(member(u));

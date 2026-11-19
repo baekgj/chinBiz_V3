@@ -120,3 +120,17 @@
 | FE 본사 교육 | `app/master/education/{apply,approve}` + `components/EducationAdminPanel.tsx` + `master/eduCls.ts` | 신청/승인 소메뉴 |
 | FE 센터 교육 | `app/center/education`(신청/승인 탭) + `EducationAdminPanel` | |
 | sale.parent_id | `Sale.parentId` + `BuzzSalesController.centerParentId`(주소→CenterMatcher→CENTER_ADMIN user.id) | 1차영업 등록 시 저장 |
+
+## docs/37 (2026-11-19) 본부 센터 리더보드 실데이터 · 센터관리(센터등록/추천등록센터List) · 센터 관리비 추천본부 지급
+| 모듈 | 위치 | 용도 |
+|---|---|---|
+| BE 리더보드 | `be org/DivisionDashboardController` `GET /api/division/leaderboard?month=`(비우면 전체기간) | 센터별 본부수당(순액, 처리자 소속센터 귀속)·1차(버즈 소속) 건수·2차(승인 매니저 배정) 건수·점수(1위 대비 %) |
+| BE 센터관리 | `be org/DivisionCenterController` `/api/division/center-mgmt/{check-id,divisions,centers,referred}` + `POST centers` | 본부가 센터 계정 등록(referral_code=본부장 ID, 센터장 지정 fix_idx 는 하지 않음) / 추천등록센터 리스트 |
+| BE 리포 | `SaleRepository.findByManagerIdIn` | 2차 관리 기여 집계 |
+| BE 관리비 수당 | `AllowanceService.createForMembership` | 센터회원 회비 → **추천본부**(user.referral_code 의 DIVISION_ADMIN)로 DIVISION CP 지급. 추천본부 없으면 미지급 |
+| FE 리더보드 | `components/division/sections/LeaderboardSection.tsx` | 실데이터 + 월 검색/전체기간 |
+| FE 센터관리 | `DivisionTopbar`(본부분석↔광역상품마켓 사이 [센터관리]) · `app/division/center-mgmt/{page,new/page}` · `components/division/{CenterRegisterForm,ReferredCentersList}.tsx` | |
+| FE 관리비설정 | `components/master/FeeSettingsManager.tsx` | 센터회원 라벨 소속본부→추천본부 |
+- 본사 [본부ᆞ센터등록](`OrgController.create`)도 referral_code = 등록한 본사 계정 ID로 저장.
+- 본사 [하위추천회원 소속센터 전체변경](`OrgController.cascadeCenter`): 센터장 계정이면 center_code.fix_idx 도 함께 이동(대상 센터에 타 센터장 있으면 409), 하위 체인의 본부/센터장 계정은 제외.
+- DB 변경 없음(기존 user.referral_code 사용).

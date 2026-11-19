@@ -17,6 +17,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
     /** 등록자(user.id) 목록의 1차영업 — 본부 산하 집계(docs/35-1) */
     java.util.List<Sale> findByBuzzIdIn(java.util.Collection<Long> buzzIds);
 
+    /** 2차 배정 매니저(user.id) 목록의 영업 — 본부 센터 리더보드 관리(2차) 기여 (docs/37) */
+    java.util.List<Sale> findByManagerIdIn(java.util.Collection<Long> managerIds);
+
     /** 기간 내 등록된 영업의 상품 판매가 합산(총 거래액/GMV) */
     @Query("select coalesce(sum(p.salePrice),0) from Sale s, com.chinbiz.api.product.Product p " +
            "where p.id = s.productId and s.createdAt >= :from and s.createdAt < :to")
