@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/buzz/BuzzUI";
+import ReferralAlimtalk from "@/components/buzz/ReferralAlimtalk";
 import { useBuzz } from "@/components/buzz/theme";
 import { apiGet } from "@/lib/api";
 
@@ -70,6 +71,7 @@ export default function NetworkSection() {
           <code className={`flex-1 truncate rounded-lg border px-3 py-2 text-sm ${theme.codeBox}`}>{refUrl}</code>
           <button onClick={copy} className={`rounded-lg px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>{copied ? "복사됨 ✓" : "링크 복사"}</button>
         </div>
+        <ReferralAlimtalk className="mt-4" />
       </Card>
 
       <Card

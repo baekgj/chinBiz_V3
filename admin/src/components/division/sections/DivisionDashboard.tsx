@@ -9,7 +9,7 @@ import WalletSection from "@/components/division/sections/WalletSection";
 type Me = { name?: string; salesCenterName?: string | null };
 type CenterHead = { idx: number; centerCode: string; centerName: string; headUserId: string | null; headName: string | null; headPhone: string | null };
 type Dash = {
-  cp: number; mp: number; centerCount: number; buzzCount: number; productKinds: number; headAssigned: number;
+  cp: number; mp: number; centerCount: number; referredCenterCount?: number; buzzCount: number; productKinds: number; headAssigned: number;
   centers: CenterHead[];
 };
 
@@ -41,8 +41,9 @@ export default function DivisionDashboard() {
       <WalletSection cp={d?.cp ?? 0} mp={d?.mp ?? 0} />
 
       {/* 산하 현황 */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="본부 산하 총 센터 수" value={n(d?.centerCount)} unit="개 센터" tone="violet" />
+        <Stat label="추천센터 수" value={n(d?.referredCenterCount)} unit="개 센터" tone="violet" />
         <Stat label="본부 산하 총 소속 버즈회원 수" value={n(d?.buzzCount)} unit="명" tone="fuchsia" />
         <Stat label="진행 중인 1차 영업 상품 종류 수" value={n(d?.productKinds)} unit="종" tone="slate" />
       </div>

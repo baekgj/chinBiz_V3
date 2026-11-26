@@ -132,6 +132,7 @@ com\chinbiz\api\product\Product$RewardType.class
 com\chinbiz\api\ad\Ad$Position.class
 com\chinbiz\api\ad\AdImageRepository.class
 com\chinbiz\api\allowance\AllowanceRepository.class
+com\chinbiz\api\buzz\BuzzReferralController.class
 com\chinbiz\api\payment\PaymentController$PrepareRequest.class
 com\chinbiz\api\notice\NoticeRecipientResolver.class
 com\chinbiz\api\ChinbizApiApplication.class
@@ -183,6 +184,7 @@ com\chinbiz\api\auth\AuthController.class
 com\chinbiz\api\terms\TermSeeder.class
 com\chinbiz\api\partner\PartnerInquiry.class
 com\chinbiz\api\terms\TermAgreementController$AgreeRequest.class
+com\chinbiz\api\buzz\BuzzReferralController$SendRequest.class
 com\chinbiz\api\product\PublicProductController.class
 com\chinbiz\api\alarm\AlarmTarget.class
 com\chinbiz\api\setting\AppSettingController$Seeder.class

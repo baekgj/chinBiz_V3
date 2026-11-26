@@ -27,6 +27,9 @@ public class Sale {
     // 고객(B2B) 기본정보
     @Column(name = "company_name", length = 120) private String companyName;   // 상호명
     @Column(name = "business_number", length = 20) private String businessNumber; // 사업자등록번호
+    @Column(name = "sub_business_number", length = 4) private String subBusinessNumber; // 종사업자번호 4자리 (docs/38)
+    @Column(name = "business_type", length = 50) private String businessType;   // 업태 (docs/38)
+    @Column(name = "business_item", length = 50) private String businessItem;   // 업종 (docs/38)
     @Column(name = "ceo_name", length = 50) private String ceoName;            // 대표자명
     @Column(name = "ceo_phone", length = 20) private String ceoPhone;          // 대표자 핸드폰번호 (docs/27)
     @Column(name = "company_phone", length = 20) private String companyPhone;  // 회사 전화번호
@@ -62,6 +65,9 @@ public class Sale {
     public Long getCustomerCenterId() { return customerCenterId; } public void setCustomerCenterId(Long v) { customerCenterId = v; }
     public String getCompanyName() { return companyName; } public void setCompanyName(String v) { companyName = v; }
     public String getBusinessNumber() { return businessNumber; } public void setBusinessNumber(String v) { businessNumber = v; }
+    public String getSubBusinessNumber() { return subBusinessNumber; } public void setSubBusinessNumber(String v) { subBusinessNumber = v; }
+    public String getBusinessType() { return businessType; } public void setBusinessType(String v) { businessType = v; }
+    public String getBusinessItem() { return businessItem; } public void setBusinessItem(String v) { businessItem = v; }
     public String getCeoName() { return ceoName; } public void setCeoName(String v) { ceoName = v; }
     public String getCeoPhone() { return ceoPhone; } public void setCeoPhone(String v) { ceoPhone = v; }
     public String getCompanyPhone() { return companyPhone; } public void setCompanyPhone(String v) { companyPhone = v; }

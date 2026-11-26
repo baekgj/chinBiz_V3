@@ -6,7 +6,8 @@ import { apiGet, apiPost, apiPut } from "@/lib/api";
 
 /**
  * 본사 [시스템설정]-[알림톡설정] (docs/35)
- *  ① 알리고 연동 계정  ② 이벤트별 발송 문구(현재: 1차영업신청 접수 → 가망고객 대표자)  ③ 테스트 발송  ④ 발송 이력
+ *  ① 알리고 연동 계정  ② 알림톡 유형별(탭) 발송 문구  ③ 테스트 발송  ④ 발송 이력
+ *  유형: SALE1_CUSTOMER(1차영업신청 접수 → 가망고객 대표자) / REFERRAL_LINK(버즈 추천링크 발송, docs/38)
  *  BE: /api/org/alimtalk/*
  */
 
@@ -33,7 +34,17 @@ const LINK_TYPES = [
   { v: "AC", l: "채널 추가" },
   { v: "DS", l: "배송조회" },
 ];
-const EVENT_CODE = "SALE1_CUSTOMER";
+/** 알림톡 유형 탭 — 탭명 · 발송 시점 안내 · 이력 구분 · 버튼 링크 변수 */
+const EVENT_META: Record<string, { tab: string; when: React.ReactNode; logLabel: string; linkVar: string }> = {
+  SALE1_CUSTOMER: {
+    tab: "1차영업 접수", logLabel: "1차영업 접수", linkVar: "#{상품링크}",
+    when: <>버즈admin [1차영업신청] 접수 → 가망고객 <b className="text-white">대표자 핸드폰</b></>,
+  },
+  REFERRAL_LINK: {
+    tab: "추천링크 발송", logLabel: "추천링크", linkVar: "#{추천링크}",
+    when: <>버즈admin [대시보드]·[버즈네트워크] 추천링크 알림톡 발송 → <b className="text-white">입력한 핸드폰번호</b></>,
+  },
+};
 
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label?: string }) {
   return (
@@ -64,10 +75,17 @@ export default function AlimtalkSettings() {
   const [remain, setRemain] = useState<string | null>(null);
 
   // ② 문구
-  const [tpl, setTpl] = useState<Tpl | null>(null);
-  const [btns, setBtns] = useState<Btn[]>([]);
-  const [vars, setVars] = useState<Var[]>([]);
-  const [sample, setSample] = useState<Record<string, string>>({});
+  const [tpls, setTpls] = useState<Tpl[]>([]);                       // 유형(탭) 목록 — 편집 중 값 보관
+  const [btnsBy, setBtnsBy] = useState<Record<string, Btn[]>>({});   // 유형별 버튼 편집 값
+  const [active, setActive] = useState<string>("");
+  const [varsBy, setVarsBy] = useState<Record<string, Var[]>>({});
+  const [sampleBy, setSampleBy] = useState<Record<string, Record<string, string>>>({});
+  const tpl = tpls.find((t) => t.eventCode === active) ?? null;
+  const btns = btnsBy[active] ?? [];
+  const setBtns = (fn: (p: Btn[]) => Btn[]) => setBtnsBy((m) => ({ ...m, [active]: fn(m[active] ?? []) }));
+  const vars = varsBy[active] ?? [];
+  const sample = sampleBy[active] ?? {};
+  const meta = EVENT_META[active];
   const [tplMsg, setTplMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const msgRef = useRef<HTMLTextAreaElement>(null);
@@ -90,10 +108,13 @@ export default function AlimtalkSettings() {
 
   useEffect(() => {
     apiGet<Config>("/api/org/alimtalk/config").then((r) => { if (r.ok && r.data) setCfg(r.data); });
-    apiGet<{ templates: Tpl[]; vars: Var[]; sample: Record<string, string> }>("/api/org/alimtalk/templates").then((r) => {
+    apiGet<{ templates: Tpl[]; varsByEvent: Record<string, Var[]>; sampleByEvent: Record<string, Record<string, string>> }>("/api/org/alimtalk/templates").then((r) => {
       if (r.ok && r.data) {
-        const t = r.data.templates.find((x) => x.eventCode === EVENT_CODE) || r.data.templates[0] || null;
-        setTpl(t); setBtns(parseBtns(t?.buttonJson ?? null)); setVars(r.data.vars); setSample(r.data.sample);
+        const list = r.data.templates;
+        setTpls(list);
+        setBtnsBy(Object.fromEntries(list.map((t) => [t.eventCode, parseBtns(t.buttonJson)])));
+        setVarsBy(r.data.varsByEvent || {}); setSampleBy(r.data.sampleByEvent || {});
+        setActive(list[0]?.eventCode ?? "");
       }
     });
     loadLogs(0);
@@ -123,7 +144,8 @@ export default function AlimtalkSettings() {
   }
 
   // ── ② 문구 ──
-  const setT = <K extends keyof Tpl>(k: K, v: Tpl[K]) => setTpl((p) => (p ? { ...p, [k]: v } : p));
+  const setT = <K extends keyof Tpl>(k: K, v: Tpl[K]) =>
+    setTpls((list) => list.map((t) => (t.eventCode === active ? { ...t, [k]: v } : t)));
 
   function insertVar(key: string) {
     if (!tpl) return;
@@ -157,8 +179,8 @@ export default function AlimtalkSettings() {
   }
 
   function applyAligo(a: AligoTpl) {
-    setTpl((p) => (p ? { ...p, tplCode: a.tplCode, message: a.content, subject: p.subject || a.name } : p));
-    setBtns(a.buttons.map((b) => ({ ...b })));
+    setTpls((list) => list.map((t) => (t.eventCode === active ? { ...t, tplCode: a.tplCode, message: a.content, subject: t.subject || a.name } : t)));
+    setBtns(() => a.buttons.map((b) => ({ ...b })));
     setAligoList(null);
     setTplMsg("템플릿을 불러왔습니다. [저장]을 눌러 반영하세요.");
   }
@@ -231,9 +253,20 @@ export default function AlimtalkSettings() {
             right={<Toggle on={tpl.enabled === "Y"} onChange={(v) => setT("enabled", v ? "Y" : "N")} label={tpl.enabled === "Y" ? "발송 사용" : "발송 중지"} />}
           />
 
+          {/* 알림톡 유형 탭 (docs/38) */}
+          <div className="mb-4 flex flex-wrap gap-2 border-b border-line pb-3">
+            {tpls.map((t) => (
+              <button key={t.eventCode} type="button" onClick={() => { setActive(t.eventCode); setTplMsg(null); setTestMsg(null); }}
+                className={`rounded-lg px-4 py-2 text-sm font-bold transition ${t.eventCode === active ? "bg-brand-600 text-white" : "bg-navy-800 text-slate-400 hover:text-white"}`}>
+                {EVENT_META[t.eventCode]?.tab ?? t.eventName}
+                <span className={`ml-2 text-[10px] ${t.enabled === "Y" ? "text-emerald-300" : "text-slate-500"}`}>{t.enabled === "Y" ? "사용" : "중지"}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="mb-4 rounded-xl border border-brand-500/30 bg-navy-900/60 px-4 py-3 text-sm">
             <span className="font-bold text-brand-300">발송 시점</span>
-            <span className="ml-3 text-slate-300">버즈admin [1차영업신청] 접수 → 가망고객 <b className="text-white">대표자 핸드폰</b></span>
+            <span className="ml-3 text-slate-300">{meta?.when ?? tpl.eventName}</span>
             <span className="ml-2 text-xs text-slate-500">({tpl.eventCode})</span>
           </div>
 
@@ -271,7 +304,7 @@ export default function AlimtalkSettings() {
               {/* 버튼 */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className={labelCls}>버튼 (최대 5개 · 링크에 #{"{상품링크}"} 사용 가능)</label>
+                  <label className={labelCls}>버튼 (최대 5개 · 링크에 {meta?.linkVar ?? "#{변수}"} 사용 가능)</label>
                   <button type="button" disabled={btns.length >= 5}
                     onClick={() => setBtns((p) => [...p, { name: "", linkType: "WL", linkMo: "", linkPc: "" }])} className={subBtnCls}>+ 버튼 추가</button>
                 </div>
@@ -336,7 +369,7 @@ export default function AlimtalkSettings() {
 
       {/* ③ 테스트 발송 */}
       <Card>
-        <SectionTitle title="테스트 발송" sub="저장된 문구를 샘플 값으로 치환해 입력한 번호로 발송합니다. (발송 사용 상태 + 계정 설정 완료 시)" />
+        <SectionTitle title={`테스트 발송${meta ? ` · ${meta.tab}` : ""}`} sub="선택한 알림톡 유형의 저장된 문구를 샘플 값으로 치환해 입력한 번호로 발송합니다. (발송 사용 상태 + 계정 설정 완료 시)" />
         <div className="flex flex-wrap items-center gap-3">
           <input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="수신 핸드폰번호 (010-0000-0000)" className={`${inputCls} max-w-xs`} />
           <button onClick={sendTest} disabled={testing} className={btnCls}>{testing ? "발송 중…" : "테스트 발송"}</button>
@@ -351,7 +384,7 @@ export default function AlimtalkSettings() {
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs text-slate-500">
-                <th className="py-2">일시</th><th>구분</th><th>영업ID</th><th>수신</th><th>템플릿</th><th>결과</th><th>내용</th>
+                <th className="py-2">일시</th><th>구분</th><th>참조ID</th><th>수신</th><th>템플릿</th><th>결과</th><th>내용</th>
               </tr>
             </thead>
             <tbody>
@@ -360,7 +393,7 @@ export default function AlimtalkSettings() {
                 <Fragment key={l.id}>
                   <tr onClick={() => setOpenLog(openLog === l.id ? null : l.id)} className="cursor-pointer border-b border-line/50 text-slate-300 hover:bg-navy-800/60">
                     <td className="py-2 whitespace-nowrap">{(l.createdAt || "").replace("T", " ").slice(0, 16)}</td>
-                    <td>{l.refId == null ? "테스트" : "1차영업 접수"}{l.testMode === "Y" && <span className="ml-1 text-xs text-warn">(T)</span>}</td>
+                    <td>{l.refId == null ? "테스트" : (EVENT_META[l.eventCode]?.logLabel ?? l.eventCode)}{l.testMode === "Y" && <span className="ml-1 text-xs text-warn">(T)</span>}</td>
                     <td>{l.refId ?? "-"}</td>
                     <td className="whitespace-nowrap">{l.recvName ? `${l.recvName} ` : ""}{l.receiver}</td>
                     <td>{l.tplCode || "-"}</td>

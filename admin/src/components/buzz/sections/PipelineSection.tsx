@@ -16,6 +16,11 @@ type PageResp = { content: Sale[]; page: number; totalPages: number; totalElemen
 
 const SIZE = 10;
 const DONE = new Set(["구매확정"]);
+type Stage = "ing" | "done";
+const STAGE_TABS: { key: Stage; label: string }[] = [
+  { key: "ing", label: "진행중" },
+  { key: "done", label: "완료" },
+];
 
 /** 버즈 영업 파이프라인 — 내가 등록한 1차영업 + 나를 추천인으로 등록한 버즈의 1차영업 */
 export default function PipelineSection() {
@@ -23,33 +28,45 @@ export default function PipelineSection() {
   const router = useRouter();
   const sp = useSearchParams();
   const initialPage = Math.max(0, Number(sp.get("page")) || 0); // URL ?page=N (0-indexed)
+  const initialStage: Stage = sp.get("stage") === "done" ? "done" : "ing"; // URL ?stage=ing|done
   const [rows, setRows] = useState<Sale[]>([]);
   const [page, setPage] = useState(initialPage);
+  const [stage, setStage] = useState<Stage>(initialStage);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (p: number) => {
+  const load = useCallback(async (p: number, st: Stage) => {
     setLoading(true);
-    const r = await apiGet<PageResp>(`/api/buzz/sales?page=${p}&size=${SIZE}`);
+    const r = await apiGet<PageResp>(`/api/buzz/sales?page=${p}&size=${SIZE}&stage=${st}`);
     if (r.data) { setRows(r.data.content); setTotalPages(r.data.totalPages || 1); setTotal(r.data.totalElements); setPage(r.data.page); }
     setLoading(false);
   }, []);
 
-  // 페이지 이동을 URL(?page=)에 저장 → 상세 다녀와 돌아가기 시 해당 페이지 복원
-  const go = useCallback((p: number) => {
-    router.replace(`/buzz/pipeline?page=${p}`, { scroll: false });
-    load(p);
-  }, [router, load]);
+  // 페이지·소메뉴를 URL(?page=&stage=)에 저장 → 상세 다녀와 돌아가기 시 복원
+  const go = useCallback((p: number, st: Stage = stage) => {
+    router.replace(`/buzz/pipeline?stage=${st}&page=${p}`, { scroll: false });
+    setStage(st);
+    load(p, st);
+  }, [router, load, stage]);
 
-  useEffect(() => { load(initialPage); }, [load]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(initialPage, initialStage); }, [load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card
       title="1차 영업 파이프라인"
-      sub={`총 ${total}건 · 내 영업 + 추천 네트워크 영업`}
+      sub={`${STAGE_TABS.find((t) => t.key === stage)?.label} ${total}건 · 내 영업 + 추천 네트워크 영업`}
       right={<Link href="/buzz/pipeline/new" className={`rounded-xl px-4 py-2 text-sm font-bold ${theme.primaryBtn}`}>+ 1차 영업등록</Link>}
     >
+      {/* 영업상태 소메뉴 (docs/38) — 진행중 / 완료(구매확정·취소/반품) */}
+      <div className="mb-4 flex gap-2">
+        {STAGE_TABS.map((t) => (
+          <button key={t.key} onClick={() => go(0, t.key)}
+            className={`rounded-xl px-4 py-2 text-sm font-bold ${stage === t.key ? theme.primaryBtn : `border ${theme.tableWrap} ${theme.cellSub}`}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
       <div className={`overflow-x-auto rounded-xl border ${theme.tableWrap}`}>
         <table className="w-full min-w-[900px] text-sm">
           <thead>

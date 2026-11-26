@@ -559,6 +559,10 @@ CALL chinbiz_add_col('partner_order','shipping_fee', "`shipping_fee` bigint DEFA
 CALL chinbiz_add_col('ad_chinbiz','area_height', "`area_height` int DEFAULT NULL");
 CALL chinbiz_add_col('ad_chinbiz','width_mode',  "`width_mode` varchar(10) NOT NULL DEFAULT 'DEFAULT'");
 CALL chinbiz_add_col('ad_chinbiz','area_width',  "`area_width` int DEFAULT NULL");
+-- [2026-11-26] docs/38 — 1차영업 가망고객: 종사업자번호(4) / 업태(50) / 업종(50)
+CALL chinbiz_add_col('sale','sub_business_number', "`sub_business_number` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `business_number`");
+CALL chinbiz_add_col('sale','business_type',       "`business_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `sub_business_number`");
+CALL chinbiz_add_col('sale','business_item',       "`business_item` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `business_type`");
 DROP PROCEDURE IF EXISTS chinbiz_add_col;
 -- 완료.
 

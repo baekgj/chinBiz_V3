@@ -81,6 +81,8 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
     else setErr(res.message ?? "저장에 실패했습니다.");
   }
 
+  const productLocked = d?.productId != null; // 1차영업 등록 상품 고정
+
   if (!mounted) return null;
   const dark = theme.card.includes("neutral");
   const panel = dark ? "bg-neutral-900 text-neutral-100" : "bg-white text-slate-900";
@@ -107,23 +109,27 @@ export default function AssignModal({ saleId, onClose, onSaved }: { saleId: numb
               <p className={`font-bold ${theme.cellMain}`}>{d.companyName ?? d.customerName}{d.ceoName ? ` · ${d.ceoName}` : ""}{d.ceoPhone ? ` (${d.ceoPhone})` : ""}</p>
               <p className={`mt-0.5 text-xs ${theme.cellSub}`}>{[d.phone, d.address, d.addressDetail].filter(Boolean).join(" · ")}</p>
             </div>
-            {/* 카테고리·상품 선택 (docs/24) — 저장 시 sale 에 반영 */}
+            {/* 카테고리·상품 (docs/24) — 등록된 상품은 변경 불가(2026-11-26 정책: 변경 시 주문 취소 후 신규 등록) */}
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className={`text-xs font-semibold ${theme.fieldLabel}`}>카테고리</span>
-                <select className={`mt-1 ${inp}`} value={catId} onChange={(e) => setCatId(e.target.value)}>
+                <select className={`mt-1 ${inp} disabled:opacity-60`} value={catId} disabled={productLocked} onChange={(e) => setCatId(e.target.value)}>
                   <option value="">전체</option>
                   {cats.map((c) => <option key={c.id} value={c.id}>{"·".repeat(["LARGE", "MEDIUM", "SMALL"].indexOf(c.level))}{c.name}</option>)}
                 </select>
               </label>
               <label className="block">
                 <span className={`text-xs font-semibold ${theme.fieldLabel}`}>상품 *</span>
-                <select className={`mt-1 ${inp}`} value={prodId} onChange={(e) => setProdId(e.target.value)}>
+                <select className={`mt-1 ${inp} disabled:opacity-60`} value={prodId} disabled={productLocked} onChange={(e) => setProdId(e.target.value)}>
                   <option value="">상품 선택</option>
+                  {productLocked && !prods.some((p) => String(p.id) === prodId) && <option value={prodId}>{d.productName}</option>}
                   {prods.map((p) => <option key={p.id} value={p.id}>{p.name}{p.partnerName ? ` (${p.partnerName})` : ""}</option>)}
                 </select>
               </label>
             </div>
+            {productLocked && (
+              <p className={`-mt-2 text-xs ${theme.cardSub}`}>상품·주소는 변경할 수 없습니다. 변경이 필요하면 주문을 취소한 뒤 새로 등록해 주세요.</p>
+            )}
             <label className="block">
               <span className={`text-xs font-semibold ${theme.fieldLabel}`}>영업 진행현황</span>
               <select className={`mt-1 ${inp}`} value={status} onChange={(e) => setStatus(e.target.value)}>

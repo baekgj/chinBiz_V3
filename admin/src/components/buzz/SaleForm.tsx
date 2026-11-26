@@ -52,7 +52,7 @@ export default function SaleForm() {
   const [prods, setProds] = useState<Prod[]>([]);
   const [catId, setCatId] = useState(initCat);
   const [f, setF] = useState({
-    productId: initProd, companyName: "", businessNumber: "", ceoName: "", ceoPhone: "", companyPhone: "",
+    productId: initProd, companyName: "", businessNumber: "", subBusinessNumber: "", businessType: "", businessItem: "", ceoName: "", ceoPhone: "", companyPhone: "",
     managerName: "", phone: "", email: "", zipcode: "", address: "", addressDetail: "",
     status: "접수", memo: "",
   });
@@ -118,25 +118,48 @@ export default function SaleForm() {
 
       <section className={theme.card}>
         <h3 className={`mb-3 text-sm font-black ${theme.cardHead}`}>가망고객 기본정보</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <F label="상호명 *" labelCls={lc}><input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="상호명" /></F>
-          <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} inputMode="numeric" onChange={(e) => set("businessNumber")(fmtBiz(e.target.value))} placeholder="000-00-00000" /></F>
-          <F label="대표자명" labelCls={lc}><input className={inputCls} value={f.ceoName} onChange={(e) => set("ceoName")(e.target.value)} placeholder="대표자명" /></F>
-          <F label="대표자 핸드폰번호" labelCls={lc}><input className={inputCls} value={f.ceoPhone} inputMode="numeric" onChange={(e) => set("ceoPhone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
-          <F label="회사 전화번호" labelCls={lc}><input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(fmtPhone(e.target.value))} placeholder="02-000-0000" /></F>
-          <F label="담당자명" labelCls={lc}><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자명" /></F>
-          <F label="핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
-          <F label="이메일" labelCls={lc}><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></F>
-        </div>
-        <div className="mt-4">
-          <span className={`text-xs font-semibold ${theme.fieldLabel}`}>회사 주소</span>
-          <div className="mt-1 flex gap-2">
-            <input className={`${inputCls} w-32`} value={f.zipcode} readOnly placeholder="우편번호" />
-            <button type="button" onClick={() => openDaumPostcode((r) => setF((p) => ({ ...p, zipcode: r.zipcode, address: r.address })))}
-              className={`shrink-0 rounded-lg px-3 text-xs font-bold ${theme.outlineBtn}`}>우편번호 검색</button>
+        {/* 배치 순서 (docs/38) */}
+        <div className="space-y-4">
+          {/* 1라인: 상호명 · 사업자등록번호 · 종사업자번호 */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <F label="상호명 *" labelCls={lc}><input className={inputCls} value={f.companyName} onChange={(e) => set("companyName")(e.target.value)} placeholder="상호명" /></F>
+            <F label="사업자등록번호" labelCls={lc}><input className={inputCls} value={f.businessNumber} inputMode="numeric" onChange={(e) => set("businessNumber")(fmtBiz(e.target.value))} placeholder="000-00-00000" /></F>
+            <F label="종사업자번호" labelCls={lc}><input className={inputCls} value={f.subBusinessNumber} inputMode="numeric" maxLength={4} onChange={(e) => set("subBusinessNumber")(digits(e.target.value).slice(0, 4))} placeholder="0000 (4자리)" /></F>
           </div>
-          <input className={`${inputCls} mt-2`} value={f.address} readOnly placeholder="기본주소" />
-          <input className={`${inputCls} mt-2`} value={f.addressDetail} onChange={(e) => set("addressDetail")(e.target.value)} placeholder="회사 상세주소" />
+          {/* 2라인: 회사 전화번호 · 이메일주소 */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <F label="회사 전화번호" labelCls={lc}><input className={inputCls} value={f.companyPhone} inputMode="numeric" onChange={(e) => set("companyPhone")(fmtPhone(e.target.value))} placeholder="02-000-0000" /></F>
+            <F label="이메일주소" labelCls={lc}><input className={inputCls} value={f.email} onChange={(e) => set("email")(e.target.value)} placeholder="mail@example.com" /></F>
+          </div>
+          {/* 3라인: 업태 · 업종 */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <F label="업태" labelCls={lc}><input className={inputCls} value={f.businessType} maxLength={50} onChange={(e) => set("businessType")(e.target.value)} placeholder="예) 서비스업" /></F>
+            <F label="업종" labelCls={lc}><input className={inputCls} value={f.businessItem} maxLength={50} onChange={(e) => set("businessItem")(e.target.value)} placeholder="예) 소프트웨어 개발" /></F>
+          </div>
+          {/* 4라인: 회사 주소 (우편번호 · 기본주소 · 상세주소) */}
+          <div>
+            <span className={`text-xs font-semibold ${theme.fieldLabel}`}>회사 주소</span>
+            {/* 1라인: 우편번호 + 기본주소 / 2라인: 상세주소 */}
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+              <div className="flex gap-2">
+                <input className={`${inputCls} w-28`} value={f.zipcode} readOnly placeholder="우편번호" />
+                <button type="button" onClick={() => openDaumPostcode((r) => setF((p) => ({ ...p, zipcode: r.zipcode, address: r.address })))}
+                  className={`shrink-0 rounded-lg px-3 text-xs font-bold ${theme.outlineBtn}`}>우편번호 검색</button>
+              </div>
+              <input className={`${inputCls} sm:flex-1`} value={f.address} readOnly placeholder="기본주소" />
+            </div>
+            <input className={`${inputCls} mt-2`} value={f.addressDetail} onChange={(e) => set("addressDetail")(e.target.value)} placeholder="상세주소" />
+          </div>
+          {/* 5라인: 대표자명 · 대표자 핸드폰번호 */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <F label="대표자명" labelCls={lc}><input className={inputCls} value={f.ceoName} onChange={(e) => set("ceoName")(e.target.value)} placeholder="대표자명" /></F>
+            <F label="대표자 핸드폰번호" labelCls={lc}><input className={inputCls} value={f.ceoPhone} inputMode="numeric" onChange={(e) => set("ceoPhone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
+          </div>
+          {/* 6라인: 담당자명 · 담당자 핸드폰번호 */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <F label="담당자명" labelCls={lc}><input className={inputCls} value={f.managerName} onChange={(e) => set("managerName")(e.target.value)} placeholder="담당자명" /></F>
+            <F label="담당자 핸드폰번호" labelCls={lc}><input className={inputCls} value={f.phone} inputMode="numeric" onChange={(e) => set("phone")(fmtPhone(e.target.value))} placeholder="010-0000-0000" /></F>
+          </div>
         </div>
       </section>
 

@@ -99,28 +99,37 @@ public class AllowanceService {
         // 단순배송상품은 1차영업 등록이 아니라 HOME 주문 완료 시점에 CP 적립 (docs/33-2, createForShopOrder)
         if (p.isSimpleDelivery()) return;
         Long partnerId = p.getPartnerId();
+        User master = masterAdmin();
 
         // 1) 버즈 본인
         add(sale, Allowance.MemberType.BUZZ, buzz.getUserId(), amount(p, p.getBuzzReward()), buzz, partnerId, buzz);
 
-        // 2) 추천인(친쿠) — 있을 때만
-        if (referrer != null)
-            add(sale, Allowance.MemberType.TOPBUZZ, referrer.getUserId(), amount(p, p.getChinkuReward()), referrer, partnerId, buzz);
+        // 2) 추천인(친쿠) — 없으면 본사 귀속
+        addOrHq(sale, Allowance.MemberType.TOPBUZZ, referrer, amount(p, p.getChinkuReward()), master, partnerId, buzz);
 
-        // 3) 소속센터
-        User center = centerAdmin(buzz.getSalesCenterId());
-        String centerId = center != null ? center.getUserId() : (buzz.getSalesCenterId() != null ? "SC:" + buzz.getSalesCenterId() : null);
-        add(sale, Allowance.MemberType.BUZZ_CENTER, centerId, amount(p, p.getSalesCenterReward()), center, partnerId, buzz);
+        // 3) 소속센터 — 소속센터/센터 계정이 없으면 본사 귀속
+        addOrHq(sale, Allowance.MemberType.BUZZ_CENTER, centerAdmin(buzz.getSalesCenterId()),
+                amount(p, p.getSalesCenterReward()), master, partnerId, buzz);
 
-        // 4) 본부(총괄본부)
-        User division = divisionAdmin(buzz.getSalesCenterId());
-        String divisionId = division != null ? division.getUserId() : "DIVISION";
-        add(sale, Allowance.MemberType.DIVISION, divisionId, amount(p, p.getDivisionReward()), division, partnerId, buzz);
+        // 4) 본부(총괄본부) — 본부 계정이 없으면 본사 귀속
+        addOrHq(sale, Allowance.MemberType.DIVISION, divisionAdmin(buzz.getSalesCenterId()),
+                amount(p, p.getDivisionReward()), master, partnerId, buzz);
 
         // 5) 친비즈 본사 (MASTER_ADMIN 계정 ID)
-        User master = masterAdmin();
-        String hqId = master != null ? master.getUserId() : "HQ";
-        add(sale, Allowance.MemberType.HQ, hqId, amount(p, p.getHqReward()), master, partnerId, buzz);
+        add(sale, Allowance.MemberType.HQ, hqId(master), amount(p, p.getHqReward()), master, partnerId, buzz);
+    }
+
+    private static String hqId(User master) { return master != null ? master.getUserId() : "HQ"; }
+
+    /**
+     * 빈 수당 본사 귀속 (2026-11-26 정책): 수취 계정(추천인·소속센터·본부·관리센터)이 없으면
+     * 해당 슬롯 금액을 본사(MASTER_ADMIN) 계정으로 적립. 회원구분은 원래 슬롯 그대로 두어 출처를 추적하고,
+     * 본사 수익 집계는 member_id(본사 계정) 기준으로 모든 회원구분을 합산한다(MasterDashboardController).
+     * 금액 0 인 빈 슬롯은 전표를 만들지 않는다.
+     */
+    private void addOrHq(Sale sale, Allowance.MemberType mt, User payee, long amt, User master, Long partnerId, User handler) {
+        if (payee != null) { add(sale, mt, payee.getUserId(), amt, payee, partnerId, handler); return; }
+        if (amt != 0) add(sale, mt, hqId(master), amt, master, partnerId, handler);
     }
 
     /**
@@ -140,17 +149,22 @@ public class AllowanceService {
 
         addIfAbsent(sale, Allowance.MemberType.BUZZ, buzz.getUserId(), amount(p, p.getBuzzReward()) * qty, buzz, partnerId, buzz);
 
+        User master = masterAdmin();
+
+        // 소속센터·본부 계정이 없으면 본사 귀속 (빈 수당 정책)
         User center = centerAdmin(buzz.getSalesCenterId());
-        String centerId = center != null ? center.getUserId() : (buzz.getSalesCenterId() != null ? "SC:" + buzz.getSalesCenterId() : null);
-        addIfAbsent(sale, Allowance.MemberType.BUZZ_CENTER, centerId, amount(p, p.getSalesCenterReward()) * qty, center, partnerId, buzz);
+        long centerAmt = amount(p, p.getSalesCenterReward()) * qty;
+        if (center != null || centerAmt != 0)
+            addIfAbsent(sale, Allowance.MemberType.BUZZ_CENTER, center != null ? center.getUserId() : hqId(master),
+                    centerAmt, center != null ? center : master, partnerId, buzz);
 
         User division = divisionAdmin(buzz.getSalesCenterId());
-        String divisionId = division != null ? division.getUserId() : "DIVISION";
-        addIfAbsent(sale, Allowance.MemberType.DIVISION, divisionId, amount(p, p.getDivisionReward()) * qty, division, partnerId, buzz);
+        long divisionAmt = amount(p, p.getDivisionReward()) * qty;
+        if (division != null || divisionAmt != 0)
+            addIfAbsent(sale, Allowance.MemberType.DIVISION, division != null ? division.getUserId() : hqId(master),
+                    divisionAmt, division != null ? division : master, partnerId, buzz);
 
-        User master = masterAdmin();
-        String hqId = master != null ? master.getUserId() : "HQ";
-        addIfAbsent(sale, Allowance.MemberType.HQ, hqId, amount(p, p.getHqReward()) * qty, master, partnerId, buzz);
+        addIfAbsent(sale, Allowance.MemberType.HQ, hqId(master), amount(p, p.getHqReward()) * qty, master, partnerId, buzz);
 
         return allowanceRepo.findByOrderNoAndType(sale.getOrderNo(), Allowance.Type.ORDER);
     }
@@ -179,11 +193,9 @@ public class AllowanceService {
         add(sale, Allowance.MemberType.MANAGER, manager.getUserId(), amount(p, p.getManagerReward()), manager, partnerId, manager);
 
         // 2) 매니저 관리센터 — 이 영업의 지역센터(고객 주소 센터, 매니저의 활동센터 중 하나). docs/19 다중센터
-        Long mgmtCenterId = sale.getCustomerCenterId();
-        User mgmtCenter = centerAdmin(mgmtCenterId);
-        String mcId = mgmtCenter != null ? mgmtCenter.getUserId()
-                : (mgmtCenterId != null ? "MC:" + mgmtCenterId : null);
-        add(sale, Allowance.MemberType.MANAGER_CENTER, mcId, amount(p, p.getMgmtCenterReward()), mgmtCenter, partnerId, manager);
+        //    관리센터 계정이 없으면 본사 귀속 (빈 수당 정책)
+        addOrHq(sale, Allowance.MemberType.MANAGER_CENTER, centerAdmin(sale.getCustomerCenterId()),
+                amount(p, p.getMgmtCenterReward()), masterAdmin(), partnerId, manager);
     }
 
     /** 매니저 재배정: 해당 주문의 MANAGER·MANAGER_CENTER ORDER 전표를 CANCEL(−금액) 상계전표로 Insert */
@@ -303,7 +315,7 @@ public class AllowanceService {
 
     /**
      * 회비/입점비 결제 완료 시 상위 조직 수당 (docs/30). type=MEMBERSHIP, status=CP, order_no=결제 주문번호.
-     *  - 매니저 회비 : 소속센터(BUZZ_CENTER) centerAmt + 소속본부(DIVISION) divisionAmt
+     *  - 매니저 회비 : 소속센터(BUZZ_CENTER) centerAmt + 추천본부(DIVISION, 소속센터를 등록한 본부) divisionAmt
      *  - 센터 회비   : 소속본부(DIVISION) divisionAmt
      *  - 파트너 입점비: 영업본부(partner.sale_id) divisionAmt
      * 수취 계정이 없거나 금액이 0 이면 생략. 결제 1건당 1회만 호출(멱등은 호출측 DONE 체크).
@@ -318,12 +330,11 @@ public class AllowanceService {
         User center = null, division = null;
         if (payer != null && payer.getRole() == Role.MANAGER) {
             center = centerAdmin(payer.getSalesCenterId());
-            division = divisionAdmin(payer.getSalesCenterId());
+            // docs/38: 매니저 회비 수당은 소속본부가 아닌 추천본부(매니저 소속센터를 등록한 본부 = 센터장 referral_code)에 지급
+            division = referralDivision(center);
         } else if (payer != null && payer.getRole() == Role.CENTER_ADMIN) {
             // docs/37: 센터 관리비 수당은 소속본부가 아닌 추천본부(referral_code = 센터를 등록한 본부장 ID)에 지급
-            String ref = payer.getReferralCode();
-            division = ref == null || ref.isBlank() ? null : userRepo.findByUserId(ref.trim())
-                    .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);
+            division = referralDivision(payer);
         } else if (partnerSaleId != null && !partnerSaleId.isBlank()) {
             division = userRepo.findByUserId(partnerSaleId.trim())
                     .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);
@@ -333,6 +344,14 @@ public class AllowanceService {
         if (division != null && divisionAmt > 0)
             out.add(addMembership(orderId, Allowance.MemberType.DIVISION, division, divisionAmt, handlerId));
         return out;
+    }
+
+    /** 센터 계정의 추천본부 — 센터를 등록한 본부장(user.referral_code = 본부장 ID, DIVISION_ADMIN). 없으면 null */
+    private User referralDivision(User centerUser) {
+        if (centerUser == null) return null;
+        String ref = centerUser.getReferralCode();
+        return ref == null || ref.isBlank() ? null : userRepo.findByUserId(ref.trim())
+                .filter(u -> u.getRole() == Role.DIVISION_ADMIN).orElse(null);
     }
 
     private Allowance addMembership(String orderId, Allowance.MemberType mt, User payee, long amt, String handlerId) {

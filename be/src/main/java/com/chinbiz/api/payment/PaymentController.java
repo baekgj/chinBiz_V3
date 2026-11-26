@@ -478,7 +478,7 @@ public class PaymentController {
         }
     }
 
-    /** 본사 [관리비설정] 수당지급 %에 따라 소속센터/소속본부(센터회원은 추천본부, 파트너는 영업본부)에 MEMBERSHIP CP 수당 지급.
+    /** 본사 [관리비설정] 수당지급 %에 따라 소속센터/추천본부(매니저=소속센터를 등록한 본부, 센터=센터를 등록한 본부, 파트너는 영업본부)에 MEMBERSHIP CP 수당 지급.
      *  수당 = 결제 공급가액(회비 - 부가세) × % (원 미만 절사). 결제수단(카드/MP)과 무관하게 동일 기준. */
     private void grantMembershipAllowance(MembershipPayment mp) {
         long base = nz(mp.getBaseFee()) - nz(mp.getVat());

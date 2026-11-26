@@ -215,6 +215,9 @@ CREATE TABLE IF NOT EXISTS `sale` (
   `address` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `address_detail` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `business_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sub_business_number` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL,  -- 종사업자번호 (docs/38)
+  `business_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,       -- 업태 (docs/38)
+  `business_item` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,       -- 업종 (docs/38)
   `buzz_id` bigint DEFAULT NULL,
   `category_id` bigint DEFAULT NULL,
   `ceo_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

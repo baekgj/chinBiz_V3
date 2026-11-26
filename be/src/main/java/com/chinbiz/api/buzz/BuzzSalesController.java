@@ -33,6 +33,9 @@ import java.util.Map;
 @RequestMapping("/api/buzz/sales")
 public class BuzzSalesController {
 
+    /** 영업 종료 상태 — 파이프라인 [완료] 소메뉴 */
+    private static final List<String> FINISHED = List.of("구매확정", "취소/반품");
+
     private final SaleRepository saleRepo;
     private final ProductRepository productRepo;
     private final PartnerRepository partnerRepo;
@@ -138,6 +141,9 @@ public class BuzzSalesController {
         m.put("parentId", s.getParentId());
         m.put("companyName", s.getCompanyName());
         m.put("businessNumber", s.getBusinessNumber());
+        m.put("subBusinessNumber", s.getSubBusinessNumber());
+        m.put("businessType", s.getBusinessType());
+        m.put("businessItem", s.getBusinessItem());
         m.put("ceoName", s.getCeoName());
         m.put("ceoPhone", s.getCeoPhone());
         m.put("agreeCheck", s.getAgreeCheck());
@@ -156,6 +162,7 @@ public class BuzzSalesController {
     @GetMapping
     public ResponseEntity<?> list(Authentication auth,
                                   @RequestParam(required = false) String keyword,
+                                  @RequestParam(required = false) String stage,
                                   @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "10") int size) {
         User me = me(auth);
@@ -171,6 +178,11 @@ public class BuzzSalesController {
 
         List<Specification<Sale>> specs = new ArrayList<>();
         specs.add((r, q, cb) -> r.get("buzzId").in(buzzIds));
+        // 영업상태 소메뉴 (docs/38): done=완료(구매확정·취소/반품), ing=진행중(그 외)
+        if ("done".equals(stage))
+            specs.add((r, q, cb) -> r.get("status").in(FINISHED));
+        else if ("ing".equals(stage))
+            specs.add((r, q, cb) -> cb.or(cb.isNull(r.get("status")), cb.not(r.get("status").in(FINISHED))));
         if (keyword != null && !keyword.isBlank())
             specs.add((r, q, cb) -> cb.like(r.get("companyName"), "%" + keyword.trim() + "%"));
         Specification<Sale> spec = specs.stream().reduce(Specification::and).orElse(null);
@@ -247,7 +259,8 @@ public class BuzzSalesController {
 
     public record SaleRequest(
             Long productId, Long categoryId,
-            String companyName, String businessNumber, String ceoName, String ceoPhone, String companyPhone,
+            String companyName, String businessNumber, String subBusinessNumber, String businessType, String businessItem,
+            String ceoName, String ceoPhone, String companyPhone,
             String managerName, String phone, String email,
             String zipcode, String address, String addressDetail,
             String status, String memo) {}
@@ -303,6 +316,11 @@ public class BuzzSalesController {
         Sale s = saleRepo.findById(id).orElse(null);
         if (s == null || me == null || !me.getId().equals(s.getBuzzId()))
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
+        // 매니저 배정 후에는 주소·상품 변경 불가 (2026-11-26 정책) — 변경이 필요하면 주문 취소 후 신규 등록
+        if (s.getManagerId() != null && (changed(s.getProductId(), req.productId())
+                || changed(s.getZipcode(), req.zipcode()) || changed(s.getAddress(), req.address())
+                || changed(s.getAddressDetail(), req.addressDetail())))
+            return lockedResponse();
         if (isDuplicate(req, s.getId())) return dupResponse();
         apply(s, req);
         s.setParentId(centerParentId(req.address()));
@@ -314,10 +332,8 @@ public class BuzzSalesController {
     /** 1차영업 접수 시 본인 활동영역(manager_center Y)에 해당하면 본인을 2차 매니저로 배정 + 수당 원장 + [2차영업자동배정] 알람.
      *  수동 [우선할당]과 동일하게 해당 상품 교육 이수·승인이 있어야 배정. */
     private void autoAssignSelf(Sale s, User me) {
-        if (me.getRole() != Role.MANAGER || s.getManagerId() != null || s.getCustomerCenterId() == null || s.getProductId() == null) return;
-        boolean inArea = managerCenterRepo.findByBuzzIdAndStatus(me.getId(), "Y").stream()
-                .anyMatch(mc -> s.getCustomerCenterId().equals(mc.getCenterId()));
-        if (!inArea) return;
+        if (me.getRole() != Role.MANAGER || s.getManagerId() != null || s.getProductId() == null) return;
+        if (!inMyArea(s, me)) return; // 활동지역 밖 고객은 우선할당 없이 일반 접수로 남음
         boolean eduApproved = eduRepo.findByProductIdAndManagerId(s.getProductId(), me.getId())
                 .map(e -> e.isCompleted() && e.isApproved()).orElse(false);
         if (!eduApproved) return;
@@ -340,9 +356,17 @@ public class BuzzSalesController {
         if (s == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
         if (s.getManagerId() != null && !me.getId().equals(s.getManagerId()))
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 다른 매니저에게 배정된 영업입니다."));
-        // 매니저가 배정 시 카테고리/상품 선택 저장 (docs/24) — 교육 승인 판정 전에 반영
-        if (req.categoryId() != null) s.setCategoryId(req.categoryId());
-        if (req.productId() != null) s.setProductId(req.productId());
+        // 활동지역 검증 — 신규 배정은 고객 주소 지역이 내 승인 활동센터일 때만 (우선할당·자동배정 공통)
+        if (s.getManagerId() == null && !inMyArea(s, me))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "승인된 활동지역의 고객만 배정받을 수 있습니다."));
+        // 상품 변경 불가 (2026-11-26 정책) — 1차영업 등록 시점 상품으로 수당 원장이 생성되므로,
+        // 상품을 바꿔야 하면 주문 취소 후 신규 등록. 상품이 비어 있는 구 데이터만 배정 시 선택 허용(docs/24)
+        if (s.getProductId() != null && req.productId() != null && !req.productId().equals(s.getProductId()))
+            return lockedResponse();
+        if (s.getProductId() == null) {
+            if (req.categoryId() != null) s.setCategoryId(req.categoryId());
+            if (req.productId() != null) s.setProductId(req.productId());
+        }
         boolean eduApproved = s.getProductId() != null && eduRepo.findByProductIdAndManagerId(s.getProductId(), me.getId())
                 .map(e -> e.isCompleted() && e.isApproved()).orElse(false);
         if (!eduApproved) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "해당 상품 교육 이수·승인 후 배정할 수 있습니다."));
@@ -374,6 +398,22 @@ public class BuzzSalesController {
         if (!phone.isEmpty()) return saleRepo.countDupByCeoPhone(req.productId(), phone, excludeId) > 0;
         return false;
     }
+    /** 고객 주소 지역(customer_center_id)이 매니저의 승인된 활동센터(manager_center Y) 중 하나인지 */
+    private boolean inMyArea(Sale s, User me) {
+        if (s.getCustomerCenterId() == null) return false;
+        return managerCenterRepo.findByBuzzIdAndStatus(me.getId(), "Y").stream()
+                .anyMatch(mc -> s.getCustomerCenterId().equals(mc.getCenterId()));
+    }
+    /** 요청값이 현재값과 다른지 (null·공백은 빈 값으로 동일 취급) */
+    private static boolean changed(Object cur, Object req) {
+        String a = cur == null ? "" : cur.toString().trim();
+        String b = req == null ? "" : req.toString().trim();
+        return !a.equals(b);
+    }
+    private static ResponseEntity<?> lockedResponse() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("code", "SALE_LOCKED",
+                "message", "매니저가 배정된 영업은 주소·상품을 변경할 수 없습니다. 주문을 취소한 뒤 새로 등록해 주세요."));
+    }
     private static String digits(String v) { return v == null ? "" : v.replaceAll("[^0-9]", ""); }
     private static ResponseEntity<?> dupResponse() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("code", "DUPLICATE_SALE", "message", "동일한 상품에 대한 신청내역이 존재합니다."));
@@ -393,6 +433,9 @@ public class BuzzSalesController {
         s.setCategoryId(req.categoryId());
         s.setCompanyName(req.companyName());
         s.setBusinessNumber(req.businessNumber());
+        s.setSubBusinessNumber(trimTo(digits(req.subBusinessNumber()), 4)); // 종사업자번호 숫자 4자리 (docs/38)
+        s.setBusinessType(trimTo(req.businessType(), 50));                  // 업태
+        s.setBusinessItem(trimTo(req.businessItem(), 50));                  // 업종
         s.setCeoName(req.ceoName());
         s.setCeoPhone(req.ceoPhone());
         s.setCompanyPhone(req.companyPhone());
@@ -408,4 +451,10 @@ public class BuzzSalesController {
     }
 
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
+    /** 공백 제거 후 최대 n자, 비면 null */
+    private static String trimTo(String v, int n) {
+        if (v == null) return null;
+        String t = v.trim();
+        return t.isEmpty() ? null : (t.length() > n ? t.substring(0, n) : t);
+    }
 }

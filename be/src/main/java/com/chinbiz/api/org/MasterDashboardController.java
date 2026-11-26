@@ -74,8 +74,9 @@ public class MasterDashboardController {
         long gmvCur = saleRepo.sumGmvBetween(curFrom, curTo);
         long gmvPrev = saleRepo.sumGmvBetween(prevFrom, curFrom);
 
-        // 금월/전월 본사 확정수익 (HQ, MP)
-        var hq = List.of(Allowance.MemberType.HQ);
+        // 금월/전월 본사 확정수익 (MP) — 본사 계정 기준 전 회원구분 합산
+        //  (HQ 몫 + 수취인이 없어 본사로 귀속된 추천·센터·본부 몫, 2026-11-26 빈 수당 정책)
+        var hq = List.of(Allowance.MemberType.values());
         long profitCur = allowanceRepo.sumMonthly(me.getUserId(), Allowance.Status.MP, hq, curFrom, curTo);
         long profitPrev = allowanceRepo.sumMonthly(me.getUserId(), Allowance.Status.MP, hq, prevFrom, curFrom);
 

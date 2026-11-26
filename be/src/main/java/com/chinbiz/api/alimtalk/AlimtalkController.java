@@ -68,11 +68,23 @@ public class AlimtalkController {
     // ── 발송 문구 ─────────────────────────────────────────
     @GetMapping("/templates")
     public Map<String, Object> templates() {
+        // 알림톡 유형(이벤트) 탭 순서대로 정렬 (docs/38)
         List<Map<String, Object>> list = new ArrayList<>();
-        tplRepo.findAll().forEach(t -> list.add(toMap(t)));
-        List<Map<String, String>> vars = new ArrayList<>();
-        AlimtalkService.VARS.forEach((k, v) -> vars.add(Map.of("key", k, "desc", v)));
-        return Map.of("templates", list, "vars", vars, "sample", service.sampleVars());
+        tplRepo.findAll().stream()
+                .sorted(Comparator.comparingInt(t -> {
+                    int i = AlimtalkService.EVENTS.indexOf(t.getEventCode());
+                    return i < 0 ? Integer.MAX_VALUE : i;
+                }))
+                .forEach(t -> list.add(toMap(t)));
+        // 이벤트별 치환변수·샘플값
+        Map<String, Object> varsByEvent = new LinkedHashMap<>(), sampleByEvent = new LinkedHashMap<>();
+        for (String ev : AlimtalkService.EVENTS) {
+            List<Map<String, String>> vars = new ArrayList<>();
+            AlimtalkService.varsOf(ev).forEach((k, v) -> vars.add(Map.of("key", k, "desc", v)));
+            varsByEvent.put(ev, vars);
+            sampleByEvent.put(ev, service.sampleVars(ev));
+        }
+        return Map.of("templates", list, "varsByEvent", varsByEvent, "sampleByEvent", sampleByEvent);
     }
 
     public record TemplateRequest(String enabled, String tplCode, String subject, String message, String buttonJson,
@@ -154,7 +166,7 @@ public class AlimtalkController {
         String to = AligoClient.digits(req.receiver());
         if (to.length() < 10) return ResponseEntity.badRequest().body(Map.of("message", "수신 핸드폰번호를 정확히 입력해 주세요."));
         String ev = isBlank(req.eventCode()) ? AlimtalkService.EV_SALE1_CUSTOMER : req.eventCode();
-        AlimtalkLog l = service.send(ev, null, to, "테스트", service.sampleVars());
+        AlimtalkLog l = service.send(ev, null, to, "테스트", service.sampleVars(ev));
         return ResponseEntity.ok(logMap(l));
     }
 

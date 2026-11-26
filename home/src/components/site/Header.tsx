@@ -93,7 +93,7 @@ export default function Header() {
             버즈회원 가입
           </Link>
           <a
-            href="#inquiry"
+            href="/#inquiry"
             className="rounded-lg border border-forest-600/40 px-4 py-2 text-sm font-semibold text-forest-700 transition-colors hover:bg-forest-50"
           >
             파트너사 입점문의

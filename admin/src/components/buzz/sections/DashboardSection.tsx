@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { krw } from "@/components/ui";
 import { Card } from "@/components/buzz/BuzzUI";
+import ReferralAlimtalk from "@/components/buzz/ReferralAlimtalk";
 import { useBuzz } from "@/components/buzz/theme";
 import { apiGet, mediaUrl } from "@/lib/api";
 import { myReward } from "@/lib/reward";
@@ -163,6 +164,7 @@ export default function DashboardSection() {
           <button onClick={copyRef} className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold ${theme.primaryBtn}`}>
             🔗 추천링크 복사하여 공유
           </button>
+          <ReferralAlimtalk className="mt-3" />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className={`rounded-xl border p-3 text-center ${theme.tableWrap}`}>

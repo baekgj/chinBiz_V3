@@ -81,6 +81,9 @@ public class AdminSalesController {
         if (s == null) return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(Map.of("message", "영업 건을 찾을 수 없습니다."));
         Map<String, Object> m = row(s);
         m.put("businessNumber", s.getBusinessNumber());
+        m.put("subBusinessNumber", s.getSubBusinessNumber()); // 종사업자번호 (docs/38)
+        m.put("businessType", s.getBusinessType());           // 업태
+        m.put("businessItem", s.getBusinessItem());           // 업종
         m.put("companyPhone", s.getCompanyPhone());
         m.put("contactName", s.getManagerName());   // 고객사 담당자명
         m.put("phone", s.getPhone());

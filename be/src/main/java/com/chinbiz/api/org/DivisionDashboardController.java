@@ -167,6 +167,9 @@ public class DivisionDashboardController {
         out.put("mpAll", mpAll);
         out.put("withdrawn", withdrawn);
         out.put("centerCount", c.centers.size());
+        // 추천센터 수 (docs/38) — 이 본부가 등록(추천)한 센터 계정 수 (user.referral_code = 본부장 ID)
+        out.put("referredCenterCount", userRepo.findByReferralCode(me.getUserId()).stream()
+                .filter(u -> u.getRole() == Role.CENTER_ADMIN).count());
         out.put("buzzCount", buzzCount);
         out.put("productKinds", productKinds);
         out.put("headAssigned", heads.size());

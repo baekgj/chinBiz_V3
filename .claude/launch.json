@@ -2,6 +2,8 @@
   "version": "0.0.1",
   "configurations": [
     { "name": "home", "url": "http://localhost:8001" },
-    { "name": "admin", "url": "http://localhost:3100" }
+    { "name": "admin", "url": "http://localhost:3100" },
+    { "name": "home-dev", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "home", "run", "dev"], "port": 8001 },
+    { "name": "admin-dev", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "admin", "run", "dev"], "port": 3100 }
   ]
 }

@@ -9,7 +9,7 @@ import { apiGet } from "@/lib/api";
 
 type Sale = Record<string, unknown> & {
   id: number; createdAt: string; productId?: number; productName?: string; partnerName?: string; status?: string;
-  companyName?: string; businessNumber?: string; ceoName?: string; ceoPhone?: string; companyPhone?: string;
+  companyName?: string; businessNumber?: string; subBusinessNumber?: string; businessType?: string; businessItem?: string; ceoName?: string; ceoPhone?: string; companyPhone?: string;
   managerName?: string; phone?: string; email?: string; zipcode?: string; address?: string; addressDetail?: string; memo?: string;
 };
 
@@ -49,13 +49,16 @@ export default function BuzzSaleDetailPage() {
             <Card title="고객 기본정보">
               <Row label="상호명" value={s.companyName} />
               <Row label="사업자등록번호" value={s.businessNumber} />
+              <Row label="종사업자번호" value={s.subBusinessNumber} />
+              <Row label="회사 전화번호" value={s.companyPhone} />
+              <Row label="이메일주소" value={s.email} />
+              <Row label="업태" value={s.businessType} />
+              <Row label="업종" value={s.businessItem} />
+              <Row label="회사 주소" value={[s.zipcode, s.address, s.addressDetail].filter(Boolean).join(" ")} />
               <Row label="대표자명" value={s.ceoName} />
               <Row label="대표자 핸드폰번호" value={s.ceoPhone} />
-              <Row label="회사 전화번호" value={s.companyPhone} />
               <Row label="담당자명" value={s.managerName} />
-              <Row label="핸드폰번호" value={s.phone} />
-              <Row label="이메일" value={s.email} />
-              <Row label="주소" value={[s.zipcode, s.address, s.addressDetail].filter(Boolean).join(" ")} />
+              <Row label="담당자 핸드폰번호" value={s.phone} />
             </Card>
             {s.memo && <Card title="메모"><p className={`whitespace-pre-wrap text-sm ${theme.cellMain}`}>{s.memo}</p></Card>}
           </div>

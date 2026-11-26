@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
 
-type StatsResp = { totalMatches: number; activeBuzz: number; monthMatches: number };
+const ACTIVE_BUZZ_MIN = 100;
+
+type StatsResp ={ totalMatches: number; activeBuzz: number; monthMatches: number };
 
 /** 파트너 온보딩 지표 카드 — 활성 버즈 회원(1차영업 1회 이상 신청자)은 DB 연동 */
 export default function PartnerStats() {
@@ -15,14 +17,16 @@ export default function PartnerStats() {
     });
   }, []);
 
+  // 활성 버즈 회원은 100명 이상일 때만 노출 (docs/38)
+  const showActive = activeBuzz !== null && activeBuzz >= ACTIVE_BUZZ_MIN;
   const cards = [
-    { v: activeBuzz === null ? "…" : activeBuzz.toLocaleString("ko-KR"), l: "활성 버즈 회원" },
+    ...(showActive ? [{ v: activeBuzz!.toLocaleString("ko-KR"), l: "활성 버즈 회원" }] : []),
     { v: "100%", l: "성과 기반 정산" },
     { v: "Zero", l: "초기 마케팅 비용" },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className={`grid gap-4 ${showActive ? "grid-cols-3" : "grid-cols-2"}`}>
       {cards.map((s) => (
         <div key={s.l} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
           <p className="text-xl font-black text-gold-300 sm:text-2xl">{s.v}</p>

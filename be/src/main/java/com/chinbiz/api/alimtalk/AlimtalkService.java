@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
  *  - 발송 문구 : alimtalk_template (event_code 별)
  *  - 발송 이력 : alimtalk_log (Insert-Only)
  *  이벤트: SALE1_CUSTOMER — 버즈admin 1차영업신청 접수 시 가망고객 대표자 핸드폰으로 발송.
+ *         REFERRAL_LINK  — 버즈admin [대시보드]·[버즈네트워크] 추천링크를 입력한 핸드폰번호로 발송 (docs/38).
  *  발송은 별도 스레드(비동기)로 수행해 영업 등록 응답을 지연시키지 않는다.
  */
 @Service
@@ -37,6 +38,9 @@ public class AlimtalkService {
     private static final Logger log = LoggerFactory.getLogger(AlimtalkService.class);
 
     public static final String EV_SALE1_CUSTOMER = "SALE1_CUSTOMER";
+    public static final String EV_REFERRAL_LINK = "REFERRAL_LINK";
+    /** 알림톡 유형(이벤트) 표시 순서 — 본사 [알림톡설정] 탭 순서 */
+    public static final List<String> EVENTS = List.of(EV_SALE1_CUSTOMER, EV_REFERRAL_LINK);
 
     // app_setting 키
     public static final String K_APIKEY = "aligo_apikey";
@@ -46,8 +50,10 @@ public class AlimtalkService {
     public static final String K_TESTMODE = "aligo_test_mode";
     public static final List<String> CONFIG_KEYS = List.of(K_APIKEY, K_USERID, K_SENDERKEY, K_SENDER, K_TESTMODE);
 
-    /** 치환 변수 (화면 안내용 설명 포함) */
+    /** 치환 변수 (화면 안내용 설명 포함) — SALE1_CUSTOMER */
     public static final Map<String, String> VARS = new LinkedHashMap<>();
+    /** 치환 변수 — REFERRAL_LINK (docs/38) */
+    public static final Map<String, String> REFERRAL_VARS = new LinkedHashMap<>();
     static {
         VARS.put("#{대표자명}", "가망고객 대표자명");
         VARS.put("#{상호명}", "가망고객 상호명");
@@ -57,6 +63,15 @@ public class AlimtalkService {
         VARS.put("#{버즈회원명}", "1차영업 버즈회원 이름");
         VARS.put("#{상품링크}", "상품 확인·동의 URL");
         VARS.put("#{고객센터}", "친비즈 고객센터 번호");
+        REFERRAL_VARS.put("#{버즈회원명}", "추천하는 버즈회원 이름");
+        REFERRAL_VARS.put("#{추천코드}", "추천 코드(버즈회원 아이디)");
+        REFERRAL_VARS.put("#{추천링크}", "버즈회원 가입 추천 URL");
+        REFERRAL_VARS.put("#{고객센터}", "친비즈 고객센터 번호");
+    }
+
+    /** 이벤트별 치환 변수 */
+    public static Map<String, String> varsOf(String eventCode) {
+        return EV_REFERRAL_LINK.equals(eventCode) ? REFERRAL_VARS : VARS;
     }
     static final String CS_PHONE = "02-6412-0505";
 
@@ -114,7 +129,28 @@ public class AlimtalkService {
         return v;
     }
 
-    /** 테스트 발송용 샘플 값 */
+    /** 추천링크 → 입력한 핸드폰 알림톡 (docs/38, 동기 — 결과를 화면에 안내). ref_id = 발송 버즈 user.id */
+    public AlimtalkLog sendReferralLink(com.chinbiz.api.user.User buzz, String receiver, String link) {
+        Map<String, String> v = new LinkedHashMap<>();
+        v.put("#{버즈회원명}", nz(buzz.getName()));
+        v.put("#{추천코드}", nz(buzz.getUserId()));
+        v.put("#{추천링크}", nz(link));
+        v.put("#{고객센터}", CS_PHONE);
+        return send(EV_REFERRAL_LINK, buzz.getId(), receiver, "", v);
+    }
+
+    /** 이벤트별 테스트 발송용 샘플 값 */
+    public Map<String, String> sampleVars(String eventCode) {
+        if (!EV_REFERRAL_LINK.equals(eventCode)) return sampleVars();
+        Map<String, String> v = new LinkedHashMap<>();
+        v.put("#{버즈회원명}", "김버즈");
+        v.put("#{추천코드}", "buzz_hong123");
+        v.put("#{추천링크}", "https://chinbiz.kr/signup?ref=buzz_hong123");
+        v.put("#{고객센터}", CS_PHONE);
+        return v;
+    }
+
+    /** 테스트 발송용 샘플 값 (SALE1_CUSTOMER) */
     public Map<String, String> sampleVars() {
         Map<String, String> v = new LinkedHashMap<>();
         v.put("#{대표자명}", "홍길동");
@@ -228,6 +264,7 @@ public class AlimtalkService {
         private final AlimtalkTemplateRepository repo;
         Seeder(AlimtalkTemplateRepository repo) { this.repo = repo; }
         @Override public void run(String... args) {
+            seedReferral();
             if (repo.findById(EV_SALE1_CUSTOMER).isPresent()) return;
             AlimtalkTemplate t = new AlimtalkTemplate(EV_SALE1_CUSTOMER, "1차영업신청 접수 → 가망고객 대표자");
             t.setEnabled("N");
@@ -246,6 +283,29 @@ public class AlimtalkService {
             t.setFailover("Y");
             t.setFsubject("[친비즈] 상품 상담 신청 접수");
             t.setFmessage("[친비즈] #{대표자명} 대표님, [#{상품명}] 상담 신청이 접수되었습니다. 상품확인: #{상품링크}");
+            repo.save(t);
+        }
+
+        /** 추천링크 발송 (docs/38) — 사용안함 상태로 생성. 알리고 템플릿 검수 후 본사에서 코드·문구 맞춰 사용 */
+        private void seedReferral() {
+            if (repo.findById(EV_REFERRAL_LINK).isPresent()) return;
+            AlimtalkTemplate t = new AlimtalkTemplate(EV_REFERRAL_LINK, "버즈 추천링크 발송 → 입력한 핸드폰");
+            t.setEnabled("N");
+            t.setSubject("친비즈 버즈회원 추천 안내");
+            t.setMessage("""
+                    [친비즈] #{버즈회원명}님이 친비즈 버즈회원 가입을 추천했습니다.
+
+                    친비즈는 내 네트워크로 좋은 상품을 소개하고
+                    성과에 따라 수당을 받는 버즈마케팅 플랫폼입니다.
+
+                    ■ 추천코드 : #{추천코드}
+
+                    아래 [무료 회원가입] 버튼을 눌러 가입해 주세요.
+                    문의 : #{고객센터}""");
+            t.setButtonJson("[{\"name\":\"무료 회원가입\",\"linkType\":\"WL\",\"linkMo\":\"#{추천링크}\",\"linkPc\":\"#{추천링크}\"}]");
+            t.setFailover("Y");
+            t.setFsubject("[친비즈] 버즈회원 추천");
+            t.setFmessage("[친비즈] #{버즈회원명}님이 친비즈 버즈회원 가입을 추천했습니다. 가입: #{추천링크}");
             repo.save(t);
         }
     }

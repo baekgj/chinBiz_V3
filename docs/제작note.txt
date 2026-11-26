@@ -462,6 +462,10 @@ ALTER TABLE `partner_order` ADD COLUMN `shipping_fee` bigint DEFAULT 0;
 ALTER TABLE `ad_chinbiz` ADD COLUMN `area_height` int DEFAULT NULL;
 ALTER TABLE `ad_chinbiz` ADD COLUMN `width_mode` varchar(10) NOT NULL DEFAULT 'DEFAULT';
 ALTER TABLE `ad_chinbiz` ADD COLUMN `area_width` int DEFAULT NULL;
+-- [2026-11-26] docs/38 1차영업 가망고객 종사업자번호/업태/업종
+ALTER TABLE `sale` ADD COLUMN `sub_business_number` varchar(4) DEFAULT NULL AFTER `business_number`;
+ALTER TABLE `sale` ADD COLUMN `business_type` varchar(50) DEFAULT NULL AFTER `sub_business_number`;
+ALTER TABLE `sale` ADD COLUMN `business_item` varchar(50) DEFAULT NULL AFTER `business_type`;
 
 
   [보완 2026-07-24] 센터 1차/2차영업관리 개별 내역 + 고객정보 마스킹
@@ -1792,3 +1796,34 @@ Spring Boot는 루트 .env 를 자동 로드하지 않으므로, 그냥 `mvnw sp
    - 파일: be ad/Ad.java·AdController.java, admin components/master/AdForm.tsx, home components/landing/MainAds.tsx
    - 검증(로컬): 넓이 누락/높이 10px → 400, FIXED 800·높이 150 → HOME 광고 800×150 가운데 정렬,
      MAIN_TOP+DEFAULT+높이 250(admin 화면 저장) → 상단 광고 높이 250 콘텐츠 폭 렌더링 확인. tsc 오류 0, BE 컴파일 OK.
+
+====================================================================
+[추가] 수당 정책 확정 + docs/38 작업 (2026-11-26)
+====================================================================
+■ A. 수당 정책 확정 (docs/수당.docx 검토 결과, 상세는 CLAUDE.md 3절 "수당 정책 확정")
+   - 기준 = CLAUDE.md 예시(45/5/25/7/8/4/6%), 총수당 VAT 포함가 그대로 분배, 셋팅비 50% 환불은 시스템 미구현, 입점비 본부 수당 유지.
+   - 빈 수당 → 본사 귀속: 추천인·소속센터·본부·관리센터 수취 계정이 없으면 원래 슬롯(member_type) 그대로 member_id=본사 계정으로 적립.
+     본사 대시보드 확정수익 = 본사 계정 전 회원구분 합산. (AllowanceService.addOrHq, MasterDashboardController)
+   - 매니저 배정은 활동지역 한정: [우선할당] API 도 고객지역 ∈ 승인 활동센터 서버 검증(자동배정과 동일).
+   - 매니저 배정 후 주소·상품 변경 금지(409 SALE_LOCKED), [우선할당] 시 상품 변경 불가 → 변경 필요 시 주문 취소 후 신규 등록.
+■ B. docs/38
+   1. HOME 파트너 온보딩 [활성 버즈 회원] 카드: 100명 이상일 때만 노출(미만이면 2칸 배치). PartnerStats ACTIVE_BUZZ_MIN=100
+   2. HOME 상단 [파트너사 입점문의] → "/#inquiry"(STRATEGIC INQUIRY). 다른 페이지에서도 홈 로드 후 해당 섹션으로 스크롤(HashScroll).
+   3. 본부 대시보드 [추천센터 수] 카드 추가 = 이 본부가 등록한 센터 계정 수(user.referral_code=본부장ID, CENTER_ADMIN)
+   4. 버즈 [영업파이프라인] 소메뉴 [진행중][완료] — 완료=구매확정·취소/반품, 진행중=그 외. GET /api/buzz/sales?stage=ing|done (URL ?stage 유지)
+   5. 버즈 [1차영업등록] 종사업자번호(숫자4)·업태(50)·업종(50) 추가 + 가망고객 기본정보 6라인 재배치. 상세화면·본사 고객상세 응답에도 표시.
+      DB: sale.sub_business_number / business_type / business_item (위 [DB 마이그레이션] · migration_new_fields.sql · schema_chin4.sql 반영)
+   6. 본사 [관리비설정] 매니저 회비 결제시 "소속본부" → "추천본부" %. 매니저 회비 수당은 매니저 소속센터를 등록한 본부(센터장 referral_code)에 지급.
+   7. 본사 [알림톡설정] 알림톡 유형 탭: [1차영업 접수](SALE1_CUSTOMER) / [추천링크 발송](REFERRAL_LINK, 신규·기동 시 사용안함으로 시드).
+      유형별 치환변수·샘플·발송시점·테스트발송. REFERRAL_LINK 변수: #{버즈회원명} #{추천코드} #{추천링크} #{고객센터}
+      ⚠ 서버 반영 후 알리고에 추천링크 템플릿 검수 → 본사 [추천링크 발송] 탭에 템플릿코드 입력·발송 사용 ON 필요.
+   8. 버즈 [대시보드]·[버즈네트워크] 추천링크 영역에 핸드폰번호 입력 → 알림톡 발송(ReferralAlimtalk).
+      POST /api/buzz/referral/alimtalk {phone} · 링크 = app.home-url + /signup?ref=아이디 · 회원당 하루 30건 · 이력 alimtalk_log(ref_id=회원 id)
+■ 검증(로컬 DB chin4, BE 9001 local override):
+   - 1차영업(상품9) 등록 → 소속센터(30, 센터 계정 없음) 1,000원이 본사 admin 으로 적립(BUZZ_CENTER/admin), 나머지 정상.
+   - 신규필드 저장(종사업자 "12a345"→"1234"), stage=ing 2건/done 0건, 미배정 건 수정 200.
+   - 추천링크 발송: 잘못된 번호 400, 정상 번호 → 템플릿 사용안함이라 503 안내(SKIP 로그). 화면 메시지 확인.
+   - HOME 활성버즈 12명 → 카드 숨김, /process 에서 입점문의 클릭 → /#inquiry 섹션 위치로 이동.
+   - 알림톡설정 탭 2개·미리보기, 본부 대시보드 추천센터 수 1 렌더. 타입체크/BE 컴파일 OK.
+   - 미검증: 매니저 계정 우선할당 활동지역 거부·배정 후 수정 409(로컬 매니저 비밀번호 미보유), 매니저 회비 결제 수당(결제 흐름).
+   - 테스트 데이터(로컬): 버즈 qa38b89912841, sale#77·#78 남아 있음.
